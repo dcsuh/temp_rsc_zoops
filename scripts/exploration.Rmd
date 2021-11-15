@@ -16,9 +16,49 @@ library(here)
 ```
 
 
-Exploration of pilot data
-```{r}
-pilot <- read_csv(here("pilot_data.xlsx"))
+Read in pilot data
+```{r, message=F}
+treatments <- read_csv(here("data/treatments.csv"))
+fitness <- read_csv(here("data/fitness.csv"))
+mort <- read_csv(here("data/mortality.csv"))
 ```
 
+
+View
+```{r}
+head(treatments)
+head(mort)
+head(fitness)
+```
+
+Summarize prevalence
+```{r}
+prevalence <- mort %>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status, na.rm = T)/n()) #NA's removed from numerator but still in denominator
+prevalence %>% ggplot(.,aes(x=ID,y=prev)) +
+  geom_col() + 
+  labs(title = "Prevalence")
+```
+
+Summarize fitness
+```{r}
+fit_by_ID_replicate <- fitness %>% group_by(ID, replicate) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs
+fit_average <- fit_by_ID_replicate %>% group_by(ID) %>% 
+  summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
+fit_average %>% ggplot(., aes(x=ID, y=mean_fit)) +
+  geom_col() + 
+  geom_errorbar(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
+  labs(title = "Average Total Fitness")
+```
+
+Summarize spore yield
+```{r}
+spores <- mort %>% filter(spore_yield>0) %>% group_by(ID) %>% 
+  summarize(mean_yield = mean(spore_yield, na.rm=T), # NAs removed but there should be no NAs after the filter
+            var = var(spore_yield, na.rm = T), 
+            se = sqrt(var(spore_yield, na.rm = T)/n()))
+spores %>% ggplot(., aes(x=ID, y=mean_yield)) + 
+  geom_col() + 
+  geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se)) +
+  labs(title = "Average Spore Yield")
+```
 
