@@ -1,0 +1,24 @@
+---
+title: "Exploration"
+author: "Daniel Suh"
+date: "11/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(tidyverse)
+library(magrittr)
+library(here)
+```
+
+
+Exploration of pilot data
+```{r}
+pilot <- read_csv(here("pilot_data.xlsx"))
+```
+
+
