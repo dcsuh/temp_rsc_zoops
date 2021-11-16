@@ -79,4 +79,8 @@ mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.r
 mean_span %>% ggplot(.,aes(x=ID, y=mean_span)) +
   geom_col()
 ```
+Tracking fitness over time
+```{r}
+fitness %>% filter(ID=="3A" & replicate == 1) %>% mutate(date=mdy(date)) %>% ggplot(., aes(x=date, y=fitness)) + geom_point()
+```
 
