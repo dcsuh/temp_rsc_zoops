@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, message = F}
 library(tidyverse)
 library(magrittr)
+library(lubridate)
 library(here)
 ```
 
@@ -60,5 +61,22 @@ spores %>% ggplot(., aes(x=ID, y=mean_yield)) +
   geom_col() + 
   geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se)) +
   labs(title = "Average Spore Yield")
+spores %>% ggplot(., aes(x=ID, y=log(mean_yield))) + 
+  geom_col() + 
+  labs(title = "Average Spore Yield log-transformed")
+```
+
+Summarize lifespan for all
+```{r}
+lifespan <- left_join(mort, treatments, by = "ID")
+lifespan %<>% select(ID, replicate, birth_date, date)
+mdy(lifespan$birth_date)
+lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), deathday=mdy(date))
+lifespan %<>% mutate(span = deathday - birthday)
+
+mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.rm=T))
+
+mean_span %>% ggplot(.,aes(x=ID, y=mean_span)) +
+  geom_col()
 ```
 
