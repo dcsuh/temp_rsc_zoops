@@ -77,7 +77,8 @@ lifespan %<>% mutate(span = deathday - birthday)
 mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.rm=T))
 
 mean_span %>% ggplot(.,aes(x=ID, y=mean_span)) +
-  geom_col()
+  geom_col() + 
+  geom_text(aes(label=round(mean_span, digits = 2)), vjust = -0.5)
 ```
 Tracking fitness over time
 ```{r}
