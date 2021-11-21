@@ -55,7 +55,8 @@ fit_average %>% ggplot(., aes(x=ID, y=mean_fit)) +
 Summarize spore yield
 ```{r}
 spores <- mort %>% filter(spore_yield>0) %>% group_by(ID) %>% 
-  summarize(mean_yield = mean(spore_yield, na.rm=T), # NAs removed but there should be no NAs after the filter
+  summarize(mean_yield = mean(spore_yield, na.rm=T), 
+            # NAs removed but there should be no NAs after the filter
             var = var(spore_yield, na.rm = T), 
             se = sqrt(var(spore_yield, na.rm = T)/n()))
 spores %>% ggplot(., aes(x=ID, y=mean_yield)) + 
@@ -83,6 +84,5 @@ mean_span %>% ggplot(.,aes(x=ID, y=mean_span)) +
 ```
 
 ```{r}
-#rmarkdown::render('exploration.Rmd', output_format = "pdf_document",output_file = here("pilot.pdf"))
+#rmarkdown::render(here('scripts/exploration.Rmd'), output_format = "pdf_document",output_file = here("pilot.pdf"))
 ```
-
