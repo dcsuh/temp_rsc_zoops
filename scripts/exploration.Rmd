@@ -54,7 +54,12 @@ head(fitness)
 
 ### Summarize prevalence
 
-One difficulty that I faced during this pilot was confidently deeming an individual infected or not when spore yield was very low. At high spore yield, I can be confident that an individual is infected because visual inspection under the dissecting scope makes this clear and hemocytometry will clearly show a large volume of spores. At low spore yield, it can be difficult to assess infectivity upon visual inspection and hemocytometry is made difficult because of algae in the solution. It is possible that I am incorrectly identifying algal cells as spores and these can cause an individual to be marked as infected when they are not. As an initial test of this, I am comparing my initially recorded prevalence to an adjusted prevalence that only counts individuals as infected if their spore yield exceeds a certain threshold (i.e. > 3125; this is equivalent to counting 10 spores during hemocytometry)
+```{r, include=F}
+prev_threshold = 3125
+```
+
+
+One difficulty that I faced during this pilot was confidently deeming an individual infected or not when spore yield was very low. At high spore yield, I can be confident that an individual is infected because visual inspection under the dissecting scope makes this clear and hemocytometry will clearly show a large volume of spores. At low spore yield, it can be difficult to assess infectivity upon visual inspection and hemocytometry is made difficult because of algae in the solution. It is possible that I am incorrectly identifying algal cells as spores and these can cause an individual to be marked as infected when they are not. As an initial test of this, I am comparing my initially recorded prevalence to an adjusted prevalence that only counts individuals as infected if their spore yield exceeds a certain threshold (i.e. > `r prev_threshold`; this is equivalent to counting 10 spores during hemocytometry)
 
 Recorded Prevalence
 ```{r}
@@ -67,8 +72,8 @@ prevalence %>% ggplot(.,aes(x=ID,y=prev)) +
 
 Adjusted prevalence
 ```{r}
-prev_adj <- mort %>% mutate(inf_adj = ifelse(spore_yield>3125, 1, 0))
-prev_adj %<>% drop_na(inf_adj) #remove observations with NA for inf_adj
+mort %<>% mutate(inf_adj = ifelse(spore_yield>prev_threshold, 1, 0))
+prev_adj <- mort %>% drop_na(inf_adj) #remove observations with NA for inf_adj
 prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
 prev_adj %>% ggplot(.,aes(x=ID,y=prev)) +
   geom_col() + 
@@ -97,25 +102,34 @@ spores <- mort %>% filter(spore_yield>0) %>% group_by(ID) %>%
 spores %>% ggplot(., aes(x=ID, y=mean_yield)) + 
   geom_col() + 
   geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se)) +
-  labs(title = "Average Spore Yield")
+  labs(title = "Average Spore Yield", y = "Mean Yield")
 spores %>% ggplot(., aes(x=ID, y=log(mean_yield))) + 
   geom_col() + 
-  labs(title = "Average Spore Yield log-transformed")
+  labs(title = "Average Spore Yield log-transformed", y = "log(Mean Yield)")
 ```
 
 Summarize lifespan for all
 ```{r}
 lifespan <- left_join(mort, treatments, by = "ID")
 lifespan %<>% select(ID, replicate, birth_date, date)
-mdy(lifespan$birth_date)
+#mdy(lifespan$birth_date)
 lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), deathday=mdy(date))
 lifespan %<>% mutate(span = deathday - birthday)
 
-mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.rm=T))
+mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.rm=T),
+                                                     var = var(span, na.rm = T),
+                                                     se = sqrt(var(span, na.rm = T)/n()))
 
 mean_span %>% ggplot(.,aes(x=ID, y=mean_span)) +
   geom_col() + 
-  geom_text(aes(label=round(mean_span, digits = 2)), vjust = -0.5)
+  geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se)) +
+  geom_text(aes(label=round(mean_span, digits = 2)), vjust = -0.5) +
+  labs(title = "Average lifespan with standard error bars", y = "Average lifespan")
+
+ggplot(lifespan,aes(x=ID, y = span)) + geom_boxplot()
+
+ggplot(lifespan,aes(x=ID, y = span)) + geom_boxplot() + 
+  stat_summary(geom="text", fun.y=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(x=0.6), size=3.5)
 ```
 
 ### Reflections
