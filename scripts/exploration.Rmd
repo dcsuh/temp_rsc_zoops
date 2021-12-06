@@ -17,6 +17,11 @@ library(lubridate)
 library(here)
 ```
 
+### Introduction
+
+The primary purpose of this pilot was to determine the average lifespan of *Metschnikowia bicuspidata*-infected *Daphnia dentifera* under different temperature and resource conditions. These data will be helpful in designing the main experiment where we will be attempting to measure the within-host production of the parasite in the host under different temperature and resource conditions. This research will be helpful for understanding how changes in environmental conditions such as temperature and resource will modulate the growth of the parasite in individual hosts. If temperature and resources cause variations in parasite growth within individuals then this can have implications on epidemics in the larger population. Another purpose of this research is to understand how plastic host competence (the ability to generate new infections) is under different conditions. Should we treat host competence as a robust trait that can be attributed to host species or is this still highly variable within a species and should be considered a flexible and plastic trait that should be attributed to the host individual? These distinctions can have implications for understanding how likely epidemics are to start in host populations and this becomes even more complex when considering generalist parasites.
+
+
 
 Read in pilot data
 ```{r, message=F}
@@ -33,13 +38,23 @@ head(mort)
 head(fitness)
 ```
 
-Summarize prevalence
+### Summarize prevalence
+
+One difficulty that I faced during this pilot was confidently deeming an individual infected or not when spore yield was very low. At high spore yield, I can be confident that an individual is infected because visual inspection under the dissecting scope makes this clear and hemocytometry will clearly show a large volume of spores. At low spore yield, it can be difficult to assess infectivity upon visual inspection and hemocytometry is made difficult because of algae in the solution. It is possible that I am incorrectly identifying algal cells as spores and these can cause an individual to be marked as infected when they are not. As an initial test of this, I am comparing my initially recorded prevalence to an adjusted prevalence that only counts individuals as infected if their spore yield exceeds a certain threshold (i.e. > 3125; this is equivalent to counting 10 spores during hemocytometry)
+
+Recorded Prevalence
 ```{r}
 prevalence <- mort %>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status, na.rm = T)/n()) #NA's removed from numerator but still in denominator
 prevalence %>% ggplot(.,aes(x=ID,y=prev)) +
   geom_col() + 
   labs(title = "Prevalence")
 ```
+
+Adjusted prevalence
+```{r}
+
+```
+
 
 Summarize fitness
 ```{r}
@@ -82,6 +97,11 @@ mean_span %>% ggplot(.,aes(x=ID, y=mean_span)) +
   geom_col() + 
   geom_text(aes(label=round(mean_span, digits = 2)), vjust = -0.5)
 ```
+
+### Reflections
+
+
+
 
 ```{r}
 #rmarkdown::render(here('scripts/exploration.Rmd'), output_format = "pdf_document",output_file = here("pilot.pdf"))
