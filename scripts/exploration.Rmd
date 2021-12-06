@@ -21,7 +21,21 @@ library(here)
 
 The primary purpose of this pilot was to determine the average lifespan of *Metschnikowia bicuspidata*-infected *Daphnia dentifera* under different temperature and resource conditions. These data will be helpful in designing the main experiment where we will be attempting to measure the within-host production of the parasite in the host under different temperature and resource conditions. This research will be helpful for understanding how changes in environmental conditions such as temperature and resource will modulate the growth of the parasite in individual hosts. If temperature and resources cause variations in parasite growth within individuals then this can have implications on epidemics in the larger population. Another purpose of this research is to understand how plastic host competence (the ability to generate new infections) is under different conditions. Should we treat host competence as a robust trait that can be attributed to host species or is this still highly variable within a species and should be considered a flexible and plastic trait that should be attributed to the host individual? These distinctions can have implications for understanding how likely epidemics are to start in host populations and this becomes even more complex when considering generalist parasites.
 
+### Key
 
+Treatment IDs are represented by a number and letter. The number denotes the temperature and the letter denotes resource concentration.
+
+$$
+1 = 15 ^\circ C \\
+2 = 20 ^\circ C \\
+3 = 25 ^\circ C \\
+$$
+
+$$
+\text A = 1\ mg\ \text C/L \\
+\text B = 0.5\ mg\ \text C/L \\ 
+\text C = 0.1\ mg\ \text C/L \\
+$$
 
 Read in pilot data
 ```{r, message=F}
@@ -44,7 +58,8 @@ One difficulty that I faced during this pilot was confidently deeming an individ
 
 Recorded Prevalence
 ```{r}
-prevalence <- mort %>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status, na.rm = T)/n()) #NA's removed from numerator but still in denominator
+prevalence <- mort %>% drop_na(infection_status) #remove observations with NA for infection status
+prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n()) 
 prevalence %>% ggplot(.,aes(x=ID,y=prev)) +
   geom_col() + 
   labs(title = "Prevalence")
@@ -52,7 +67,12 @@ prevalence %>% ggplot(.,aes(x=ID,y=prev)) +
 
 Adjusted prevalence
 ```{r}
-
+prev_adj <- mort %>% mutate(inf_adj = ifelse(spore_yield>3125, 1, 0))
+prev_adj %<>% drop_na(inf_adj) #remove observations with NA for inf_adj
+prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
+prev_adj %>% ggplot(.,aes(x=ID,y=prev)) +
+  geom_col() + 
+  labs(title = "Prevalence")
 ```
 
 
