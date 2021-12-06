@@ -120,16 +120,16 @@ mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.r
                                                      var = var(span, na.rm = T),
                                                      se = sqrt(var(span, na.rm = T)/n()))
 
-mean_span %>% ggplot(.,aes(x=ID, y=mean_span)) +
+mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span))) +
   geom_col() + 
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se)) +
-  geom_text(aes(label=round(mean_span, digits = 2)), vjust = -0.5) +
+  geom_text(aes(label=round(as.numeric(mean_span), digits = 2)), vjust = -0.5) +
   labs(title = "Average lifespan with standard error bars", y = "Average lifespan")
 
-ggplot(lifespan,aes(x=ID, y = span)) + geom_boxplot()
+lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span))) + geom_boxplot()
 
-ggplot(lifespan,aes(x=ID, y = span)) + geom_boxplot() + 
-  stat_summary(geom="text", fun.y=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(x=0.6), size=3.5)
+lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span))) + geom_boxplot() + 
+  stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5)
 ```
 
 ### Reflections
