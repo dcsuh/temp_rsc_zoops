@@ -77,7 +77,7 @@ prev_adj <- mort %>% drop_na(inf_adj) #remove observations with NA for inf_adj
 prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
 prev_adj %>% ggplot(.,aes(x=ID,y=prev)) +
   geom_col() + 
-  labs(title = "Prevalence")
+  labs(title = "Threshold-adjusted Prevalence")
 ```
 
 
