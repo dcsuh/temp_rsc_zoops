@@ -44,6 +44,14 @@ fitness <- read_csv(here("data/fitness.csv"))
 mort <- read_csv(here("data/mortality.csv"))
 ```
 
+Reorder factors for treament ID
+```{r}
+newOrder <- c("1C","1B","1A","2C","2B","2A","3C","3B","3A")
+treatments$ID <- factor(treatments$ID, levels = newOrder)
+fitness$ID <- factor(fitness$ID, levels = newOrder)
+mort$ID <- factor(mort$ID, levels = newOrder)
+```
+
 
 View
 ```{r}
@@ -63,11 +71,14 @@ One difficulty that I faced during this pilot was confidently deeming an individ
 
 Recorded Prevalence
 ```{r}
+treatment_factors <- treatments %>% dplyr::select(ID,resource,temperature)
+
 prevalence <- mort %>% drop_na(infection_status) #remove observations with NA for infection status
-prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n()) 
-prevalence %>% ggplot(.,aes(x=ID,y=prev)) +
-  geom_col() + 
-  labs(title = "Prevalence") + theme_minimal()
+prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n())
+prevalence %<>% left_join(.,treatment_factors)
+prevalence %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  labs(title = "Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
 ```
 
 Adjusted prevalence
@@ -75,9 +86,10 @@ Adjusted prevalence
 mort %<>% mutate(inf_adj = ifelse(spore_yield>prev_threshold, 1, 0))
 prev_adj <- mort %>% drop_na(inf_adj) #remove observations with NA for inf_adj
 prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
-prev_adj %>% ggplot(.,aes(x=ID,y=prev)) +
-  geom_col() + 
-  labs(title = "Threshold-adjusted Prevalence") + theme_minimal()
+prev_adj %<>% left_join(.,treatment_factors)
+prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  labs(title = "Threshold-adjusted Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
 ```
 
 
@@ -86,10 +98,11 @@ Summarize fitness
 fit_by_ID_replicate <- fitness %>% group_by(ID, replicate) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs
 fit_average <- fit_by_ID_replicate %>% group_by(ID) %>% 
   summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
-fit_average %>% ggplot(., aes(x=ID, y=mean_fit)) +
-  geom_col() + 
+fit_average %<>% left_join(.,treatment_factors)
+fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
   geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
-  labs(title = "Average Total Fitness w/ SE") + theme_minimal()
+  labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal()
 ```
 
 Summarize spore yield
@@ -99,13 +112,17 @@ spores <- mort %>% filter(spore_yield>0) %>% group_by(ID) %>%
             # NAs removed but there should be no NAs after the filter
             var = var(spore_yield, na.rm = T), 
             se = sqrt(var(spore_yield, na.rm = T)/n()))
-spores %>% ggplot(., aes(x=ID, y=mean_yield)) + 
-  geom_col() + 
-  geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se)) +
-  labs(title = "Average Spore Yield w/ SE", y = "Mean Yield") + theme_minimal()
-spores %>% ggplot(., aes(x=ID, y=log(mean_yield))) + 
-  geom_col() + 
-  labs(title = "Average Spore Yield log-transformed", y = "log(Mean Yield)") + theme_minimal()
+spores %<>% left_join(.,treatment_factors)
+spores %>% ggplot(., aes(x=ID, y=mean_yield, fill=as.factor(resource))) + 
+  geom_col(position="dodge") + 
+  geom_linerange(aes(ymin = mean_yield-se, ymax = mean_yield+se)) +
+  labs(title = "Average Spore Yield w/ SE", y = "Mean Yield", fill = "Resource mgC/L", x = "ID") + theme_minimal()
+spores %>% ggplot(., aes(x=as.factor(temperature), y=log(mean_yield), fill=as.factor(resource))) + 
+  geom_col(position="dodge") + 
+  labs(title = "Average Spore Yield log-transformed", y = "log(Mean Yield)", fill = "Resource mgC/L", x = "Temperature") + theme_minimal()
+mort %>% ggplot(., aes(x=ID, y=spore_yield)) + 
+  geom_boxplot() + 
+  labs(title = "Spore Yield", y = "Spores", x = "ID") + theme_minimal()
 ```
 
 Summarize lifespan for all
@@ -115,21 +132,24 @@ lifespan %<>% select(ID, replicate, birth_date, date)
 #mdy(lifespan$birth_date)
 lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), deathday=mdy(date))
 lifespan %<>% mutate(span = deathday - birthday)
+lifespan %<>% left_join(.,treatment_factors)
 
 mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.rm=T),
                                                      var = var(span, na.rm = T),
                                                      se = sqrt(var(span, na.rm = T)/n()))
 
-mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span))) +
-  geom_col() + 
-  geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se)) +
+mean_span %<>% left_join(.,treatment_factors)
+
+mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  geom_linerange(aes(ymin = mean_span-se, ymax = mean_span+se)) +
   geom_text(aes(label=round(as.numeric(mean_span), digits = 2)), vjust = -0.5) +
-  labs(title = "Average lifespan with standard error bars", y = "Average lifespan")
+  labs(title = "Average lifespan with standard error bars", y = "Average lifespan", fill = "Resource mgC/L")
 
-lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span))) + geom_boxplot()
+lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position="dodge") + labs(title="avearge lifespan", x="temperature", y ="lifespan")
 
-lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span))) + geom_boxplot() + 
-  stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5) + theme_minimal() + theme(legend.position="none")
+lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position = "dodge") + 
+  stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5) + theme_minimal() + guides(color=F) + labs(title = "Host lifespan", y = "days", fill = "Resource mgC/L")
 ```
 
 ### Reflections
