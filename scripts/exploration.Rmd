@@ -21,6 +21,13 @@ library(here)
 
 The primary purpose of this pilot was to determine the average lifespan of *Metschnikowia bicuspidata*-infected *Daphnia dentifera* under different temperature and resource conditions. These data will be helpful in designing the main experiment where we will be attempting to measure the within-host production of the parasite in the host under different temperature and resource conditions. This research will be helpful for understanding how changes in environmental conditions such as temperature and resource will modulate the growth of the parasite in individual hosts. If temperature and resources cause variations in parasite growth within individuals then this can have implications on epidemics in the larger population. Another purpose of this research is to understand how plastic host competence (the ability to generate new infections) is under different conditions. Should we treat host competence as a robust trait that can be attributed to host species or is this still highly variable within a species and should be considered a flexible and plastic trait that should be attributed to the host individual? These distinctions can have implications for understanding how likely epidemics are to start in host populations and this becomes even more complex when considering generalist parasites.
 
+### Hypotheses
+
+Lifespan of infected hosts will be highest in low temperature, high resource conditions
+Spore yield will be highest in high temperature, high resource conditions
+Prevalence will be highest in high temperature, low resource conditions
+Reproduction will be lowest in low temperature, low resource conditions
+
 ### Key
 
 Treatment IDs are represented by a number and letter. The number denotes the temperature and the letter denotes resource concentration.
@@ -151,6 +158,21 @@ lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric
 lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position = "dodge") + 
   stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5) + theme_minimal() + guides(color=F) + labs(title = "Host lifespan", y = "days", fill = "Resource mgC/L")
 ```
+
+Correlation between host body size and spore yield
+```{r}
+mort %>% select(length, spore_yield) %>% filter(spore_yield>1000) %>% drop_na %>% ggplot(.,aes(x=length,y=log(spore_yield))) + geom_point() + geom_smooth(method="lm")
+
+mean_length_yield <- mort %>% group_by(ID) %>% summarize(mean_length = mean(length, na.rm=T),
+                                                     length_var = var(length, na.rm = T),
+                                                     length_se = sqrt(var(length, na.rm = T)/n()),
+                                                     mean_yield = mean(spore_yield, na.rm=T),
+                                                     yield_var = var(spore_yield, na.rm = T),
+                                                     yield_se = sqrt(var(spore_yield, na.rm = T)/n()))
+
+mean_length_yield %>% ggplot(.,aes(x=mean_length, y=mean_yield,color=ID)) + geom_point()
+```
+
 
 ### Reflections
 
