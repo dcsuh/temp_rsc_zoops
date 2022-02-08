@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, Packages, message=F}
 library(tidyverse)
 library(magrittr)
-
+library(pwr)
 ```
 
 
@@ -29,4 +29,8 @@ Power analyses require values for four different variables:
  
  To start, I will just try to do a power analysis with an arbitrary effect size of Cohen's d of 0.8, significance of 0.05, and power of 0.8.
  
+ one-way anova power analysis
+```{r}
+pwr.anova.test(k = 3, n = , f = 0.4, sig.level = 0.05, power = 0.8)
+```
  
