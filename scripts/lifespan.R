@@ -25,6 +25,7 @@ avg_span <- lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), 
                                                   aes(label=sprintf("%1.1f", ..y..), 
                                                       color=factor(ID)), 
                                                   position=position_nudge(y=0.35), size=3.5) + 
-  labs(title = "Host lifespan", x = "Treatment", y = "Time to death in days", fill = "Resource mgC/L") +
+  labs(title = "Host lifespan", x = "Treatment", y = "Time to death in days", fill = "Resource mg C/L") +
   guides(color = "none") + proj_theme
 
+ggsave("lifespan.png", avg_span, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = here("figures"))
