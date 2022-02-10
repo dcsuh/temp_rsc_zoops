@@ -21,7 +21,7 @@ lapply(pckg_names,
 
 
 # setting the plot theme for the project
-theme_set(theme_minimal(base_size = 13))
+proj_theme <- theme_set(theme_minimal(base_size = 13))
 
 
 ## Intended target dims
