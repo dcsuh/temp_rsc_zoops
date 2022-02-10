@@ -46,9 +46,9 @@ $$
 
 Read in pilot data
 ```{r, message=F}
-treatments <- read_csv(here("data/treatments.csv"))
-fitness <- read_csv(here("data/fitness.csv"))
-mort <- read_csv(here("data/mortality.csv"))
+treatments <- read_csv(here("raw_data/treatments.csv"))
+fitness <- read_csv(here("raw_data/fitness.csv"))
+mort <- read_csv(here("raw_data/mortality.csv"))
 ```
 
 Reorder factors for treament ID
