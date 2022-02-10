@@ -1,5 +1,5 @@
 ## script to be sourced at beginning of other scripts
 
-source("./setup.R")
-source("./fns.R")
+source(here("base","setup.R"))
+source(here("base","fns.R"))
 
