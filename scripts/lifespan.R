@@ -22,8 +22,7 @@ lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric
 
 avg_span <- lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), fill=as.factor(resource))) + 
   geom_boxplot(position = "dodge") + stat_summary(geom="text", fun=quantile, 
-                                                  aes(label=sprintf("%1.1f", ..y..), 
-                                                      color=factor(ID)), 
+                                                  aes(label=sprintf("%1.1f", ..y..)), 
                                                   position=position_nudge(y=0.35), size=3.5) + 
   labs(title = "Host lifespan", x = "Treatment", y = "Time to death in days", fill = "Resource mg C/L") +
   guides(color = "none") + proj_theme
