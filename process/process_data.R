@@ -12,16 +12,15 @@ treatments$ID <- factor(treatments$ID, levels = newOrder)
 fitness$ID <- factor(fitness$ID, levels = newOrder)
 mort$ID <- factor(mort$ID, levels = newOrder)
 
-#spore yield
-yield <- mort %<>% filter(!is.na(spore_yield))
-
-
 #lifespan
 lifespan <- left_join(mort, treatments, by = "ID")
 lifespan %<>% select(ID, replicate, birth_date, date)
 lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), deathday=mdy(date))
 lifespan %<>% mutate(span = deathday - birthday)
 lifespan %<>% left_join(.,treatment_factors)
+
+
+
 
 # please process data before this line 
 if(dir.exists(here("processed_data")) == FALSE) {
@@ -33,4 +32,7 @@ if(dir.exists(here("processed_data")) == FALSE) {
 
 # please save data after this line 
 saveRDS(lifespan, file = here("processed_data","lifespan.rds"))
+saveRDS(fitness, file = here("processed_data","fitness.rds"))
+saveRDS(mort, file = here("processed_data","mortality.rds"))
+saveRDS(treatment, file = here("processed_data","treatment.rds"))
 
