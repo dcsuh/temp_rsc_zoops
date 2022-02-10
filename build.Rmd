@@ -18,3 +18,7 @@ load(here("figures", "avg_span.RData"))
 avg_span
 ```
 
+load plot from png
+![avg_span](figures/lifespan.png)
+
+
