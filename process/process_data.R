@@ -6,6 +6,8 @@ treatments <- read_csv(here("raw_data", "treatments.csv"))
 fitness <- read_csv(here("raw_data", "fitness.csv"))
 mort <- read_csv(here("raw_data", "mortality.csv"))
 
+treatment_factors <- treatments %>% dplyr::select(ID,resource,temperature)
+
 #reorder data
 newOrder <- c("1C","1B","1A","2C","2B","2A","3C","3B","3A")
 treatments$ID <- factor(treatments$ID, levels = newOrder)
@@ -34,5 +36,5 @@ if(dir.exists(here("processed_data")) == FALSE) {
 saveRDS(lifespan, file = here("processed_data","lifespan.rds"))
 saveRDS(fitness, file = here("processed_data","fitness.rds"))
 saveRDS(mort, file = here("processed_data","mortality.rds"))
-saveRDS(treatment, file = here("processed_data","treatment.rds"))
+saveRDS(treatments, file = here("processed_data","treatment.rds"))
 
