@@ -1,0 +1,18 @@
+---
+title: "build"
+author: "Daniel Suh"
+date: "2/10/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Build Script
+
+Source
+```{r}
+
+```
+
