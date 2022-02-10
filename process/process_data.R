@@ -6,13 +6,13 @@ treatments <- read_csv(here("raw_data", "treatments.csv"))
 fitness <- read_csv(here("raw_data", "fitness.csv"))
 mort <- read_csv(here("raw_data", "mortality.csv"))
 
-treatment_factors <- treatments %>% dplyr::select(ID,resource,temperature)
-
 #reorder data
 newOrder <- c("1C","1B","1A","2C","2B","2A","3C","3B","3A")
 treatments$ID <- factor(treatments$ID, levels = newOrder)
 fitness$ID <- factor(fitness$ID, levels = newOrder)
 mort$ID <- factor(mort$ID, levels = newOrder)
+
+treatment_factors <- treatments %>% dplyr::select(ID,resource,temperature)
 
 #lifespan
 lifespan <- left_join(mort, treatments, by = "ID")
