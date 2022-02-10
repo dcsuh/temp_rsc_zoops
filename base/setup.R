@@ -12,7 +12,7 @@ install_if_necessary <- function(x) {
 
 
 # all the necessary packages go here
-pckg_names <- c("tidyverse", "magrittr", "here")
+pckg_names <- c("tidyverse", "magrittr", "here", "lubridate")
 
 # load/install packages
 lapply(pckg_names, 
