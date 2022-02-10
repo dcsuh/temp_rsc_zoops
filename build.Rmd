@@ -7,11 +7,12 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(here)
 ```
 
 Build Script
 
-Source
+Load plot
 ```{r}
 load(here("figures", "avg_span.RData"))
 avg_span
