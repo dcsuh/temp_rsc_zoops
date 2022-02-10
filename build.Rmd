@@ -13,6 +13,7 @@ Build Script
 
 Source
 ```{r}
-
+load(here("figures", "avg_span.RData"))
+avg_span
 ```
 

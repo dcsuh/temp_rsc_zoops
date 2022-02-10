@@ -141,11 +141,12 @@ lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), de
 lifespan %<>% mutate(span = deathday - birthday)
 lifespan %<>% left_join(.,treatment_factors)
 
+
 mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.rm=T),
                                                      var = var(span, na.rm = T),
-                                                     se = sqrt(var(span, na.rm = T)/n()))
-
-mean_span %<>% left_join(.,treatment_factors)
+                                                     se = sqrt(var(span, na.rm = T)/n()),
+                                                     resource = unique(resource),
+                                                     temperature = unique(temperature))
 
 mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resource))) +
   geom_col(position="dodge") + 

@@ -27,7 +27,7 @@ proj_theme <- theme_set(theme_bw(base_size = 13))
 ## Intended target dims
 golden <- 1.618
 outwidth <- c(8.7, 11.4, 17.8)
-unit <- "cm"
+unit <- "in"
 
 
 # load packages
