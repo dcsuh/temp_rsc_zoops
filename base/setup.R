@@ -25,7 +25,9 @@ proj_theme <- theme_set(theme_minimal(base_size = 13))
 
 
 ## Intended target dims
-outwidth <- c('8.7cm', '11.4cm', '17.8cm')
+golden <- 1.618
+outwidth <- c(8.7, 11.4, 17.8)
+unit <- "cm"
 
 
 # load packages
