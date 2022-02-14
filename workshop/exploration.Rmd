@@ -174,6 +174,50 @@ mean_length_yield <- mort %>% group_by(ID) %>% summarize(mean_length = mean(leng
 mean_length_yield %>% ggplot(.,aes(x=mean_length, y=mean_yield,color=ID)) + geom_point()
 ```
 
+## Analyses
+
+How does spore yield, lifespan, host length, and total fitness depend on resource and temperature conditions?
+
+I'll start with an ANOVA but this analysis might still benefit from an SEM approach. e.g. resource and temp likely to drive lifespan and host length which should both drive spore yield
+
+ANOVA assumptions
+
+Homogeneity of variance: AKA homoscedasticity: Variance around the mean should be similar for all of the data. i.e. the variance shouldn't be dramatically different between different ranges of the predictor variable
+ - haven't actually checked this formally
+
+Independence of observations: predictor variables shouldn't rely on each other and individual data points should be independent and not grouped
+ - temperature and resources do not depend on each other in any way
+ - fitness is measured over time but if it is aggregated then it represents one independent individual
+
+Normally-distributed dependent variable
+ - need to make some histograms to check this
+
+histograms of dependent variables 
+```{r}
+lifespan %>% ggplot(.,aes(x=span)) + geom_histogram() + facet_grid(rows=vars(ID))
+mort %>% ggplot(.,aes(x=spore_yield)) + geom_histogram() + facet_grid(rows=vars(ID))
+fitness %>% ggplot(.,aes(x=fitness)) + geom_histogram() + facet_grid(rows=vars(ID))
+mort %>% ggplot(.,aes(x=length)) + geom_histogram() + facet_grid(rows=vars(ID))
+```
+close enough?
+
+ANOVA
+```{r}
+spores_anova <- left_join(mort,treatment_factors,by="ID")
+spores_aov <-  aov(spore_yield ~ resource + temperature, data = spores_anova)
+spores_aov_interaction <- aov(spore_yield ~ resource * temperature, data = spores_anova)
+spores_aov_blocking <-  aov(spore_yield ~ resource * temperature + ID, data = spores_anova)
+
+models <- list(spores_aov, spores_aov_interaction, spores_aov_blocking)
+model_names <- c("two-way", "interaction", "blocking")
+
+broom::glance(spores_aov)
+broom::glance(spores_aov_interaction)
+broom::glance(spores_aov_blocking)
+```
+
+
+
 
 ### Reflections
 
