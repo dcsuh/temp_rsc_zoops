@@ -214,6 +214,21 @@ broom::glance(spores_aov)
 broom::glance(spores_aov_interaction)
 ```
 
+SEM
+```{r}
+library(piecewiseSEM)
+sem_data <- left_join(mort, lifespan, by = c("ID", "replicate"))
+```
+
+
+```{r}
+lifespan_glm <- glm(as.numeric(span) ~ resource * temperature, data = sem_data)
+length_glm <- glm(length ~ resource * temperature, data = sem_data)
+yield_glm <- glm(spore_yield ~ as.numeric(span) * length, data = sem_data)
+
+sem <- psem(lifespan_glm, length_glm, yield_glm)
+summary(sem)
+```
 
 
 
