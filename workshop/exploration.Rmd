@@ -206,14 +206,12 @@ ANOVA
 spores_anova <- left_join(mort,treatment_factors,by="ID")
 spores_aov <-  aov(spore_yield ~ resource + temperature, data = spores_anova)
 spores_aov_interaction <- aov(spore_yield ~ resource * temperature, data = spores_anova)
-spores_aov_blocking <-  aov(spore_yield ~ resource * temperature + ID, data = spores_anova)
 
-models <- list(spores_aov, spores_aov_interaction, spores_aov_blocking)
-model_names <- c("two-way", "interaction", "blocking")
+models <- list(spores_aov, spores_aov_interaction)
+model_names <- c("two-way", "interaction")
 
 broom::glance(spores_aov)
 broom::glance(spores_aov_interaction)
-broom::glance(spores_aov_blocking)
 ```
 
 
