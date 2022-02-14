@@ -214,17 +214,30 @@ broom::glance(spores_aov)
 broom::glance(spores_aov_interaction)
 ```
 
+
+*Seems like the outputs for the SEMs in markdown files just coem out weird. not sure what is up with that but the model summaries should be executed in the console*
+
+*Actually it just kind of looks like the results get split up into separate sections panels.*
+
 SEM
 ```{r}
 library(piecewiseSEM)
 sem_data <- left_join(mort, lifespan, by = c("ID", "replicate"))
+sem_data %<>% mutate(lifespan = as.numeric(span))
+```
+
+Example SEM
+```{r}
+dat <- data.frame(x1 = runif(50), y1 = runif(50), y2 = runif(50), y3 = runif(50))
+model <- psem(lm(y1 ~ x1 + y2, dat), lm(y2 ~ x1, dat), lm(y3 ~ y1, dat))
+summary(model, .progressBar = F)
 ```
 
 
 ```{r}
-lifespan_glm <- glm(as.numeric(span) ~ resource * temperature, data = sem_data)
-length_glm <- glm(length ~ resource * temperature, data = sem_data)
-yield_glm <- glm(spore_yield ~ as.numeric(span) * length, data = sem_data)
+lifespan_glm <- glm(lifespan ~ resource, data = sem_data)
+length_glm <- glm(length ~ lifespan, data = sem_data)
+yield_glm <- glm(spore_yield ~ lifespan * length, data = sem_data)
 
 sem <- psem(lifespan_glm, length_glm, yield_glm)
 summary(sem)
