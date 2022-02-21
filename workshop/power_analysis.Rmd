@@ -27,7 +27,7 @@ Power analyses require values for four different variables:
  
  Typical method includes using pilot data to estimate effect size to be used for power analysis. However, some suggest that multiple biases can occur in a priori power analyses using pilot data that lead to unpowered studies. [https://doi.org/10.1016/j.jesp.2017.09.004] These authors suggest to skip pilot studies and instead arbitrarily choose a medium effect size or to perform sequential analyses where data are collected in multiple phases as needed.
  
- To start, I will just try to do a power analysis with an arbitrary effect size of Cohen's d of 0.8, significance of 0.05, and power of 0.8.
+ To start, I will just try to do a power analysis with an arbitrary effect size of 0.4 (large), significance of 0.05, and power of 0.8.
  
  one-way anova power analysis
 ```{r}
