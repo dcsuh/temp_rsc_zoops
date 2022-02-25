@@ -144,6 +144,16 @@ mort %>% ggplot(., aes(x=ID, y=spore_yield)) +
   labs(title = "Spore Yield", y = "Spores", x = "ID") + theme_minimal()
 ```
 
+Summarize spore yield * infection prevalence
+Just a test. Need to do calculation on infection prevalence to estimate transmission potential.
+```{r}
+spore_prev <- left_join(spores, prevalence)
+spore_prev %<>% mutate(.,potential = mean_yield*prev)
+spore_prev %>% ggplot(.,aes(x=ID, y=potential)) + geom_col()
+```
+
+
+
 Summarize lifespan for all
 ```{r}
 lifespan <- left_join(mort, treatments, by = "ID")
