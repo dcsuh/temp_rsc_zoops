@@ -227,7 +227,7 @@ broom::glance(spores_aov_interaction)
 ```
 
 
-*Seems like the outputs for the SEMs in markdown files just coem out weird. not sure what is up with that but the model summaries should be executed in the console*
+*Seems like the outputs for the SEMs in markdown files just come out weird. not sure what is up with that but the model summaries should be executed in the console*
 
 *Actually it just kind of looks like the results get split up into separate sections panels.*
 
