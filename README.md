@@ -2,7 +2,7 @@
 
 ## Data
 
-All data can be found in the /data directory.
+All data can be found in the /raw_data directory.
 
 "treatments.csv" includes the treatment ID used and details about the birth date, exposure date, and treatment conditions.
 
