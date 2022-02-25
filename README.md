@@ -12,6 +12,6 @@ All data can be found in the /raw_data directory.
 
 ## Scripts
 
-All scripts can be found in the /scripts directory.
+All scripts that generate figures can be found in the /scripts directory.
 
-"exploration.Rmd" has some quick summary stats and visualizations of the data. Work in progress.
+"exploration.Rmd" in /workshop has some quick summary stats and visualizations of the data. Work in progress.
