@@ -21,4 +21,6 @@ avg_span
 load plot from png
 ![avg_span](figures/lifespan.png)
 
+load plot from jpg
+![paths](figures/Tmp rsc paths.jpg)
 
