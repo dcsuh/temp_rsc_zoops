@@ -22,6 +22,12 @@ lifespan %<>% mutate(span = deathday - birthday)
 lifespan %<>% left_join(.,treatment_factors)
 
 
+#prevalence
+prevalence <- mort %>% drop_na(infection_status) #remove observations with NA for infection status
+prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n())
+prevalence %<>% left_join(.,treatment_factors)
+
+
 
 
 # please process data before this line 
@@ -37,4 +43,7 @@ saveRDS(lifespan, file = here("processed_data","lifespan.rds"))
 saveRDS(fitness, file = here("processed_data","fitness.rds"))
 saveRDS(mort, file = here("processed_data","mortality.rds"))
 saveRDS(treatments, file = here("processed_data","treatment.rds"))
+saveRDS(treatment_factors, file = here("processed_data","treatment_factors.rds"))
+saveRDS(prevalence, file = here("processed_data", "prevalence.rds"))
+
 
