@@ -16,8 +16,8 @@ treatment_factors <- treatments %>% dplyr::select(ID,resource,temperature)
 
 #lifespan
 lifespan <- left_join(mort, treatments, by = "ID")
-lifespan %<>% select(ID, replicate, birth_date, date)
-lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), deathday=mdy(date))
+lifespan %<>% select(ID, replicate, birth_date, date, spore_yield)
+lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), deathday=mdy(date), spore_yield=spore_yield)
 lifespan %<>% mutate(span = deathday - birthday)
 lifespan %<>% left_join(.,treatment_factors)
 

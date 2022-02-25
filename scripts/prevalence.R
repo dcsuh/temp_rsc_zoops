@@ -10,7 +10,7 @@ treatment_factors <- readRDS(here("processed_data", "treatment_factors.rds"))
 
 prev <- prevalence %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
   geom_col(position="dodge") + 
-  labs(title = "Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
+  labs(title = "Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + proj_theme
 
 
 #optional set prev threshold
@@ -23,7 +23,7 @@ prev_adj_title <- paste("Threshold-adjusted Prevalence: Threshold = ",threshold,
 
 adjusted_prev <- prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
   geom_col(position="dodge") + 
-  labs(title = prev_adj_title, fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
+  labs(title = prev_adj_title, fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + proj_theme
 
 save(prev, file = here("figures","prev.RData"))
 ggsave("prev.png", prev, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = here("figures"))

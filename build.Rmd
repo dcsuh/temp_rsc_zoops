@@ -12,15 +12,28 @@ library(here)
 
 Build Script
 
-Load plot
-```{r}
-load(here("figures", "avg_span.RData"))
-avg_span
-```
+Need to go back and just source the files that make the figures and grab the figures from those. By doing that, it would run through each of those scripts rather than just using an asynchronously saved output.
 
-load plot from png
+
+Proposed Temperature and Resource Effects
+![paths](figures/Tmp rsc paths.jpg)
+
+Effects of temperature and resources on lifespan
 ![avg_span](figures/lifespan.png)
 
-load plot from jpg
-![paths](figures/Tmp rsc paths.jpg)
+Effects of temperature and resources on prevalence
+![prevalence](figures/prev.png)
+
+Effects of temperature and resources on body size
+![body_size](figures/body_size.png)
+
+Effects of lifespan on spore yield
+![span_yield](figures/lifespan_spores.png)
+
+Effects of length on spore yield
+![body_size_yield](figures/body_size_spores.png)
+
+
+
+
 
