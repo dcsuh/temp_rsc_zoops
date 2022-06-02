@@ -154,7 +154,8 @@ spores %>% ggplot(., aes(x=as.factor(temperature), y=log(mean_yield), fill=as.fa
   labs(title = "Average Spore Yield log-transformed", y = "log(Mean Yield)", fill = "Resource mgC/L", x = "Temperature") + theme_minimal()
 mort %>% ggplot(., aes(x=ID, y=spore_yield)) + 
   geom_boxplot() + 
-  labs(title = "Spore Yield", y = "Spores", x = "ID") + theme_minimal()
+  labs(title = "Spore Yield", y = "Spores", x = "ID") + theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 Summarize spore yield * infection prevalence
