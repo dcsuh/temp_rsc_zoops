@@ -46,28 +46,28 @@ $$
 
 Read in pilot data
 ```{r, message=F}
-treatments <- read_csv(here("raw_data/treatments.csv"))
-fitness <- read_csv(here("raw_data/fitness.csv"))
-mort <- read_csv(here("raw_data/mortality.csv"))
+# treatments <- read_csv(here("raw_data/treatments.csv"))
+# fitness <- read_csv(here("raw_data/fitness.csv"))
+mort <- read_csv(here("raw_data/main_mort_data.csv"))
 ```
 
-Reorder factors for treament ID
-```{r}
-newOrder <- c("1C","1B","1A","2C","2B","2A","3C","3B","3A")
-treatments$ID <- factor(treatments$ID, levels = newOrder)
-fitness$ID <- factor(fitness$ID, levels = newOrder)
-mort$ID <- factor(mort$ID, levels = newOrder)
-```
+<!-- Reorder factors for treament ID -->
+<!-- ```{r} -->
+<!-- newOrder <- c("1C","1B","1A","2C","2B","2A","3C","3B","3A") -->
+<!-- treatments$ID <- factor(treatments$ID, levels = newOrder) -->
+<!-- fitness$ID <- factor(fitness$ID, levels = newOrder) -->
+<!-- mort$ID <- factor(mort$ID, levels = newOrder) -->
+<!-- ``` -->
 
 
-View
-```{r}
-head(treatments)
-head(mort)
-head(fitness)
-```
+<!-- View -->
+<!-- ```{r} -->
+<!-- head(treatments) -->
+<!-- head(mort) -->
+<!-- head(fitness) -->
+<!-- ``` -->
 
-### Summarize prevalence
+<!-- ### Summarize prevalence -->
 
 ```{r, include=F}
 prev_threshold = 3125
@@ -78,9 +78,16 @@ One difficulty that I faced during this pilot was confidently deeming an individ
 
 Recorded Prevalence
 ```{r}
-treatment_factors <- treatments %>% dplyr::select(ID,resource,temperature)
+mort %<>% mutate(ID = paste(temp, resource,sep = "_"))
 
-prevalence <- mort %>% drop_na(infection_status) #remove observations with NA for infection status
+prevalence <- mort %>% drop_na(inf) #remove observations with NA for infection status
+
+prevalence %<>% rename(.,infection_status = inf)
+
+treatment_factors <- prevalence %>% dplyr::select(ID,temp,resource)
+treatment_factors %<>% rename(.,temperature = temp)
+treatment_factors %<>% distinct()
+
 prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n())
 prevalence %<>% left_join(.,treatment_factors)
 prevalence %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
@@ -89,43 +96,45 @@ prevalence %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(reso
 ```
 
 Adjusted prevalence
-```{r}
-mort %<>% mutate(inf_adj = ifelse(spore_yield>prev_threshold, 1, 0))
-prev_adj <- mort %>% drop_na(inf_adj) #remove observations with NA for inf_adj
-prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
-prev_adj %<>% left_join(.,treatment_factors)
-prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
-  geom_col(position="dodge") + 
-  labs(title = "Threshold-adjusted Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
-```
+# ```{r}
+# mort %<>% mutate(inf_adj = ifelse(spore_yield>prev_threshold, 1, 0))
+# prev_adj <- mort %>% drop_na(inf_adj) #remove observations with NA for inf_adj
+# prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
+# prev_adj %<>% left_join(.,treatment_factors)
+# prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
+#   geom_col(position="dodge") + 
+#   labs(title = "Threshold-adjusted Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
+# ```
 
 
 Summarize fitness
-```{r}
-fit_by_ID_replicate <- fitness %>% group_by(ID, replicate) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs
-fit_average <- fit_by_ID_replicate %>% group_by(ID) %>% 
-  summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
-fit_average %<>% left_join(.,treatment_factors)
-fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
-  geom_col(position="dodge") + 
-  geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
-  labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal()
-```
+# ```{r}
+# fit_by_ID_replicate <- fitness %>% group_by(ID, replicate) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs
+# fit_average <- fit_by_ID_replicate %>% group_by(ID) %>% 
+#   summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
+# fit_average %<>% left_join(.,treatment_factors)
+# fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
+#   geom_col(position="dodge") + 
+#   geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
+#   labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal()
+# ```
 
-Summarize host body size
-```{r}
-length <- mort %>% group_by(ID) %>% summarize(n=n(), mean_length = mean(length, na.rm = T), var = var(length, na.rm = T), se = sqrt(var(length,na.rm = T)/n()))
-length %<>% left_join(.,treatment_factors)
-length %>% ggplot(., aes(x=ID, y=mean_length, fill=as.factor(resource))) +
-  geom_col(position="dodge") + 
-  geom_linerange(aes(ymin = mean_length-se, ymax = mean_length+se)) +
-  labs(title = "Average Total Length w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Length") + theme_minimal()
-
-```
+Summarize host body size (need to figure out mag correction)
+# ```{r}
+# length <- mort %>% group_by(ID) %>% summarize(n=n(), mean_length = mean(length, na.rm = T), var = var(length, na.rm = T), se = sqrt(var(length,na.rm = T)/n()))
+# length %<>% left_join(.,treatment_factors)
+# length %>% ggplot(., aes(x=ID, y=mean_length, fill=as.factor(resource))) +
+#   geom_col(position="dodge") + 
+#   geom_linerange(aes(ymin = mean_length-se, ymax = mean_length+se)) +
+#   labs(title = "Average Total Length w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Length") + theme_minimal()
+# 
+# ```
 
 
 Summarize spore yield
 ```{r}
+mort %<>% mutate(spore_yield = spore_RAW*(spore_water_added+1))
+
 spores <- mort %>% filter(spore_yield>0) %>% group_by(ID) %>% 
   summarize(mean_yield = mean(spore_yield, na.rm=T), 
             # NAs removed but there should be no NAs after the filter
@@ -147,19 +156,19 @@ mort %>% ggplot(., aes(x=ID, y=spore_yield)) +
 Summarize spore yield * infection prevalence
 Just a test. Need to do calculation on infection prevalence to estimate transmission potential.
 ```{r}
-spore_prev <- left_join(spores, prevalence)
-spore_prev %<>% mutate(.,potential = mean_yield*prev)
-spore_prev %>% ggplot(.,aes(x=ID, y=potential)) + geom_col()
+# spore_prev <- left_join(spores, prevalence)
+# spore_prev %<>% mutate(.,potential = mean_yield*prev)
+# spore_prev %>% ggplot(.,aes(x=ID, y=potential)) + geom_col()
 ```
 
 
 
 Summarize lifespan for all
 ```{r}
-lifespan <- left_join(mort, treatments, by = "ID")
-lifespan %<>% select(ID, replicate, birth_date, date)
+lifespan <- mort %>% select(ID, mortality_day)
+lifespan %<>% mutate(birth_day = "4/5/22")
 #mdy(lifespan$birth_date)
-lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), deathday=mdy(date))
+lifespan %<>% transmute(ID=ID, birthday=mdy(birth_day), deathday=mdy(mortality_day))
 lifespan %<>% mutate(span = deathday - birthday)
 lifespan %<>% left_join(.,treatment_factors)
 
@@ -170,31 +179,33 @@ mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.r
                                                      resource = unique(resource),
                                                      temperature = unique(temperature))
 
+mean_span %<>% filter(ID!="2V_1")
+
 mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resource))) +
   geom_col(position="dodge") + 
   geom_linerange(aes(ymin = mean_span-se, ymax = mean_span+se)) +
   geom_text(aes(label=round(as.numeric(mean_span), digits = 2)), vjust = -0.5) +
   labs(title = "Average lifespan with standard error bars", y = "Average lifespan", fill = "Resource mgC/L")
 
-lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position="dodge") + labs(title="avearge lifespan", x="temperature", y ="lifespan")
-
-lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position = "dodge") + 
-  stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5) + theme_minimal() + guides(color=F) + labs(title = "Host lifespan", y = "days", fill = "Resource mgC/L")
+# lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position="dodge") + labs(title="avearge lifespan", x="temperature", y ="lifespan")
+# 
+# lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position = "dodge") + 
+#   stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5) + theme_minimal() + guides(color=F) + labs(title = "Host lifespan", y = "days", fill = "Resource mgC/L")
 ```
 
 Correlation between host body size and spore yield
-```{r}
-mort %>% select(length, spore_yield) %>% filter(spore_yield>1000) %>% drop_na %>% ggplot(.,aes(x=length,y=log(spore_yield))) + geom_point() + geom_smooth(method="lm")
-
-mean_length_yield <- mort %>% group_by(ID) %>% summarize(mean_length = mean(length, na.rm=T),
-                                                     length_var = var(length, na.rm = T),
-                                                     length_se = sqrt(var(length, na.rm = T)/n()),
-                                                     mean_yield = mean(spore_yield, na.rm=T),
-                                                     yield_var = var(spore_yield, na.rm = T),
-                                                     yield_se = sqrt(var(spore_yield, na.rm = T)/n()))
-
-mean_length_yield %>% ggplot(.,aes(x=mean_length, y=mean_yield,color=ID)) + geom_point()
-```
+# ```{r}
+# mort %>% select(length, spore_yield) %>% filter(spore_yield>1000) %>% drop_na %>% ggplot(.,aes(x=length,y=log(spore_yield))) + geom_point() + geom_smooth(method="lm")
+# 
+# mean_length_yield <- mort %>% group_by(ID) %>% summarize(mean_length = mean(length, na.rm=T),
+#                                                      length_var = var(length, na.rm = T),
+#                                                      length_se = sqrt(var(length, na.rm = T)/n()),
+#                                                      mean_yield = mean(spore_yield, na.rm=T),
+#                                                      yield_var = var(spore_yield, na.rm = T),
+#                                                      yield_se = sqrt(var(spore_yield, na.rm = T)/n()))
+# 
+# mean_length_yield %>% ggplot(.,aes(x=mean_length, y=mean_yield,color=ID)) + geom_point()
+# ```
 
 ## Analyses
 
@@ -215,55 +226,55 @@ Normally-distributed dependent variable
  - need to make some histograms to check this
 
 histograms of dependent variables 
-```{r}
-lifespan %>% ggplot(.,aes(x=span)) + geom_histogram() + facet_grid(rows=vars(ID))
-mort %>% ggplot(.,aes(x=spore_yield)) + geom_histogram() + facet_grid(rows=vars(ID))
-fitness %>% ggplot(.,aes(x=fitness)) + geom_histogram() + facet_grid(rows=vars(ID))
-mort %>% ggplot(.,aes(x=length)) + geom_histogram() + facet_grid(rows=vars(ID))
-```
-close enough?
-
-ANOVA
-```{r}
-spores_anova <- left_join(mort,treatment_factors,by="ID")
-spores_aov <-  aov(spore_yield ~ resource + temperature, data = spores_anova)
-spores_aov_interaction <- aov(spore_yield ~ resource * temperature, data = spores_anova)
-
-models <- list(spores_aov, spores_aov_interaction)
-model_names <- c("two-way", "interaction")
-
-broom::glance(spores_aov)
-broom::glance(spores_aov_interaction)
-```
-
-
-*Seems like the outputs for the SEMs in markdown files just come out weird. not sure what is up with that but the model summaries should be executed in the console*
-
-*Actually it just kind of looks like the results get split up into separate sections panels.*
-
-SEM
-```{r}
-library(piecewiseSEM)
-sem_data <- left_join(mort, lifespan, by = c("ID", "replicate"))
-sem_data %<>% mutate(lifespan = as.numeric(span))
-```
-
-Example SEM
-```{r}
-dat <- data.frame(x1 = runif(50), y1 = runif(50), y2 = runif(50), y3 = runif(50))
-model <- psem(lm(y1 ~ x1 + y2, dat), lm(y2 ~ x1, dat), lm(y3 ~ y1, dat))
-summary(model, .progressBar = F)
-```
-
-
-```{r}
-lifespan_glm <- glm(lifespan ~ resource, data = sem_data)
-length_glm <- glm(length ~ lifespan, data = sem_data)
-yield_glm <- glm(spore_yield ~ lifespan * length, data = sem_data)
-
-sem <- psem(lifespan_glm, length_glm, yield_glm)
-summary(sem)
-```
+# ```{r}
+# lifespan %>% ggplot(.,aes(x=span)) + geom_histogram() + facet_grid(rows=vars(ID))
+# mort %>% ggplot(.,aes(x=spore_yield)) + geom_histogram() + facet_grid(rows=vars(ID))
+# fitness %>% ggplot(.,aes(x=fitness)) + geom_histogram() + facet_grid(rows=vars(ID))
+# mort %>% ggplot(.,aes(x=length)) + geom_histogram() + facet_grid(rows=vars(ID))
+# ```
+# close enough?
+# 
+# ANOVA
+# ```{r}
+# spores_anova <- left_join(mort,treatment_factors,by="ID")
+# spores_aov <-  aov(spore_yield ~ resource + temperature, data = spores_anova)
+# spores_aov_interaction <- aov(spore_yield ~ resource * temperature, data = spores_anova)
+# 
+# models <- list(spores_aov, spores_aov_interaction)
+# model_names <- c("two-way", "interaction")
+# 
+# broom::glance(spores_aov)
+# broom::glance(spores_aov_interaction)
+# ```
+# 
+# 
+# *Seems like the outputs for the SEMs in markdown files just come out weird. not sure what is up with that but the model summaries should be executed in the console*
+# 
+# *Actually it just kind of looks like the results get split up into separate sections panels.*
+# 
+# SEM
+# ```{r}
+# library(piecewiseSEM)
+# sem_data <- left_join(mort, lifespan, by = c("ID", "replicate"))
+# sem_data %<>% mutate(lifespan = as.numeric(span))
+# ```
+# 
+# Example SEM
+# ```{r}
+# dat <- data.frame(x1 = runif(50), y1 = runif(50), y2 = runif(50), y3 = runif(50))
+# model <- psem(lm(y1 ~ x1 + y2, dat), lm(y2 ~ x1, dat), lm(y3 ~ y1, dat))
+# summary(model, .progressBar = F)
+# ```
+# 
+# 
+# ```{r}
+# lifespan_glm <- glm(lifespan ~ resource, data = sem_data)
+# length_glm <- glm(length ~ lifespan, data = sem_data)
+# yield_glm <- glm(spore_yield ~ lifespan * length, data = sem_data)
+# 
+# sem <- psem(lifespan_glm, length_glm, yield_glm)
+# summary(sem)
+# ```
 
 
 
@@ -273,5 +284,5 @@ summary(sem)
 
 
 ```{r}
-#rmarkdown::render(here('scripts/exploration.Rmd'), output_format = "pdf_document",output_file = here("pilot.pdf"))
+#rmarkdown::render(here('workshop/exploration_main.Rmd'), output_format = "pdf_document",output_file = here("main.pdf"))
 ```
