@@ -76,23 +76,26 @@ prev_threshold = 3125
 
 One difficulty that I faced during this pilot was confidently deeming an individual infected or not when spore yield was very low. At high spore yield, I can be confident that an individual is infected because visual inspection under the dissecting scope makes this clear and hemocytometry will clearly show a large volume of spores. At low spore yield, it can be difficult to assess infectivity upon visual inspection and hemocytometry is made difficult because of algae in the solution. It is possible that I am incorrectly identifying algal cells as spores and these can cause an individual to be marked as infected when they are not. As an initial test of this, I am comparing my initially recorded prevalence to an adjusted prevalence that only counts individuals as infected if their spore yield exceeds a certain threshold (i.e. > `r prev_threshold`; this is equivalent to counting 10 spores during hemocytometry)
 
+
 Recorded Prevalence
 ```{r}
-mort %<>% mutate(ID = paste(temp, resource,sep = "_"))
+mort %<>% mutate(ID = paste(temp, resource, species,sep = "_"))
+
 
 prevalence <- mort %>% drop_na(inf) #remove observations with NA for infection status
 
 prevalence %<>% rename(.,infection_status = inf)
 
-treatment_factors <- prevalence %>% dplyr::select(ID,temp,resource)
+treatment_factors <- prevalence %>% dplyr::select(ID,temp,resource, species)
 treatment_factors %<>% rename(.,temperature = temp)
 treatment_factors %<>% distinct()
 
 prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n())
 prevalence %<>% left_join(.,treatment_factors)
-prevalence %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
+prevalence %>% ggplot(.,aes(x=as.factor(ID),y=prev, fill=as.factor(resource))) +
   geom_col(position="dodge") + 
-  labs(title = "Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
+  labs(title = "Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 Adjusted prevalence
@@ -144,7 +147,8 @@ spores %<>% left_join(.,treatment_factors)
 spores %>% ggplot(., aes(x=ID, y=mean_yield, fill=as.factor(resource))) + 
   geom_col(position="dodge") + 
   geom_linerange(aes(ymin = mean_yield-se, ymax = mean_yield+se)) +
-  labs(title = "Average Spore Yield w/ SE", y = "Mean Yield", fill = "Resource mgC/L", x = "ID") + theme_minimal()
+  labs(title = "Average Spore Yield w/ SE", y = "Mean Yield", fill = "Resource mgC/L", x = "ID") + theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 spores %>% ggplot(., aes(x=as.factor(temperature), y=log(mean_yield), fill=as.factor(resource))) + 
   geom_col(position="dodge") + 
   labs(title = "Average Spore Yield log-transformed", y = "log(Mean Yield)", fill = "Resource mgC/L", x = "Temperature") + theme_minimal()
@@ -179,13 +183,14 @@ mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.r
                                                      resource = unique(resource),
                                                      temperature = unique(temperature))
 
-mean_span %<>% filter(ID!="2V_1")
+mean_span %<>% filter(ID!="2V_1_D")
 
 mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resource))) +
   geom_col(position="dodge") + 
   geom_linerange(aes(ymin = mean_span-se, ymax = mean_span+se)) +
   geom_text(aes(label=round(as.numeric(mean_span), digits = 2)), vjust = -0.5) +
-  labs(title = "Average lifespan with standard error bars", y = "Average lifespan", fill = "Resource mgC/L")
+  labs(title = "Average lifespan with standard error bars", y = "Average lifespan", fill = "Resource mgC/L") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
 # lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position="dodge") + labs(title="avearge lifespan", x="temperature", y ="lifespan")
 # 
