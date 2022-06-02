@@ -1,0 +1,277 @@
+---
+title: "Exploration"
+author: "Daniel Suh"
+date: "11/15/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50),tidy=TRUE)
+```
+
+```{r, message = F}
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(here)
+```
+
+### Introduction
+
+The primary purpose of this pilot was to determine the average lifespan of *Metschnikowia bicuspidata*-infected *Daphnia dentifera* under different temperature and resource conditions. These data will be helpful in designing the main experiment where we will be attempting to measure the within-host production of the parasite in the host under different temperature and resource conditions. This research will be helpful for understanding how changes in environmental conditions such as temperature and resource will modulate the growth of the parasite in individual hosts. If temperature and resources cause variations in parasite growth within individuals then this can have implications on epidemics in the larger population. Another purpose of this research is to understand how plastic host competence (the ability to generate new infections) is under different conditions. Should we treat host competence as a robust trait that can be attributed to host species or is this still highly variable within a species and should be considered a flexible and plastic trait that should be attributed to the host individual? These distinctions can have implications for understanding how likely epidemics are to start in host populations and this becomes even more complex when considering generalist parasites.
+
+### Hypotheses
+
+Lifespan of infected hosts will be highest in low temperature, high resource conditions
+Spore yield will be highest in high temperature, high resource conditions
+Prevalence will be highest in high temperature, low resource conditions
+Reproduction will be lowest in low temperature, low resource conditions
+
+### Key
+
+Treatment IDs are represented by a number and letter. The number denotes the temperature and the letter denotes resource concentration.
+
+$$
+1 = 15 ^\circ C \\
+2 = 20 ^\circ C \\
+3 = 25 ^\circ C \\
+$$
+
+$$
+\text A = 1\ mg\ \text C/L \\
+\text B = 0.5\ mg\ \text C/L \\ 
+\text C = 0.1\ mg\ \text C/L \\
+$$
+
+Read in pilot data
+```{r, message=F}
+treatments <- read_csv(here("raw_data/treatments.csv"))
+fitness <- read_csv(here("raw_data/fitness.csv"))
+mort <- read_csv(here("raw_data/mortality.csv"))
+```
+
+Reorder factors for treament ID
+```{r}
+newOrder <- c("1C","1B","1A","2C","2B","2A","3C","3B","3A")
+treatments$ID <- factor(treatments$ID, levels = newOrder)
+fitness$ID <- factor(fitness$ID, levels = newOrder)
+mort$ID <- factor(mort$ID, levels = newOrder)
+```
+
+
+View
+```{r}
+head(treatments)
+head(mort)
+head(fitness)
+```
+
+### Summarize prevalence
+
+```{r, include=F}
+prev_threshold = 3125
+```
+
+
+One difficulty that I faced during this pilot was confidently deeming an individual infected or not when spore yield was very low. At high spore yield, I can be confident that an individual is infected because visual inspection under the dissecting scope makes this clear and hemocytometry will clearly show a large volume of spores. At low spore yield, it can be difficult to assess infectivity upon visual inspection and hemocytometry is made difficult because of algae in the solution. It is possible that I am incorrectly identifying algal cells as spores and these can cause an individual to be marked as infected when they are not. As an initial test of this, I am comparing my initially recorded prevalence to an adjusted prevalence that only counts individuals as infected if their spore yield exceeds a certain threshold (i.e. > `r prev_threshold`; this is equivalent to counting 10 spores during hemocytometry)
+
+Recorded Prevalence
+```{r}
+treatment_factors <- treatments %>% dplyr::select(ID,resource,temperature)
+
+prevalence <- mort %>% drop_na(infection_status) #remove observations with NA for infection status
+prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n())
+prevalence %<>% left_join(.,treatment_factors)
+prevalence %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  labs(title = "Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
+```
+
+Adjusted prevalence
+```{r}
+mort %<>% mutate(inf_adj = ifelse(spore_yield>prev_threshold, 1, 0))
+prev_adj <- mort %>% drop_na(inf_adj) #remove observations with NA for inf_adj
+prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
+prev_adj %<>% left_join(.,treatment_factors)
+prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  labs(title = "Threshold-adjusted Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
+```
+
+
+Summarize fitness
+```{r}
+fit_by_ID_replicate <- fitness %>% group_by(ID, replicate) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs
+fit_average <- fit_by_ID_replicate %>% group_by(ID) %>% 
+  summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
+fit_average %<>% left_join(.,treatment_factors)
+fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
+  labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal()
+```
+
+Summarize host body size
+```{r}
+length <- mort %>% group_by(ID) %>% summarize(n=n(), mean_length = mean(length, na.rm = T), var = var(length, na.rm = T), se = sqrt(var(length,na.rm = T)/n()))
+length %<>% left_join(.,treatment_factors)
+length %>% ggplot(., aes(x=ID, y=mean_length, fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  geom_linerange(aes(ymin = mean_length-se, ymax = mean_length+se)) +
+  labs(title = "Average Total Length w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Length") + theme_minimal()
+
+```
+
+
+Summarize spore yield
+```{r}
+spores <- mort %>% filter(spore_yield>0) %>% group_by(ID) %>% 
+  summarize(mean_yield = mean(spore_yield, na.rm=T), 
+            # NAs removed but there should be no NAs after the filter
+            var = var(spore_yield, na.rm = T), 
+            se = sqrt(var(spore_yield, na.rm = T)/n()))
+spores %<>% left_join(.,treatment_factors)
+spores %>% ggplot(., aes(x=ID, y=mean_yield, fill=as.factor(resource))) + 
+  geom_col(position="dodge") + 
+  geom_linerange(aes(ymin = mean_yield-se, ymax = mean_yield+se)) +
+  labs(title = "Average Spore Yield w/ SE", y = "Mean Yield", fill = "Resource mgC/L", x = "ID") + theme_minimal()
+spores %>% ggplot(., aes(x=as.factor(temperature), y=log(mean_yield), fill=as.factor(resource))) + 
+  geom_col(position="dodge") + 
+  labs(title = "Average Spore Yield log-transformed", y = "log(Mean Yield)", fill = "Resource mgC/L", x = "Temperature") + theme_minimal()
+mort %>% ggplot(., aes(x=ID, y=spore_yield)) + 
+  geom_boxplot() + 
+  labs(title = "Spore Yield", y = "Spores", x = "ID") + theme_minimal()
+```
+
+Summarize spore yield * infection prevalence
+Just a test. Need to do calculation on infection prevalence to estimate transmission potential.
+```{r}
+spore_prev <- left_join(spores, prevalence)
+spore_prev %<>% mutate(.,potential = mean_yield*prev)
+spore_prev %>% ggplot(.,aes(x=ID, y=potential)) + geom_col()
+```
+
+
+
+Summarize lifespan for all
+```{r}
+lifespan <- left_join(mort, treatments, by = "ID")
+lifespan %<>% select(ID, replicate, birth_date, date)
+#mdy(lifespan$birth_date)
+lifespan %<>% transmute(ID=ID, replicate=replicate, birthday=mdy(birth_date), deathday=mdy(date))
+lifespan %<>% mutate(span = deathday - birthday)
+lifespan %<>% left_join(.,treatment_factors)
+
+
+mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.rm=T),
+                                                     var = var(span, na.rm = T),
+                                                     se = sqrt(var(span, na.rm = T)/n()),
+                                                     resource = unique(resource),
+                                                     temperature = unique(temperature))
+
+mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  geom_linerange(aes(ymin = mean_span-se, ymax = mean_span+se)) +
+  geom_text(aes(label=round(as.numeric(mean_span), digits = 2)), vjust = -0.5) +
+  labs(title = "Average lifespan with standard error bars", y = "Average lifespan", fill = "Resource mgC/L")
+
+lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position="dodge") + labs(title="avearge lifespan", x="temperature", y ="lifespan")
+
+lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position = "dodge") + 
+  stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5) + theme_minimal() + guides(color=F) + labs(title = "Host lifespan", y = "days", fill = "Resource mgC/L")
+```
+
+Correlation between host body size and spore yield
+```{r}
+mort %>% select(length, spore_yield) %>% filter(spore_yield>1000) %>% drop_na %>% ggplot(.,aes(x=length,y=log(spore_yield))) + geom_point() + geom_smooth(method="lm")
+
+mean_length_yield <- mort %>% group_by(ID) %>% summarize(mean_length = mean(length, na.rm=T),
+                                                     length_var = var(length, na.rm = T),
+                                                     length_se = sqrt(var(length, na.rm = T)/n()),
+                                                     mean_yield = mean(spore_yield, na.rm=T),
+                                                     yield_var = var(spore_yield, na.rm = T),
+                                                     yield_se = sqrt(var(spore_yield, na.rm = T)/n()))
+
+mean_length_yield %>% ggplot(.,aes(x=mean_length, y=mean_yield,color=ID)) + geom_point()
+```
+
+## Analyses
+
+How does spore yield, lifespan, host length, and total fitness depend on resource and temperature conditions?
+
+I'll start with an ANOVA but this analysis might still benefit from an SEM approach. e.g. resource and temp likely to drive lifespan and host length which should both drive spore yield
+
+ANOVA assumptions
+
+Homogeneity of variance: AKA homoscedasticity: Variance around the mean should be similar for all of the data. i.e. the variance shouldn't be dramatically different between different ranges of the predictor variable
+ - haven't actually checked this formally
+
+Independence of observations: predictor variables shouldn't rely on each other and individual data points should be independent and not grouped
+ - temperature and resources do not depend on each other in any way
+ - fitness is measured over time but if it is aggregated then it represents one independent individual
+
+Normally-distributed dependent variable
+ - need to make some histograms to check this
+
+histograms of dependent variables 
+```{r}
+lifespan %>% ggplot(.,aes(x=span)) + geom_histogram() + facet_grid(rows=vars(ID))
+mort %>% ggplot(.,aes(x=spore_yield)) + geom_histogram() + facet_grid(rows=vars(ID))
+fitness %>% ggplot(.,aes(x=fitness)) + geom_histogram() + facet_grid(rows=vars(ID))
+mort %>% ggplot(.,aes(x=length)) + geom_histogram() + facet_grid(rows=vars(ID))
+```
+close enough?
+
+ANOVA
+```{r}
+spores_anova <- left_join(mort,treatment_factors,by="ID")
+spores_aov <-  aov(spore_yield ~ resource + temperature, data = spores_anova)
+spores_aov_interaction <- aov(spore_yield ~ resource * temperature, data = spores_anova)
+
+models <- list(spores_aov, spores_aov_interaction)
+model_names <- c("two-way", "interaction")
+
+broom::glance(spores_aov)
+broom::glance(spores_aov_interaction)
+```
+
+
+*Seems like the outputs for the SEMs in markdown files just come out weird. not sure what is up with that but the model summaries should be executed in the console*
+
+*Actually it just kind of looks like the results get split up into separate sections panels.*
+
+SEM
+```{r}
+library(piecewiseSEM)
+sem_data <- left_join(mort, lifespan, by = c("ID", "replicate"))
+sem_data %<>% mutate(lifespan = as.numeric(span))
+```
+
+Example SEM
+```{r}
+dat <- data.frame(x1 = runif(50), y1 = runif(50), y2 = runif(50), y3 = runif(50))
+model <- psem(lm(y1 ~ x1 + y2, dat), lm(y2 ~ x1, dat), lm(y3 ~ y1, dat))
+summary(model, .progressBar = F)
+```
+
+
+```{r}
+lifespan_glm <- glm(lifespan ~ resource, data = sem_data)
+length_glm <- glm(length ~ lifespan, data = sem_data)
+yield_glm <- glm(spore_yield ~ lifespan * length, data = sem_data)
+
+sem <- psem(lifespan_glm, length_glm, yield_glm)
+summary(sem)
+```
+
+
+
+### Reflections
+
+
+
+
+```{r}
+#rmarkdown::render(here('scripts/exploration.Rmd'), output_format = "pdf_document",output_file = here("pilot.pdf"))
+```
