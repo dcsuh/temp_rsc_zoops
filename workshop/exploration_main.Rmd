@@ -81,6 +81,12 @@ Recorded Prevalence
 ```{r}
 mort %<>% mutate(ID = paste(temp, resource, species,sep = "_"))
 
+newOrder <- c("15_0.1_D","15_0.5_D","15_1_D",
+              "20_0.1_D","20_0.5_D","20_1_D",
+              "25_0.1_D","25_0.5_D","25_1_D",
+              "15_1_C","20_1_C","25_1_C",
+              "2V_1_D","6V_1_D","14V_1_D")
+mort$ID <- factor(mort$ID, levels = newOrder)
 
 prevalence <- mort %>% drop_na(inf) #remove observations with NA for infection status
 
@@ -89,6 +95,8 @@ prevalence %<>% rename(.,infection_status = inf)
 treatment_factors <- prevalence %>% dplyr::select(ID,temp,resource, species)
 treatment_factors %<>% rename(.,temperature = temp)
 treatment_factors %<>% distinct()
+treatment_factors$ID <- factor(treatment_factors$ID, levels = newOrder)
+
 
 prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n())
 prevalence %<>% left_join(.,treatment_factors)
