@@ -79,16 +79,35 @@ One difficulty that I faced during this pilot was confidently deeming an individ
 
 Recorded Prevalence
 ```{r}
-mort %<>% mutate(ID = paste(temp, resource, species,sep = "_"))
+mort %<>% filter(!male %in% c(1) & !removed %in% c(1) & !KBP %in% c(1) & !missing %in% c(1)) %>% select(-c(male,removed,KBP,missing))
 
-newOrder <- c("15_0.1_D","15_0.5_D","15_1_D",
+prevalence <- mort %>% drop_na(inf) #remove observations with NA for infection status
+
+mort %<>% mutate(inf_status = ifelse(inf==1, "I", "U")) %>% filter(inf_status %in% c("I","U"))
+
+mort %<>% mutate(ID = paste(temp, resource, species, inf_status,sep = "_"))
+
+
+
+
+newOrder <- c("15_0.1_D_U","15_0.1_D_I","15_0.5_D_U","15_0.5_D_I","15_1_D_U","15_1_D_I",
+              "20_0.1_D_U","20_0.1_D_I","20_0.5_D_U","20_0.5_D_I","20_1_D_U","20_1_D_I",
+              "25_0.1_D_U","25_0.1_D_I","25_0.5_D_U","25_0.5_D_I","25_1_D_U","25_1_D_I",
+              "15_1_C_U","15_1_C_I","20_1_C_U","20_1_C_I","25_1_C_U","25_1_C_I",
+              "2V_1_D_U","2V_1_D_I","6V_1_D_U","6V_1_D_I","14V_1_D_U","14V_1_D_I")
+
+mort$ID <- factor(mort$ID, levels = newOrder)
+
+
+prevalence %<>% mutate(ID = paste(temp, resource, species,sep = "_"))
+
+prevOrder <- c("15_0.1_D","15_0.5_D","15_1_D",
               "20_0.1_D","20_0.5_D","20_1_D",
               "25_0.1_D","25_0.5_D","25_1_D",
               "15_1_C","20_1_C","25_1_C",
               "2V_1_D","6V_1_D","14V_1_D")
-mort$ID <- factor(mort$ID, levels = newOrder)
 
-prevalence <- mort %>% drop_na(inf) #remove observations with NA for infection status
+prevalence$ID <- factor(mort$ID, levels = prevOrder)
 
 prevalence %<>% rename(.,infection_status = inf)
 
@@ -178,11 +197,20 @@ Just a test. Need to do calculation on infection prevalence to estimate transmis
 
 Summarize lifespan for all
 ```{r}
-lifespan <- mort %>% select(ID, mortality_day)
+lifespan <- mort
+lifespan %<>% select(ID, mortality_day, inf)
 lifespan %<>% mutate(birth_day = "4/5/22")
 #mdy(lifespan$birth_date)
 lifespan %<>% transmute(ID=ID, birthday=mdy(birth_day), deathday=mdy(mortality_day))
 lifespan %<>% mutate(span = deathday - birthday)
+
+inf_order <- c("15_0.1_D","15_0.5_D","15_1_D",
+              "20_0.1_D","20_0.5_D","20_1_D",
+              "25_0.1_D","25_0.5_D","25_1_D",
+              "15_1_C","20_1_C","25_1_C",
+              "2V_1_D","6V_1_D","14V_1_D")
+
+
 lifespan %<>% left_join(.,treatment_factors)
 
 
