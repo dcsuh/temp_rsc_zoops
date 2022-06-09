@@ -47,7 +47,7 @@ $$
 Read in pilot data
 ```{r, message=F}
 # treatments <- read_csv(here("raw_data/treatments.csv"))
-# fitness <- read_csv(here("raw_data/fitness.csv"))
+fitness <- read_csv(here("raw_data/main_fitness_data.csv"))
 mort <- read_csv(here("raw_data/main_mort_data.csv"))
 ```
 
@@ -206,6 +206,31 @@ mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resourc
 # lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position = "dodge") + 
 #   stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5) + theme_minimal() + guides(color=F) + labs(title = "Host lifespan", y = "days", fill = "Resource mgC/L")
 ```
+
+
+```{r}
+fitness %<>% filter(!male %in% c(1) & !REMOVED %in% c(1) & !KBP %in% c(1)) %>% select(-c(male,REMOVED,KBP))
+fitness %<>% mutate(ID = paste(temp, resource, species,sep = "_"), .before = species) %>% select(-c(tube, temp, resource, species))
+
+fitness %<>% pivot_longer(.,cols=2:46, names_to = "date", values_to = "fitness")
+```
+
+```{r}
+
+fit_by_ID <- fitness %>% group_by(ID) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs
+fit_average <- fit_by_ID %>% group_by(ID) %>% 
+  summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
+fit_average %<>% left_join(.,treatment_factors)
+
+fit_average$ID <- factor(fit_average$ID, levels = newOrder)
+
+fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
+  geom_col(position="dodge") + 
+  geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
+  labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
 
 Correlation between host body size and spore yield
 # ```{r}
