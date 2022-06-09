@@ -79,15 +79,20 @@ One difficulty that I faced during this pilot was confidently deeming an individ
 
 Recorded Prevalence
 ```{r}
-mort %<>% filter(!male %in% c(1) & !removed %in% c(1) & !KBP %in% c(1) & !missing %in% c(1)) %>% select(-c(male,removed,KBP,missing))
+
+inf_status <- mort %>% select(tube,inf)
+
+mort %<>% filter(!male %in% c(1) & !missing %in% c(1)) %>% select(-c(male,missing))
 
 prevalence <- mort %>% drop_na(inf) #remove observations with NA for infection status
+
+spores <- mort %>% drop_na(inf) %>% mutate(spore_yield = spore_RAW*(spore_water_added+1))
+spores %<>% mutate(ID = paste(temp, resource, species,sep = "_"))
+
 
 mort %<>% mutate(inf_status = ifelse(inf==1, "I", "U")) %>% filter(inf_status %in% c("I","U"))
 
 mort %<>% mutate(ID = paste(temp, resource, species, inf_status,sep = "_"))
-
-
 
 
 newOrder <- c("15_0.1_D_U","15_0.1_D_I","15_0.5_D_U","15_0.5_D_I","15_1_D_U","15_1_D_I",
@@ -98,6 +103,12 @@ newOrder <- c("15_0.1_D_U","15_0.1_D_I","15_0.5_D_U","15_0.5_D_I","15_1_D_U","15
 
 mort$ID <- factor(mort$ID, levels = newOrder)
 
+treatment_factors <- mort %>% dplyr::select(ID,temp,resource, species, inf_status)
+treatment_factors %<>% rename(.,temperature = temp)
+treatment_factors %<>% distinct()
+treatment_factors$ID <- factor(treatment_factors$ID, levels = newOrder)
+
+
 
 prevalence %<>% mutate(ID = paste(temp, resource, species,sep = "_"))
 
@@ -107,21 +118,26 @@ prevOrder <- c("15_0.1_D","15_0.5_D","15_1_D",
               "15_1_C","20_1_C","25_1_C",
               "2V_1_D","6V_1_D","14V_1_D")
 
-prevalence$ID <- factor(mort$ID, levels = prevOrder)
+prevalence$ID <- factor(prevalence$ID, levels = prevOrder)
 
 prevalence %<>% rename(.,infection_status = inf)
 
-treatment_factors <- prevalence %>% dplyr::select(ID,temp,resource, species)
-treatment_factors %<>% rename(.,temperature = temp)
-treatment_factors %<>% distinct()
-treatment_factors$ID <- factor(treatment_factors$ID, levels = newOrder)
+prev_treatment_factors <- prevalence %>% dplyr::select(ID,temp,resource, species)
+prev_treatment_factors %<>% rename(.,temperature = temp)
+prev_treatment_factors %<>% distinct()
+prev_treatment_factors$ID <- factor(prev_treatment_factors$ID, levels = prevOrder)
 
 
-prevalence %<>% group_by(ID) %>% summarize(n = n(), prev = sum(infection_status)/n())
-prevalence %<>% left_join(.,treatment_factors)
+prevalence %<>% group_by(ID) %>% summarize(n = n(), infected = sum(infection_status), prev = sum(infection_status)/n())
+prevalence %<>% left_join(.,prev_treatment_factors)
 prevalence %>% ggplot(.,aes(x=as.factor(ID),y=prev, fill=as.factor(resource))) +
   geom_col(position="dodge") + 
-  labs(title = "Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal() +
+  labs(title = "Prevalence for all treatments", fill = "Resource mgC/L", x = "Treatment", y = "Prevalence") + theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+prevalence %>% filter(resource==1) %>% ggplot(.,aes(x=as.factor(ID),y=prev)) +
+  geom_col(position="dodge") + 
+  labs(title = "Prevalence for temperature treatments", x = "Treatment", y = "Prevalence") + theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
@@ -163,14 +179,16 @@ Summarize host body size (need to figure out mag correction)
 
 Summarize spore yield
 ```{r}
-mort %<>% mutate(spore_yield = spore_RAW*(spore_water_added+1))
 
-spores <- mort %>% filter(spore_yield>0) %>% group_by(ID) %>% 
+spores %<>% filter(spore_yield>0) %>% group_by(ID) %>% 
   summarize(mean_yield = mean(spore_yield, na.rm=T), 
             # NAs removed but there should be no NAs after the filter
             var = var(spore_yield, na.rm = T), 
             se = sqrt(var(spore_yield, na.rm = T)/n()))
-spores %<>% left_join(.,treatment_factors)
+spores %<>% left_join(.,prev_treatment_factors)
+
+spores$ID <- factor(spores$ID, levels = prevOrder)
+
 spores %>% ggplot(., aes(x=ID, y=mean_yield, fill=as.factor(resource))) + 
   geom_col(position="dodge") + 
   geom_linerange(aes(ymin = mean_yield-se, ymax = mean_yield+se)) +
@@ -179,10 +197,10 @@ spores %>% ggplot(., aes(x=ID, y=mean_yield, fill=as.factor(resource))) +
 spores %>% ggplot(., aes(x=as.factor(temperature), y=log(mean_yield), fill=as.factor(resource))) + 
   geom_col(position="dodge") + 
   labs(title = "Average Spore Yield log-transformed", y = "log(Mean Yield)", fill = "Resource mgC/L", x = "Temperature") + theme_minimal()
-mort %>% ggplot(., aes(x=ID, y=spore_yield)) + 
-  geom_boxplot() + 
-  labs(title = "Spore Yield", y = "Spores", x = "ID") + theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+# mort %>% ggplot(., aes(x=ID, y=spore_yield)) + 
+#   geom_boxplot() + 
+#   labs(title = "Spore Yield", y = "Spores", x = "ID") + theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 Summarize spore yield * infection prevalence
@@ -197,18 +215,13 @@ Just a test. Need to do calculation on infection prevalence to estimate transmis
 
 Summarize lifespan for all
 ```{r}
-lifespan <- mort
-lifespan %<>% select(ID, mortality_day, inf)
+lifespan <- mort %>% filter(!removed %in% c(1) & !KBP %in% c(1)) %>% select(-c(removed,KBP))
+lifespan %<>% select(ID, mortality_day)
 lifespan %<>% mutate(birth_day = "4/5/22")
 #mdy(lifespan$birth_date)
 lifespan %<>% transmute(ID=ID, birthday=mdy(birth_day), deathday=mdy(mortality_day))
 lifespan %<>% mutate(span = deathday - birthday)
 
-inf_order <- c("15_0.1_D","15_0.5_D","15_1_D",
-              "20_0.1_D","20_0.5_D","20_1_D",
-              "25_0.1_D","25_0.5_D","25_1_D",
-              "15_1_C","20_1_C","25_1_C",
-              "2V_1_D","6V_1_D","14V_1_D")
 
 
 lifespan %<>% left_join(.,treatment_factors)
@@ -218,9 +231,10 @@ mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.r
                                                      var = var(span, na.rm = T),
                                                      se = sqrt(var(span, na.rm = T)/n()),
                                                      resource = unique(resource),
-                                                     temperature = unique(temperature))
+                                                     temperature = unique(temperature),
+                                                     inf_status = unique(inf_status))
 
-mean_span %<>% filter(ID!="2V_1_D")
+mean_span %<>% filter(ID!="2V_1_D_I")
 
 mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resource))) +
   geom_col(position="dodge") + 
@@ -237,17 +251,23 @@ mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resourc
 
 
 ```{r}
-fitness %<>% filter(!male %in% c(1) & !REMOVED %in% c(1) & !KBP %in% c(1)) %>% select(-c(male,REMOVED,KBP))
-fitness %<>% mutate(ID = paste(temp, resource, species,sep = "_"), .before = species) %>% select(-c(tube, temp, resource, species))
 
+```
+
+
+
+
+```{r}
+fitness %<>% select(-c(temp:KBP))
 fitness %<>% pivot_longer(.,cols=2:46, names_to = "date", values_to = "fitness")
 ```
 
+THIS IS ALL SCREWED UP
 ```{r}
-
-fit_by_ID <- fitness %>% group_by(ID) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs
-fit_average <- fit_by_ID %>% group_by(ID) %>% 
-  summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
+fitness %<>% left_join(.,mort, by="tube")
+fit_by_ID_date <- fitness %>% group_by(ID, tube) %>% summarize(daily_fit = sum(fitness, na.rm = T), ID=ID, n=n()) # removed NAs
+fit_average <- fitness %>% group_by(ID, tube) %>% 
+  summarize(n = n(),total_fit = sum(fitness, na.rm = T), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
 fit_average %<>% left_join(.,treatment_factors)
 
 fit_average$ID <- factor(fit_average$ID, levels = newOrder)
