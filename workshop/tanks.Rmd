@@ -1,0 +1,60 @@
+---
+title: "tanks"
+author: "Daniel Suh"
+date: "7/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+packages
+```{r, message = F}
+library(tidyverse)
+library(magrittr)
+library(here)
+library(ggnewscale)
+```
+
+read data
+```{r, message = F}
+meta <- read_csv(here("raw_data/tank_metadata.csv"))
+counts <- read_csv(here("raw_data/tank_counts.csv"))
+```
+
+
+
+```{r}
+data <- left_join(counts, meta, by = "bucket")
+data$bucket <- as.factor(data$bucket)
+data$community <- as.factor(data$community)
+data %<>% mutate(total = rowSums(across(juvenile_daphnia_uninf:cerio_inf)), 
+                 daphnia = rowSums(across(juvenile_daphnia_uninf:adult_daphnia_inf)),
+                 treatment = paste(community, temp, sep="_"))
+```
+
+Totals
+```{r}
+ggplot(data,aes(x=sample_date,y=total, color=bucket))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + theme(legend.position = "none") + facet_wrap(vars(community)) 
+```
+
+Daphnia w/ and w/o Metsch
+```{r}
+daphnia <- data %>% filter(community %in% c("D","DM")) 
+```
+
+
+```{r}
+summary <- data %>% group_by(treatment, sample_date) %>% summarize(mean_juvenile = mean(juvenile_daphnia_uninf),
+                                                                mean_adult = mean(adult_daphnia_uninf),
+                                                                mean_cerio = mean(cerio_uninf),
+                                                                mean_daphnia = mean(daphnia),
+                                                                mean_total = mean(total),
+                                                                temp = temp,
+                                                                community = community)
+
+ggplot(summary, aes(x=sample_date,y=mean_total, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_wrap(vars(community))
+```
+
+
