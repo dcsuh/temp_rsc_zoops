@@ -21,8 +21,22 @@ read data
 ```{r, message = F}
 meta <- read_csv(here("raw_data/tank_metadata.csv"))
 counts <- read_csv(here("raw_data/tank_counts.csv"))
+ysi <- read_csv(here("raw_data/ysi_data.csv"),locale = locale(encoding = "latin1"))
 ```
 
+
+```{r}
+summary(ysi)
+ysi %<>% rename('temp_f' = '°F-21A104910', "do_per" = "DO %-21A106679", "do_conc" = "DO mg/L-21A106679",
+                "ph" = "pH-21B101988", "ph_mv" = "pH mV-21B101988", "chlor_rfu" = "Chlorophyll RFU-21B101736",
+                "chlor_conc" = "Chlorophyll ug/L-21B101736")
+
+ysi %<>% mutate(bucket = as.factor(as.numeric(gsub("Tank ", "", Site))))
+```
+
+```{r}
+meta$bucket <- as.factor(meta$bucket)
+```
 
 
 ```{r}
@@ -56,5 +70,20 @@ summary <- data %>% group_by(treatment, sample_date) %>% summarize(mean_juvenile
 
 ggplot(summary, aes(x=sample_date,y=mean_total, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_wrap(vars(community))
 ```
+ysi
+```{r}
+ysi_summ <- ysi %>% group_by(bucket, Date) %>% summarize(temp_f = mean(temp_f),
+                                                         do_per = mean(do_per),
+                                                         do_conc = mean(do_conc),
+                                                         ph = mean(ph),
+                                                         ph_mv = mean(ph_mv),
+                                                         chlor_rfu = mean(chlor_rfu),
+                                                         chlor_conc = mean(chlor_conc))
 
+ysi_summ %<>% left_join(.,meta, by = "bucket")
+```
+
+```{r}
+
+```
 
