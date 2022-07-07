@@ -26,12 +26,14 @@ ysi <- read_csv(here("raw_data/ysi_data.csv"),locale = locale(encoding = "latin1
 
 
 ```{r}
-summary(ysi)
+
 ysi %<>% rename('temp_f' = '°F-21A104910', "do_per" = "DO %-21A106679", "do_conc" = "DO mg/L-21A106679",
                 "ph" = "pH-21B101988", "ph_mv" = "pH mV-21B101988", "chlor_rfu" = "Chlorophyll RFU-21B101736",
                 "chlor_conc" = "Chlorophyll ug/L-21B101736")
 
 ysi %<>% mutate(bucket = as.factor(as.numeric(gsub("Tank ", "", Site))))
+
+ysi %<>% mutate(temp_c = (temp_f-32)*(5/9))
 ```
 
 ```{r}
@@ -73,6 +75,7 @@ ggplot(summary, aes(x=sample_date,y=mean_total, color = temp)) + geom_point() + 
 ysi
 ```{r}
 ysi_summ <- ysi %>% group_by(bucket, Date) %>% summarize(temp_f = mean(temp_f),
+                                                         temp_c = mean(temp_c),
                                                          do_per = mean(do_per),
                                                          do_conc = mean(do_conc),
                                                          ph = mean(ph),
@@ -84,6 +87,30 @@ ysi_summ %<>% left_join(.,meta, by = "bucket")
 ```
 
 ```{r}
+ggplot(ysi_summ, aes(x=Date, y=temp_c, color = bucket)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + theme(legend.position = "none")
+```
 
+```{r}
+ysi_summ %>% filter(pool == 7) %>% ggplot(., aes(x=Date, y=temp_c, color = bucket)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + theme(legend.position = "none")
+```
+do_per
+```{r}
+ggplot(ysi_summ, aes(x=Date, y=do_per, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(temp))
+
+ggplot(ysi_summ, aes(x=Date, y=do_per, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(community))
+```
+
+ph
+```{r}
+ggplot(ysi_summ, aes(x=Date, y=ph, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(temp))
+
+ggplot(ysi_summ, aes(x=Date, y=ph, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(community))
+```
+
+chlor_conc
+```{r}
+ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() +  facet_wrap(vars(temp))
+
+ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() +  facet_wrap(vars(community))
 ```
 
