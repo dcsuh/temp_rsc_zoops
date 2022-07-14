@@ -15,6 +15,7 @@ library(tidyverse)
 library(magrittr)
 library(here)
 library(ggnewscale)
+library(lubridate)
 ```
 
 read data
@@ -34,6 +35,8 @@ ysi %<>% rename('temp_f' = '°F-21A104910', "do_per" = "DO %-21A106679", "do_con
 ysi %<>% mutate(bucket = as.factor(as.numeric(gsub("Tank ", "", Site))))
 
 ysi %<>% mutate(temp_c = (temp_f-32)*(5/9))
+
+ysi$Date <- mdy(ysi$Date)
 ```
 
 ```{r}
@@ -47,6 +50,7 @@ counts$bucket <- as.factor(counts$bucket)
 ```{r}
 data <- left_join(counts, meta, by = "bucket")
 data$community <- as.factor(data$community)
+data$sample_date <- mdy(data$sample_date)
 data %<>% mutate(total = rowSums(across(juvenile_daphnia_uninf:cerio_inf)), 
                  daphnia = rowSums(across(juvenile_daphnia_uninf:adult_daphnia_inf)),
                  treatment = paste(community, temp, sep="_"))
@@ -62,6 +66,14 @@ ggplot(data,aes(x=sample_date,y=cerio_uninf, color=temp))+ geom_point() + geom_l
 
 ```
 
+```{r}
+ggplot(data,aes(x=sample_date,y=total, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + theme(legend.position = "none") + facet_grid(rows= vars(temp), cols = vars(community)) 
+
+ggplot(data,aes(x=sample_date,y=daphnia, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + facet_grid(rows= vars(temp), cols = vars(community)) 
+
+ggplot(data,aes(x=sample_date,y=cerio_uninf, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + facet_grid(rows= vars(temp), cols = vars(community)) 
+
+```
 
 
 
@@ -77,23 +89,33 @@ summary <- data %>% group_by(treatment, sample_date) %>% summarize(mean_juvenile
 
 
 ```{r}
-ggplot(summary, aes(x=sample_date,y=mean_total, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_wrap(vars(community))
+ggplot(summary, aes(x=sample_date,y=mean_total, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_grid(rows= vars(temp), cols = vars(community)) 
 
-ggplot(summary, aes(x=sample_date,y=mean_daphnia, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_wrap(vars(community))
+ggplot(summary, aes(x=sample_date,y=mean_daphnia, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_grid(rows= vars(temp), cols = vars(community)) 
 
-ggplot(summary, aes(x=sample_date,y=mean_cerio, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_wrap(vars(community))
+ggplot(summary, aes(x=sample_date,y=mean_cerio, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_grid(rows= vars(temp), cols = vars(community)) 
 ```
+
+Daphnia:cerio ratio
+```{r}
+
+data %<>% mutate(cerio = cerio_inf + cerio_uninf, d_ratio = daphnia/total)
+```
+
+```{r}
+data %>% filter(community=="DCM") %>% ggplot(., aes(x=sample_date,y=d_ratio, color = temp)) + geom_point() +geom_line(aes(group = bucket)) + facet_wrap(vars(temp))
+```
+
+
 
 Juvenile and Adult Ratio
 ```{r}
-size_ratio <- data %>% mutate(j_a_ratio = juvenile_daphnia_uninf/adult_daphnia_uninf)
+size_ratio <- data %>% mutate(j_ratio = juvenile_daphnia_uninf/daphnia)
 ```
 
 
 ```{r}
-ggplot(size_ratio, aes(x=sample_date, y=j_a_ratio, color = community)) + geom_point() + geom_line(aes(group=bucket)) + facet_wrap(vars(temp)) + geom_hline(yintercept=1)
-
-ggplot(size_ratio, aes(x=sample_date, y=j_a_ratio, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + facet_wrap(vars(community)) + geom_hline(yintercept=1)
+ggplot(size_ratio, aes(x=sample_date, y=j_ratio, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + facet_grid(rows= vars(temp), cols = vars(community))
 ```
 
 
@@ -120,40 +142,43 @@ ysi_summ <- ysi %>% group_by(bucket, Date) %>% summarize(temp_f = mean(temp_f),
 ysi_summ %<>% left_join(.,meta, by = "bucket")
 ```
 
-```{r}
-ggplot(ysi_summ, aes(x=Date, y=temp_c, color = bucket)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + theme(legend.position = "none")
 
-ggplot(ysi_summ, aes(x=Date, y=temp_c, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_grid(rows=vars(pool), cols = vars(community))
+temp
+```{r}
+# ggplot(ysi_summ, aes(x=Date, y=temp_c, color = bucket)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + theme(legend.position = "none")
+
+ggplot(ysi_summ, aes(x=Date, y=temp_c, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_grid(rows=vars(temp), cols = vars(community))
 ```
 
 ```{r}
 ysi_summ %>% filter(pool == 7) %>% ggplot(., aes(x=Date, y=temp_c, color = bucket)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + theme(legend.position = "none")
 ```
+
 do_per
 ```{r}
-ggplot(ysi_summ, aes(x=Date, y=do_per, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(temp))
+# ggplot(ysi_summ, aes(x=Date, y=do_per, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(temp))
+# 
+# ggplot(ysi_summ, aes(x=Date, y=do_per, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(community))
 
-ggplot(ysi_summ, aes(x=Date, y=do_per, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(community))
-
-ggplot(ysi_summ, aes(x=Date, y=do_per, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_grid(rows=vars(pool), cols = vars(community))
+ggplot(ysi_summ, aes(x=Date, y=do_per, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_grid(rows=vars(temp), cols = vars(community))
 ```
 
 ph
 ```{r}
-ggplot(ysi_summ, aes(x=Date, y=ph, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(temp))
+# ggplot(ysi_summ, aes(x=Date, y=ph, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(temp))
+# 
+# ggplot(ysi_summ, aes(x=Date, y=ph, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(community))
 
-ggplot(ysi_summ, aes(x=Date, y=ph, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_wrap(vars(community))
-
-ggplot(ysi_summ, aes(x=Date, y=ph, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_grid(rows=vars(pool), cols = vars(community))
+ggplot(ysi_summ, aes(x=Date, y=ph, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_grid(rows=vars(temp), cols = vars(community))
 ```
 
 chlor_conc
 ```{r}
-ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() +  facet_wrap(vars(temp))
+# ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = community)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() +  facet_wrap(vars(temp))
+# 
+# ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() +  facet_wrap(vars(community))
 
-ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() +  facet_wrap(vars(community))
-
-ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_grid(rows=vars(pool), cols = vars(community))
+ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + scale_color_discrete() + facet_grid(rows=vars(temp), cols = vars(community))
 ```
 according to temp
 ```{r}
