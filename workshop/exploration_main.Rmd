@@ -280,6 +280,59 @@ fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
 ```
 
 
+
+
+########################################################################################################################
+Figures to make for ESA presentation
+
+Probability of host survival until some date
+
+
+parasite infectivity (probability host was infected)
+
+
+average spore yield per infected host
+
+
+spore yield per exposed host? product of probability of host survival X probability of infection X average spore yield
+
+
+host lifespan
+
+
+host fecundity (total number of offspring)
+
+
+host growth rate (r)
+
+
+
+
+
+Analysis??
+Three-way ANOVA?
+temperature, resource concentration, species
+
+
+potential response variables
+ - probability of host survival
+ - probability of infection
+ - average spore yeidl
+ - net parasite output (product of previous three)
+ - host lifespan
+ - host fecundity
+ - host growth rate
+
+
+########################################################################################################################
+
+
+
+
+
+
+
+
 Correlation between host body size and spore yield
 # ```{r}
 # mort %>% select(length, spore_yield) %>% filter(spore_yield>1000) %>% drop_na %>% ggplot(.,aes(x=length,y=log(spore_yield))) + geom_point() + geom_smooth(method="lm")
