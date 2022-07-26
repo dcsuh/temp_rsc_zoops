@@ -262,6 +262,8 @@ mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.r
 
 mean_span %<>% filter(ID!="2V_1_D_I")
 
+mean_span$species <- factor(mean_span$species, levels = c("D", "C"))
+
 mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resource))) +
   geom_col(position="dodge") + 
   geom_linerange(aes(ymin = mean_span-se, ymax = mean_span+se)) +
@@ -269,11 +271,12 @@ mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resourc
   labs(title = "Average lifespan with standard error bars", y = "Average lifespan", fill = "Resource mgC/L") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 
-mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
+mean_span %>% filter(temperature %in% const_temp) %>%
   ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = inf_status)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
-  facet_wrap(vars(resource))
+  facet_wrap(. ~ resource + species, nrow=1)
+
 
 # lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position="dodge") + labs(title="avearge lifespan", x="temperature", y ="lifespan")
 # 
@@ -339,6 +342,14 @@ spore yield per exposed host? product of probability of host survival X probabil
 
 
 host lifespan
+
+```{r}
+mean_span %>% filter(temperature %in% const_temp) %>%
+  ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = inf_status)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(. ~ resource + species, nrow=1)
+```
 
 
 host fecundity (total number of offspring)
