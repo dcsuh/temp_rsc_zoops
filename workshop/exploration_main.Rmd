@@ -51,6 +51,15 @@ fitness <- read_csv(here("raw_data/main_fitness_data.csv"))
 mort <- read_csv(here("raw_data/main_mort_data.csv"))
 ```
 
+
+Declare some variables that will be used throughout
+```{r}
+const_temp <- c("15", "20", "25")
+treatment_factors$resource <- as.factor(treatment_factors$resource)
+```
+
+
+
 <!-- Reorder factors for treament ID -->
 <!-- ```{r} -->
 <!-- newOrder <- c("1C","1B","1A","2C","2B","2A","3C","3B","3A") -->
@@ -188,6 +197,7 @@ spores %<>% filter(spore_yield>0) %>% group_by(ID) %>%
 spores %<>% left_join(.,prev_treatment_factors)
 
 spores$ID <- factor(spores$ID, levels = prevOrder)
+spores$temperature <- factor(spores$temperature, levels = c("15", "20", "25", "2V", "6V", "14V"))
 
 spores %>% ggplot(., aes(x=ID, y=mean_yield, fill=as.factor(resource))) + 
   geom_col(position="dodge") + 
@@ -201,6 +211,21 @@ spores %>% ggplot(., aes(x=as.factor(temperature), y=log(mean_yield), fill=as.fa
 #   geom_boxplot() + 
 #   labs(title = "Spore Yield", y = "Spores", x = "ID") + theme_minimal() +
 #   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+
+spores %>% filter(temperature %in% const_temp) %>%  
+  ggplot(., aes(x=temperature, y = mean_yield, group = resource, color = resource)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(species))
+
+spores %>% 
+  ggplot(., aes(x=temperature, y = mean_yield, group = resource, color = resource)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(species))
+
+
 ```
 
 Summarize spore yield * infection prevalence
@@ -232,7 +257,8 @@ mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.r
                                                      se = sqrt(var(span, na.rm = T)/n()),
                                                      resource = unique(resource),
                                                      temperature = unique(temperature),
-                                                     inf_status = unique(inf_status))
+                                                     inf_status = unique(inf_status),
+                                                     species = species)
 
 mean_span %<>% filter(ID!="2V_1_D_I")
 
@@ -242,6 +268,12 @@ mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resourc
   geom_text(aes(label=round(as.numeric(mean_span), digits = 2)), vjust = -0.5) +
   labs(title = "Average lifespan with standard error bars", y = "Average lifespan", fill = "Resource mgC/L") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
+  ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = inf_status)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(resource))
 
 # lifespan %>% drop_na() %>% ggplot(.,aes(x=as.factor(temperature), y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position="dodge") + labs(title="avearge lifespan", x="temperature", y ="lifespan")
 # 
@@ -292,6 +324,15 @@ parasite infectivity (probability host was infected)
 
 
 average spore yield per infected host
+
+```{r}
+spores %>% filter(temperature %in% const_temp) %>%  
+  ggplot(., aes(x=temperature, y = mean_yield, group = resource, color = resource)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(species))
+```
+
 
 
 spore yield per exposed host? product of probability of host survival X probability of infection X average spore yield
