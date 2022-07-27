@@ -19,10 +19,10 @@ library(magrittr)
 library(lubridate)
 library(here)
 
-dataset <- read_csv(here("raw_data/main_fitness_edit.csv", na.strings=c("NA", "NULL")))
+dataset <- read_csv(here("raw_data/main_fitness_edit.csv"))
 
-dataset %<>% mutate(birthdate = mdy("4/5/22"), lifespan = as.numeric(mdy(final_date) - birthdate)) %>%
-  filter(is.na(male))
+dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22"), 
+                    lifespan = as.numeric(mdy(final_date) - mdy(birthdate))) %>% filter(is.na(male))
 
 #dataset <- read.csv("/Users/dcsuh/Desktop/Traits1-3.csv", na.strings=c("NA", "NULL"))
 
