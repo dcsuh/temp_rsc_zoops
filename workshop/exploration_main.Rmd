@@ -55,7 +55,6 @@ mort <- read_csv(here("raw_data/main_mort_data.csv"))
 Declare some variables that will be used throughout
 ```{r}
 const_temp <- c("15", "20", "25")
-treatment_factors$resource <- as.factor(treatment_factors$resource)
 ```
 
 
@@ -116,6 +115,7 @@ treatment_factors <- mort %>% dplyr::select(ID,temp,resource, species, inf_statu
 treatment_factors %<>% rename(.,temperature = temp)
 treatment_factors %<>% distinct()
 treatment_factors$ID <- factor(treatment_factors$ID, levels = newOrder)
+treatment_factors$resource <- as.factor(treatment_factors$resource)
 
 
 
