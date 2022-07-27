@@ -359,6 +359,7 @@ host fecundity (total number of offspring)
 
 
 host growth rate (r)
+- fix starting age for ceriodaphnia
 
 
 

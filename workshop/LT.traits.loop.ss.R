@@ -43,13 +43,17 @@ length(treatments) # how many unique? # this tells you how big to make the summa
 # 2) some meta-information to now about the experiment:
 
 age.at.start <- 5  #this tells the function what the starting age of animals in the spread sheet is
-day.columns <- which(names(dataset)%in%c("X4.10.22","X4.11.22","X4.12.22","X4.13.22","X4.14.22","X4.15.22","X4.16.22",
-                                         "X4.17.22","X4.18.22","X4.19.22","X4.20.22","X4.21.22","X4.22.22","X4.23.22",
-                                         "X4.24.22","X4.25.22","X4.26.22","X4.27.22","X4.28.22","X4.29.22","X4.30.22",
-                                         "X5.1.22","X5.2.22","X5.3.22","X5.4.22","X5.5.22","X5.6.22","X5.7.22",
-                                         "X5.8.22","X5.9.22","X5.10.22","X5.11.22","X5.12.22","X5.13.22","X5.14.22",
-                                         "X5.15.22","X5.16.22","X5.17.22","X5.18.22","X5.19.22","X5.20.22","X5.21.22",
-                                         "X5.22.22","X5.23.22"))
+day.columns <- which(names(dataset)%in%c("4/10/22",       "4/11/22",       "4/12/22",       "4/13/22",      
+                                         "4/14/22",       "4/15/22",       "4/16/22",       "4/17/22",       
+                                         "4/18/22",       "4/19/22",       "4/20/22",       "4/21/22",      
+                                         "4/22/22",       "4/23/22",       "4/24/22",       "4/25/22",       
+                                         "4/26/22",       "4/27/22",       "4/28/22",       "4/29/22",      
+                                         "4/30/22",       "5/1/22",        "5/2/22",        "5/3/22",        
+                                         "5/4/22",        "5/5/22",        "5/6/22",        "5/7/22",       
+                                         "5/8/22",        "5/9/22",        "5/10/22",       "5/11/22",       
+                                         "5/12/22",       "5/13/22",       "5/14/22",       "5/15/22",      
+                                         "5/16/22",       "5/17/22",       "5/18/22",       "5/19/22",       
+                                         "5/20/22",       "5/21/22",       "5/22/22",       "5/23/22"))
 # which columns in the spreadsheet have entries that correspond to # babies on each day?
 max.age <- length(day.columns) + age.at.start - 1 # we use this in the calculation of death
 # rate, in case some hosts never died
@@ -79,8 +83,8 @@ little.r.calculator = function(rdat){
   # fx is mean fecundity produced by surviving moms on each day x
   fx <- colMeans(rdat[day.columns], na.rm=T) # note that moms that 
   # had previously died should be blank (or NA) so they are removed from this mean
-  
-  # z is total number of moms at start of the experiment
+  fx[is.nan(fx)] <- 0 # replace NaN's with 0's
+    # z is total number of moms at start of the experiment
   z <- nrow(rdat)
   # sx is proportion of original moms surviving to day x
   Sx <- numeric(length(day.columns))
@@ -90,8 +94,9 @@ little.r.calculator = function(rdat){
   # now combine survivorship and fecundity into an expression to solve for r
   day <- age.at.start:(length(Sx)+age.at.start-1)
   both <- Sx*fx
-  for( k in 1:length(both)){
-    if(Sx[k] == 0){both[k] = 0}
+    for( k in 1:length(both)){
+    if(Sx[k] == 0)
+      {both[k] = 0}
     else{both[k]=Sx[k]*fx[k]}}
   
   # finally use the function from earlier to find out what value of 'r' solves the euler-lotka
