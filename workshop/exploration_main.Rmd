@@ -341,6 +341,9 @@ spores %>% filter(temperature %in% const_temp) %>%
 spore yield per exposed host? product of probability of host survival X probability of infection X average spore yield
 
 
+body size
+
+
 host lifespan
 
 ```{r}
