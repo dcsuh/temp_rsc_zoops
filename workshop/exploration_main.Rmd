@@ -51,6 +51,10 @@ fitness <- read_csv(here("raw_data/main_fitness_data.csv"))
 mort <- read_csv(here("raw_data/main_mort_data.csv"))
 ```
 
+main_fitness_data.csv includes just fitness data and some metadata
+main_fitness_edit.csv should be the same thing with more columns already added
+  - probably better to keep these separate and merge in script but whatever
+
 
 Declare some variables that will be used throughout
 ```{r}
