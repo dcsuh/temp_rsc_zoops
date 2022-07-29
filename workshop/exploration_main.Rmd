@@ -442,10 +442,15 @@ summary(lifespan_aov_2)
 
 ########################################################################################################################
 
+Figure to make for meeting with modeling collaborators
+- looking at daphnia age structure
+
+Percent juvenile and percent adult over time
 
 
 
 
+########################################################################################################################
 
 
 
