@@ -14,6 +14,7 @@ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50),tidy=TRUE)
 library(tidyverse)
 library(magrittr)
 library(lubridate)
+library(ggpubr)
 library(here)
 ```
 
@@ -371,17 +372,72 @@ host growth rate (r)
 
 Analysis??
 Three-way ANOVA?
-temperature, resource concentration, species
+temperature, resource concentration, species, infection status
 
 
 potential response variables
  - probability of host survival
  - probability of infection
- - average spore yeidl
+ - average spore yield
  - net parasite output (product of previous three)
  - host lifespan
  - host fecundity
  - host growth rate
+ 
+
+lifespan ~ temp, rsc, inf 
+```{r}
+lifespan %<>% filter(span>0) #remove after re-downloading data
+lifespan %<>% filter(temperature %in% c(15, 20, 25))
+
+lifespan_1 <- lifespan %>% filter(species == "D")
+
+lifespan_lm_1 <- lm(as.numeric(span) ~ temperature * resource * inf_status, data = lifespan_1)
+
+summary(lifespan_lm_1)
+ggqqplot(residuals(lifespan_lm_1))
+
+shapiro_test(residuals(lifespan_lm_1))
+
+
+lifespan_1 %>% mutate(span = as.numeric(span)) %>% 
+  group_by(temperature, resource, inf_status) %>% 
+  filter(n() > 2) %>% 
+  shapiro_test(span)
+
+
+lifespan_aov_1 <- aov(span ~ temperature * resource* inf_status, data = lifespan_1)
+
+summary(lifespan_aov_1)
+
+
+
+
+```
+ 
+lifespan ~ temp, species, inf 
+```{r}
+
+lifespan_2 <- lifespan %>% filter(resource == 1)
+
+lifespan_lm_2 <- lm(as.numeric(span) ~ temperature * species * inf_status, data = lifespan_2)
+
+summary(lifespan_lm_2)
+ggqqplot(residuals(lifespan_lm_2))
+
+shapiro_test(residuals(lifespan_lm_2))
+
+
+lifespan_2 %>% mutate(span = as.numeric(span)) %>% 
+  group_by(temperature, resource, infection_status) %>% 
+  shapiro_test(span)
+
+
+lifespan_aov_2 <- aov(span ~ temperature * species * inf_status, data = lifespan)
+
+summary(lifespan_aov_2)
+```
+ 
 
 
 ########################################################################################################################
