@@ -60,6 +60,8 @@ main_fitness_edit.csv should be the same thing with more columns already added
 Declare some variables that will be used throughout
 ```{r}
 const_temp <- c("15", "20", "25")
+mort$resource <- as.factor(mort$resource)
+fitness$resource <- as.factor(fitness$resource)
 ```
 
 
@@ -180,15 +182,20 @@ Summarize fitness
 # ```
 
 Summarize host body size (need to figure out mag correction)
-# ```{r}
-# length <- mort %>% group_by(ID) %>% summarize(n=n(), mean_length = mean(length, na.rm = T), var = var(length, na.rm = T), se = sqrt(var(length,na.rm = T)/n()))
-# length %<>% left_join(.,treatment_factors)
-# length %>% ggplot(., aes(x=ID, y=mean_length, fill=as.factor(resource))) +
-#   geom_col(position="dodge") + 
-#   geom_linerange(aes(ymin = mean_length-se, ymax = mean_length+se)) +
-#   labs(title = "Average Total Length w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Length") + theme_minimal()
-# 
-# ```
+```{r}
+length <- mort %>% group_by(ID) %>% 
+  summarize(n=n(), 
+            mean_length = mean(length_RAW, na.rm = T), 
+            var = var(length_RAW, na.rm = T), 
+            se = sqrt(var(length_RAW,na.rm = T)/n()))
+length %<>% left_join(.,treatment_factors)
+length %>% ggplot(., aes(x=ID, y=mean_length, fill=as.factor(resource))) +
+  geom_col(position="dodge") +
+  geom_linerange(aes(ymin = mean_length-se, ymax = mean_length+se)) +
+  labs(title = "Average Total Length w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Length") + theme_minimal()
+
+
+```
 
 
 Summarize spore yield
@@ -326,9 +333,29 @@ fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
 Figures to make for ESA presentation
 
 Probability of host survival until some date
+Proportion of individuals alive at end of expt
+
+```{r}
+prop_alive <- mort %>% filter(species=="D" & temp %in% const_temp) %>% 
+  filter(is.na(removed) & is.na(KBP)) %>%
+  group_by(temp, resource) %>%
+  summarize(n = n(),
+            alive = sum(is.na(mortality_day)))
+
+```
+
 
 
 parasite infectivity (probability host was infected)
+prevalence?
+```{r}
+prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
+  ggplot(.,aes(x=temperature, y = prev, group = resource, color = resource)) +
+  geom_point() +
+  geom_line()
+```
+
+
 
 
 average spore yield per infected host
@@ -348,6 +375,16 @@ spore yield per exposed host? product of probability of host survival X probabil
 
 body size
 
+```{r}
+length %>% filter(temperature %in% const_temp & species =="D") %>% 
+  ggplot(., aes(x=temperature, y = mean_length, color = inf_status)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = mean_length-se, ymax = mean_length+se)) + 
+  facet_wrap(vars(resource))
+```
+
+
+
 
 host lifespan
 
@@ -361,6 +398,31 @@ mean_span %>% filter(temperature %in% const_temp) %>%
 
 
 host fecundity (total number of offspring)
+
+```{r}
+day_columns <- c("4/10/22", "4/11/22", "4/12/22", "4/13/22",
+                 "4/14/22", "4/15/22", "4/16/22", "4/17/22",
+                 "4/18/22", "4/19/22", "4/20/22", "4/21/22",
+                 "4/22/22", "4/23/22", "4/24/22", "4/25/22",
+                 "4/26/22", "4/27/22", "4/28/22", "4/29/22",
+                 "4/30/22", "5/1/22", "5/2/22", "5/3/22",
+                 "5/4/22", "5/5/22", "5/6/22", "5/7/22",
+                 "5/8/22", "5/9/22", "5/10/22", "5/11/22",
+                 "5/12/22", "5/13/22", "5/14/22", "5/15/22",
+                 "5/16/22", "5/17/22", "5/18/22", "5/19/22",
+                 "5/20/22", "5/21/22", "5/22/22", "5/23/22")
+day_columns <- c(which(names(fitness) %in% day_columns))
+
+fecundity <- fitness %>% select(tube, temp, resource, species, male, REMOVED, KBP)
+
+fitness_mat <- fitness %>% select(day_columns)
+birth_sums <- rowSums(fitness_mat, na.rm = T)
+fecundity$tot_births <- birth_sums
+
+fecundity %<>% left_join(.,inf_status)
+fecundity %<>% left_join(.,treatment_factors)
+```
+
 
 
 host growth rate (r)
