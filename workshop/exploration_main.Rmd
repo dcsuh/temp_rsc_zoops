@@ -164,7 +164,7 @@ Adjusted prevalence
 # prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
 # prev_adj %<>% left_join(.,treatment_factors)
 # prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
-#   geom_col(position="dodge") + 
+#   geom_col(position="dodge") +
 #   labs(title = "Threshold-adjusted Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
 # ```
 
@@ -305,25 +305,25 @@ mean_span %>% filter(temperature %in% const_temp) %>%
 
 
 ```{r}
-fitness %<>% select(-c(temp:KBP))
-fitness %<>% pivot_longer(.,cols=2:46, names_to = "date", values_to = "fitness")
+# fitness %<>% select(-c(temp:KBP))
+# fitness %<>% pivot_longer(.,cols=2:46, names_to = "date", values_to = "fitness")
 ```
 
 THIS IS ALL SCREWED UP
 ```{r}
-fitness %<>% left_join(.,mort, by="tube")
-fit_by_ID_date <- fitness %>% group_by(ID, tube) %>% summarize(daily_fit = sum(fitness, na.rm = T), ID=ID, n=n()) # removed NAs
-fit_average <- fitness %>% group_by(ID, tube) %>% 
-  summarize(n = n(),total_fit = sum(fitness, na.rm = T), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
-fit_average %<>% left_join(.,treatment_factors)
-
-fit_average$ID <- factor(fit_average$ID, levels = newOrder)
-
-fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
-  geom_col(position="dodge") + 
-  geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
-  labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+# fitness %<>% left_join(.,mort, by="tube")
+# fit_by_ID_date <- fitness %>% group_by(ID, tube) %>% summarize(daily_fit = sum(fitness, na.rm = T), ID=ID, n=n()) # removed NAs
+# fit_average <- fitness %>% group_by(ID, tube) %>%
+#   summarize(n = n(),total_fit = sum(fitness, na.rm = T), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
+# fit_average %<>% left_join(.,treatment_factors)
+# 
+# fit_average$ID <- factor(fit_average$ID, levels = newOrder)
+# 
+# fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
+#   geom_col(position="dodge") +
+#   geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
+#   labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 
@@ -420,7 +420,7 @@ birth_sums <- rowSums(fitness_mat, na.rm = T)
 fecundity$tot_births <- birth_sums
 
 fecundity %<>% left_join(.,inf_status)
-fecundity %<>% left_join(.,treatment_factors)
+# fecundity %<>% inner_join(.,treatment_factors) #this doesn't work. fix it
 ```
 
 
