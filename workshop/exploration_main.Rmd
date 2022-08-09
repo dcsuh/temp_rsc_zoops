@@ -517,11 +517,48 @@ first_repd <- fitness %>% filter(is.na(male)) %>% pivot_longer(.,8:52)
 #   summarize(fitness = sum(value, na.rm = T)) %>%
 #   filter(fitness>0) %>%
 #   ungroup()
+
 first_repd %<>% group_by(tube, temp, resource, species) %>%
   filter(value>0) %>%
   filter(row_number() == 1) %>%
   ungroup()
 
+#first_repd has 625 observations and there were 707 total tubes after removing males
+#this means 82 individuals never had babies?
+
+stage_time <- first_repd %>% group_by(temp, resource, species) %>%
+  summarize(total = n(), date = name) %>%
+  group_by(temp, resource, species, date) %>%
+  summarize(n = n(), total = total) %>% 
+  distinct()
+
+stage_time %<>% group_by(temp, resource, species) %>% 
+  mutate(perc = cumsum(n)/total) %>%
+  ungroup()
+
+stage_time %<>% mutate(treatment = paste(temp, resource, species, sep = "_"))
+
+stage_time %>% filter(temp %in% c(15, 20, 25)) %>% ggplot(.,aes(x=date, y=perc, color = resource, shape = species, group = treatment)) +
+  geom_point() + 
+  geom_line() + 
+  facet_grid(rows = vars(temp)) + 
+  theme(axis.text.x = element_text(angle = 70, vjust = 0.5, hjust=0.5)) + 
+  labs(y = "Percent Adult")
+
+stage_time %>% filter(temp %in% c(20, "2V", "6V", "14V") & species == "D" & resource == 1) %>% ggplot(.,aes(x=date, y=perc, group = treatment)) +
+  geom_point() + 
+  geom_line() + 
+  facet_grid(rows = vars(temp)) + 
+  theme(axis.text.x = element_text(angle = 70, vjust = 0.5, hjust=0.5)) + 
+  labs(y = "Percent Adult")
+
+stage_time %>% filter(temp %in% c(15, 20, 25))  %>% select(treatment, total) %>% distinct() %>% 
+  ggplot(.,aes(x=treatment, y=total)) + geom_col() +
+  theme(axis.text.x = element_text(angle = 70, vjust = 0.5, hjust=0.5))
+
+stage_time %>% filter(temp %in% c(20, "2V", "6V", "14V") & species == "D" & resource == 1) %>% select(treatment, total) %>% distinct()  %>% 
+  ggplot(.,aes(x=treatment, y=total)) + geom_col() +
+  theme(axis.text.x = element_text(angle = 70, vjust = 0.5, hjust=0.5))
 
 
 ```
