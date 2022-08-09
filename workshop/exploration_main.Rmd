@@ -449,6 +449,8 @@ potential response variables
 
 lifespan ~ temp, rsc, inf 
 ```{r}
+library(rstatix)
+
 lifespan %<>% filter(span>0) #remove after re-downloading data
 lifespan %<>% filter(temperature %in% c(15, 20, 25))
 
@@ -491,7 +493,7 @@ shapiro_test(residuals(lifespan_lm_2))
 
 
 lifespan_2 %>% mutate(span = as.numeric(span)) %>% 
-  group_by(temperature, resource, infection_status) %>% 
+  group_by(temperature, resource, inf_status) %>% 
   shapiro_test(span)
 
 
@@ -508,6 +510,22 @@ Figure to make for meeting with modeling collaborators
 - looking at daphnia age structure
 
 Percent juvenile and percent adult over time
+
+```{r}
+first_repd <- fitness %>% filter(is.na(male)) %>% pivot_longer(.,8:52)
+# first_repd_check <- first_repd %>% group_by(tube) %>%
+#   summarize(fitness = sum(value, na.rm = T)) %>%
+#   filter(fitness>0) %>%
+#   ungroup()
+first_repd %<>% group_by(tube, temp, resource, species) %>%
+  filter(value>0) %>%
+  filter(row_number() == 1) %>%
+  ungroup()
+
+
+
+```
+
 
 
 
