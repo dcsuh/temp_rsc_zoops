@@ -22,7 +22,7 @@ read data
 ```{r, message = F}
 meta <- read_csv(here("raw_data/tank_metadata.csv"))
 counts <- read_csv(here("raw_data/tank_counts.csv"))
-ysi <- read_csv(here("raw_data/ysi_data.csv"),locale = locale(encoding = "latin1"))
+#ysi <- read_csv(here("raw_data/ysi_data.csv"),locale = locale(encoding = "latin1"))
 ```
 
 
@@ -51,8 +51,8 @@ counts$bucket <- as.factor(counts$bucket)
 data <- left_join(counts, meta, by = "bucket")
 data$community <- as.factor(data$community)
 data$sample_date <- mdy(data$sample_date)
-data %<>% mutate(total = rowSums(across(juvenile_daphnia_uninf:cerio_inf)), 
-                 daphnia = rowSums(across(juvenile_daphnia_uninf:adult_daphnia_inf)),
+data %<>% mutate(total = rowSums(across(juvenile_daphnia_uninf:cerio_inf), na.rm = T), 
+                 daphnia = rowSums(across(juvenile_daphnia_uninf:adult_daphnia_inf), na.rm = T),
                  treatment = paste(community, temp, sep="_"))
 ```
 
@@ -103,19 +103,19 @@ data %<>% mutate(cerio = cerio_inf + cerio_uninf, d_ratio = daphnia/total)
 ```
 
 ```{r}
-data %>% filter(community=="DCM") %>% ggplot(., aes(x=sample_date,y=d_ratio, color = temp)) + geom_point() +geom_line(aes(group = bucket)) + facet_wrap(vars(temp))
+data %>% filter(community=="DCM") %>% ggplot(., aes(x=sample_date,y=d_ratio, color = temp)) + geom_point() +geom_line(aes(group = bucket)) + facet_wrap(vars(temp)) + labs(y = "Percent Daphnia")
 ```
 
 
 
 Juvenile and Adult Ratio
 ```{r}
-size_ratio <- data %>% mutate(j_ratio = juvenile_daphnia_uninf/daphnia)
+size_ratio <- data %>% mutate(j_ratio = juvenile_daphnia_uninf+juvenile_daphnia_inf/daphnia)
 ```
 
 
 ```{r}
-ggplot(size_ratio, aes(x=sample_date, y=j_ratio, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + facet_grid(rows= vars(temp), cols = vars(community))
+size_ratio %>% filter(community %in% c("D", "DCM", "DM")) %>% ggplot(., aes(x=sample_date, y=j_ratio, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + facet_grid(rows= vars(temp), cols = vars(community)) + labs(y = "Percent juvenile")
 ```
 
 
