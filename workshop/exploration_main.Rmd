@@ -421,6 +421,16 @@ fecundity$tot_births <- birth_sums
 
 fecundity %<>% left_join(.,inf_status)
 # fecundity %<>% inner_join(.,treatment_factors) #this doesn't work. fix it
+
+fecundity %<>% filter(is.na(male) & is.na(REMOVED) & is.na(KBP)) %>% 
+  group_by(temp, resource, species, inf) %>% 
+  summarize(mean_births = mean(tot_births, na.rm=T),
+            var = var(tot_births, na.rm = T),
+            se = sqrt(var(tot_births, na.rm = T)/n()),
+            resource = unique(resource),
+            temperature = unique(temp),
+            inf_status = unique(inf),
+            species = species)
 ```
 
 
@@ -434,7 +444,7 @@ host growth rate (r)
 
 Analysis??
 Three-way ANOVA?
-temperature, resource concentration, species, infection status
+temperature, resource concentration, infection status
 
 
 potential response variables
@@ -463,6 +473,9 @@ ggqqplot(residuals(lifespan_lm_1))
 
 shapiro_test(residuals(lifespan_lm_1))
 
+lifespan$span <- as.numeric(lifespan$span)
+
+lifespan %>% group_by(as.factor(temperature), as.factor(resource)) %>% shapiro_test(span)
 
 lifespan_1 %>% mutate(span = as.numeric(span)) %>% 
   group_by(temperature, resource, inf_status) %>% 
@@ -475,7 +488,7 @@ lifespan_aov_1 <- aov(span ~ temperature * resource* inf_status, data = lifespan
 summary(lifespan_aov_1)
 
 
-
+lifespan %>% ggplot(.,aes(span)) + geom_histogram() + facet_wrap(vars(ID))
 
 ```
  
