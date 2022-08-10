@@ -110,12 +110,18 @@ data %>% filter(community=="DCM") %>% ggplot(., aes(x=sample_date,y=d_ratio, col
 
 Juvenile and Adult Ratio
 ```{r}
-size_ratio <- data %>% mutate(j_ratio = juvenile_daphnia_uninf+juvenile_daphnia_inf/daphnia)
+size_ratio <- data %>% mutate(j_ratio = (juvenile_daphnia_uninf+juvenile_daphnia_inf)/daphnia)
 ```
 
 
 ```{r}
 size_ratio %>% filter(community %in% c("D", "DCM", "DM")) %>% ggplot(., aes(x=sample_date, y=j_ratio, color = temp)) + geom_point() + geom_line(aes(group=bucket)) + facet_grid(rows= vars(temp), cols = vars(community)) + labs(y = "Percent juvenile")
+```
+
+```{r}
+size_ratio_summ <- size_ratio %>% group_by(treatment, sample_date) %>% summarize(mean_perc = mean(j_ratio), temp = temp)
+
+ggplot(., aes(x=sample_date, y=j_ratio, color = temp)) + geom_point()
 ```
 
 
