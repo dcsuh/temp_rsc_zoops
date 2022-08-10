@@ -389,11 +389,18 @@ length %>% filter(temperature %in% const_temp & species =="D") %>%
 host lifespan
 
 ```{r}
-mean_span %>% filter(temperature %in% const_temp) %>%
+mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
   ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = inf_status)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
-  facet_wrap(. ~ resource + species, nrow=1)
+  facet_wrap(. ~ resource, nrow=1)
+
+mean_span %>% filter(temperature %in% const_temp & resource == 1) %>%
+  ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = inf_status)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) + 
+  facet_wrap(. ~ species, nrow=1)
+
 ```
 
 
@@ -422,15 +429,27 @@ fecundity$tot_births <- birth_sums
 fecundity %<>% left_join(.,inf_status)
 # fecundity %<>% inner_join(.,treatment_factors) #this doesn't work. fix it
 
-fecundity %<>% filter(is.na(male) & is.na(REMOVED) & is.na(KBP)) %>% 
+fecundity %<>% filter(is.na(male) & is.na(REMOVED) & is.na(KBP) & !is.na(inf)) %>% 
   group_by(temp, resource, species, inf) %>% 
   summarize(mean_births = mean(tot_births, na.rm=T),
             var = var(tot_births, na.rm = T),
-            se = sqrt(var(tot_births, na.rm = T)/n()),
-            resource = unique(resource),
-            temperature = unique(temp),
-            inf_status = unique(inf),
-            species = species)
+            se = sqrt(var(tot_births, na.rm = T)/n()))
+
+fecundity$species <- factor(fecundity$species,  levels = c("D", "C"))
+```
+
+```{r}
+fecundity %>% filter(temp %in% const_temp) %>%
+  ggplot(.,aes(x=temp, y = as.numeric(mean_births),color = as.factor(inf))) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_births-se, ymax = mean_births+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(. ~ resource + species, nrow=1)
+
+fecundity %>% filter(temp %in% const_temp & species == "D") %>%
+  ggplot(.,aes(x=resource, y = as.numeric(mean_births),color = as.factor(inf))) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_births-se, ymax = mean_births+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(. ~ temp, nrow=1)
 ```
 
 
