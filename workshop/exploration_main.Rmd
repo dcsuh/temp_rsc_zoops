@@ -389,6 +389,7 @@ length %>% filter(temperature %in% const_temp & species =="D") %>%
 host lifespan
 
 ```{r}
+#daphnia only temp on x-axis
 mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
   ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = inf_status)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
@@ -396,6 +397,15 @@ mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
   facet_wrap(. ~ resource, nrow=1)
 
+#daphnia only rsc on x-axis
+mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
+  ggplot(.,aes(x=resource, y = as.numeric(mean_span),color = inf_status)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = interaction(temperature, inf_status)), position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(. ~ temperature, nrow=1)
+
+#1 rsc only. temperature on x-axis
 mean_span %>% filter(temperature %in% const_temp & resource == 1) %>%
   ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = species)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
@@ -403,6 +413,13 @@ mean_span %>% filter(temperature %in% const_temp & resource == 1) %>%
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) + 
   facet_wrap(. ~ inf_status, nrow=1)
 
+#both cerio and daphnia at all resources
+mean_span %>% filter(temperature %in% const_temp) %>%
+  ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = resource)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = interaction(temperature, resource)), position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
+  facet_grid(cols = vars(species), rows = (vars(inf_status)))
 ```
 
 
