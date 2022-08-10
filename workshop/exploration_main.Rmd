@@ -397,10 +397,11 @@ mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
   facet_wrap(. ~ resource, nrow=1)
 
 mean_span %>% filter(temperature %in% const_temp & resource == 1) %>%
-  ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = inf_status)) + 
+  ggplot(.,aes(x=temperature, y = as.numeric(mean_span),color = species)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = species), position = position_dodge(width = 0.5)) +
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) + 
-  facet_wrap(. ~ species, nrow=1)
+  facet_wrap(. ~ inf_status, nrow=1)
 
 ```
 
