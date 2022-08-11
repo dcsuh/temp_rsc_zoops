@@ -45,7 +45,7 @@ $$
 \text C = 0.1\ mg\ \text C/L \\
 $$
 
-```{r, message = F}
+```{r, warning = F}
 source(here("scripts","LT.traits.loop.ss.R"))
 ```
 
@@ -358,6 +358,11 @@ prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
   ggplot(.,aes(x=temperature, y = prev, group = resource, color = resource)) +
   geom_point() +
   geom_line()
+
+prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
+  ggplot(.,aes(x=resource, y = prev, group = temperature, color = temperature)) +
+  geom_point() +
+  geom_line()
 ```
 
 
@@ -382,10 +387,12 @@ body size
 
 ```{r}
 length %>% filter(temperature %in% const_temp & species =="D") %>% 
-  ggplot(., aes(x=temperature, y = mean_length, color = inf_status)) + 
-  geom_point() + 
-  geom_errorbar(aes(ymin = mean_length-se, ymax = mean_length+se)) + 
-  facet_wrap(vars(resource))
+  ggplot(., aes(x=resource, y = mean_length, color = inf_status)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_length-se, ymax = mean_length+se), position = position_dodge(width = 0.5)) + 
+  facet_wrap(vars(temperature)) +
+  scale_color_manual(values = c("red", "blue"))
+
 ```
 
 
@@ -408,7 +415,9 @@ mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_line(aes(group = interaction(temperature, inf_status)), position = position_dodge(width = 0.5)) +
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
-  facet_wrap(. ~ temperature, nrow=1)
+  facet_wrap(. ~ temperature, nrow=1) +
+  scale_color_manual(values = c("red", "blue"))
+
 
 #1 rsc only. temperature on x-axis
 mean_span %>% filter(temperature %in% const_temp & resource == 1) %>%
@@ -473,7 +482,8 @@ fecundity %>% filter(temp %in% const_temp & species == "D") %>%
   ggplot(.,aes(x=resource, y = as.numeric(mean_births),color = as.factor(inf))) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_errorbar(aes(ymin = mean_births-se, ymax = mean_births+se), position = position_dodge(width = 0.5)) +
-  facet_wrap(. ~ temp, nrow=1)
+  facet_wrap(. ~ temp, nrow=1) +
+  scale_color_manual(values = c("blue", "red"))
 ```
 
 
@@ -485,7 +495,7 @@ lt.summary_factors %>% filter(species=="daphnia", temp_var == 0) %>%
   ggplot(.,aes(x=as.factor(resource),y=S.r,color=inf_status)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_linerange(aes(ymax=S.r.975, ymin=S.r.025), position = position_dodge(width = 0.5)) +
-  scale_color_manual(values = c("forestgreen", "red")) + 
+  scale_color_manual(values = c("blue", "red")) + 
   facet_wrap(. ~ temp_id, nrow = 1) +
   labs(x = "Resource Concentration mgC/L", y = "Host Growth Rate")
 ```
