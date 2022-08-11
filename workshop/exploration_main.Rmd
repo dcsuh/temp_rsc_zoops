@@ -365,7 +365,7 @@ prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
   ggplot(.,aes(x=resource, y = prev, group = temperature, color = temperature)) +
   geom_point() +
   geom_line() +
-  labs(y = "Prevalence") + 
+  labs(y = "Prevalence", x = "Resource Concentration mgC/L", color = "Temperature") + 
   theme_bw()
 ```
 
@@ -380,6 +380,17 @@ spores %>% filter(temperature %in% const_temp) %>%
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se), position = position_dodge(width = 0.5)) +
   facet_wrap(vars(species))
+
+spores %>% filter(temperature %in% const_temp & species =="D") %>%  
+  ggplot(., aes(x=resource, y = mean_yield, color = T)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = temperature), position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(temperature)) + 
+  scale_color_manual(values = "red") + 
+  labs(y = "Average Spore Yield", x = "Resource Concentration mgC/L") +
+  theme_bw() 
+
 ```
 
 
@@ -395,7 +406,9 @@ length %>% filter(temperature %in% const_temp & species =="D") %>%
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_errorbar(aes(ymin = mean_length-se, ymax = mean_length+se), position = position_dodge(width = 0.5)) + 
   facet_wrap(vars(temperature)) +
-  scale_color_manual(values = c("red", "blue"))
+  scale_color_manual(values = c("red", "blue")) + 
+  labs(y = "Average Length (um)", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
+  theme_bw()
 
 ```
 
@@ -420,7 +433,9 @@ mean_span %>% filter(temperature %in% const_temp & species == "D") %>%
   geom_line(aes(group = interaction(temperature, inf_status)), position = position_dodge(width = 0.5)) +
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
   facet_wrap(. ~ temperature, nrow=1) +
-  scale_color_manual(values = c("red", "blue"))
+  scale_color_manual(values = c("red", "blue")) + 
+  labs(y = "Average Lifespan (Days)", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
+  theme_bw()
 
 
 #1 rsc only. temperature on x-axis
@@ -441,7 +456,7 @@ mean_span %>% filter(temperature %in% const_temp) %>%
 ```
 
 
-host fecundity (total number of offspring)
+host fecundity (total number of offspring) 
 
 ```{r}
 day_columns <- c("4/10/22", "4/11/22", "4/12/22", "4/13/22",
@@ -487,7 +502,9 @@ fecundity %>% filter(temp %in% const_temp & species == "D") %>%
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_errorbar(aes(ymin = mean_births-se, ymax = mean_births+se), position = position_dodge(width = 0.5)) +
   facet_wrap(. ~ temp, nrow=1) +
-  scale_color_manual(values = c("blue", "red"))
+  scale_color_manual(values = c("blue", "red")) + 
+  labs(y = "Average Fecundity (total births)", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
+  theme_bw()
 ```
 
 
@@ -500,8 +517,9 @@ lt.summary_factors %>% filter(species=="daphnia", temp_var == 0) %>%
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_linerange(aes(ymax=S.r.975, ymin=S.r.025), position = position_dodge(width = 0.5)) +
   scale_color_manual(values = c("blue", "red")) + 
-  facet_wrap(. ~ temp_id, nrow = 1) +
-  labs(x = "Resource Concentration mgC/L", y = "Host Growth Rate")
+  facet_wrap(. ~ temp_id, nrow = 1) + 
+  labs(y = "Host net reproductive rate", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
+  theme_bw()
 ```
 
 
