@@ -45,6 +45,11 @@ $$
 \text C = 0.1\ mg\ \text C/L \\
 $$
 
+```{r, message = F}
+source(here("scripts","LT.traits.loop.ss.R"))
+```
+
+
 Read in pilot data
 ```{r, message=F}
 # treatments <- read_csv(here("raw_data/treatments.csv"))
@@ -475,6 +480,15 @@ fecundity %>% filter(temp %in% const_temp & species == "D") %>%
 
 host growth rate (r)
 - fix starting age for ceriodaphnia
+```{r}
+lt.summary_factors %>% filter(species=="daphnia", temp_var == 0) %>% 
+  ggplot(.,aes(x=as.factor(resource),y=S.r,color=inf_status)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_linerange(aes(ymax=S.r.975, ymin=S.r.025), position = position_dodge(width = 0.5)) +
+  scale_color_manual(values = c("forestgreen", "red")) + 
+  facet_wrap(. ~ temp_id, nrow = 1) +
+  labs(x = "Resource Concentration mgC/L", y = "Host Growth Rate")
+```
 
 
 
