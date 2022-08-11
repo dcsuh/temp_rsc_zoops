@@ -359,10 +359,14 @@ prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
   geom_point() +
   geom_line()
 
+prevalence$temperature <- factor(prevalence$temperature, levels = c(25, 20, 15))
+
 prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
   ggplot(.,aes(x=resource, y = prev, group = temperature, color = temperature)) +
   geom_point() +
-  geom_line()
+  geom_line() +
+  labs(y = "Prevalence") + 
+  theme_bw()
 ```
 
 
