@@ -572,6 +572,29 @@ spore yield ~ lifespan
 yield_analysis %>% ggplot(.,aes(x = span, y = log(spore_yield))) + geom_point() + geom_smooth(method = "lm")
 ```
 
+Average clutch sizes over time
+```{r}
+clutches <- fitness %>% filter(is.na(male)) %>% pivot_longer(.,8:52, names_to = "date")
+clutch_summ <- clutches %>% group_by(temp, resource, species, date) %>% 
+  summarize(mean_clutch = mean(value, na.rm=T),
+            sum_clutch = sum(value, na.rm=T)) 
+clutch_summ %>% filter(species=="D" & temp %in% const_temp) %>% 
+  ggplot(.,aes(x=date, y=mean_clutch, group=interaction(resource,temp), color = resource)) + 
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(. ~ temp, ncol = 1) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+clutch_summ %>% filter(species=="D" & temp %in% const_temp) %>% 
+  ggplot(.,aes(x=date, y=sum_clutch, group=interaction(resource,temp), color = resource)) + 
+  geom_point() + 
+  geom_line() + 
+  facet_wrap(. ~ temp, ncol = 1) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+  
+```
+
+
 
 
 Analysis??
@@ -654,23 +677,50 @@ summary(lifespan_aov_2)
 Figure to make for meeting with modeling collaborators
 - looking at daphnia age structure
 
+
 Percent juvenile and percent adult over time
 
 ```{r}
-first_repd <- fitness %>% filter(is.na(male)) %>% pivot_longer(.,8:52)
+first_repd <- fitness %>% left_join(.,mort, by = c("tube", "temp", "resource", "species"))
+first_repd %<>% filter(is.na(male)) %>% pivot_longer(.,8:52)
 # first_repd_check <- first_repd %>% group_by(tube) %>%
 #   summarize(fitness = sum(value, na.rm = T)) %>%
 #   filter(fitness>0) %>%
 #   ungroup()
 
-first_repd %<>% group_by(tube, temp, resource, species) %>%
+first_repd %<>% select(c(tube, temp, resource, species, inf, name, value)) %>% filter(!is.na(inf))
+
+first_repd %<>% group_by(tube, temp, resource, species, inf) %>%
   filter(value>0) %>%
   filter(row_number() == 1) %>%
   ungroup()
 
+
 #first_repd has 625 observations and there were 707 total tubes after removing males
 #this means 82 individuals never had babies?
 
+first_repd %<>% mutate(birthday=mdy("4/5/22"), first = mdy(name), mom_age = as.numeric(first - birthday))
+
+avg_mom_age <- first_repd %>% group_by(temp,resource,species, inf) %>% 
+  summarize(mean_age = mean(mom_age),
+            var = var(mom_age),
+            se = sqrt(var(mom_age)/n()))
+
+
+avg_mom_age %>% filter(temp %in% const_temp & species == "D") %>%
+  ggplot(.,aes(x=resource, y = mean_age, color = as.factor(inf))) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = mean_age-se, ymax = mean_age+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(. ~ temp, nrow=1) +
+  scale_color_manual(values = c("blue", "red")) + 
+  labs(y = "Average Age at\nFirst Reproduction", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
+  theme_bw()
+
+
+```
+
+
+```{r}
 stage_time <- first_repd %>% group_by(temp, resource, species) %>%
   summarize(total = n(), date = name) %>%
   group_by(temp, resource, species, date) %>%
