@@ -14,6 +14,7 @@ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=50),tidy=TRUE)
 library(tidyverse)
 library(magrittr)
 library(lubridate)
+library(epitools)
 library(ggpubr)
 library(here)
 ```
@@ -149,7 +150,12 @@ prev_treatment_factors %<>% distinct()
 prev_treatment_factors$ID <- factor(prev_treatment_factors$ID, levels = prevOrder)
 
 
-prevalence %<>% group_by(ID) %>% summarize(n = n(), infected = sum(infection_status), prev = sum(infection_status)/n())
+prevalence %<>% 
+  group_by(ID) %>% 
+  summarize(n = n(), 
+            infected = sum(infection_status), 
+            prev = sum(infection_status)/n(),
+            conf = binom.exact(infected, n, conf.level = 0.95))
 prevalence %<>% left_join(.,prev_treatment_factors)
 prevalence %>% ggplot(.,aes(x=as.factor(ID),y=prev, fill=as.factor(resource))) +
   geom_col(position="dodge") + 
@@ -359,13 +365,23 @@ prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
   geom_point() +
   geom_line()
 
-prevalence$temperature <- factor(prevalence$temperature, levels = c(25, 20, 15))
+prevalence$temperature <- factor(prevalence$temperature, levels = c(15, 20, 25))
 
 prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
   ggplot(.,aes(x=resource, y = prev, group = temperature, color = temperature)) +
-  geom_point() +
-  geom_line() +
+  geom_point(aes(), position = position_dodge(width = 0.5)) +
+  geom_line(aes(), position = position_dodge(width = 0.5)) +
+  geom_linerange(aes(ymax=conf$upper, ymin=conf$lower), position = position_dodge(width = 0.5)) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
   labs(y = "Prevalence", x = "Resource Concentration mgC/L", color = "Temperature") + 
+  theme_bw()
+
+prevalence %>% filter(temperature %in% const_temp & species =="D") %>%
+  ggplot(.,aes(x=resource, y = prev, group = temperature, color = temperature)) +
+  geom_bar(stat = "identity", aes(fill = temperature), width = 0.5, position = position_dodge(width = 0.5), color = "black") +
+  geom_linerange(aes(ymax=conf$upper, ymin=conf$lower), position = position_dodge(width = 0.5), color = "black") +
+  scale_fill_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
+  labs(y = "Prevalence", x = "Resource Concentration mgC/L", fill = "Temperature") + 
   theme_bw()
 ```
 
