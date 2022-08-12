@@ -28,3 +28,5 @@ for (i in 1:nrow(mort)){
     mort$length[i] <- mort$length_RAW[i] * 17.86 / 1000
   print(i)
 }
+
+saveRDS(mort, file = here("raw_data", "main_mort_edit.rds"))

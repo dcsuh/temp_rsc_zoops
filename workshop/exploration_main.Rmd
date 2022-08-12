@@ -55,7 +55,7 @@ Read in pilot data
 ```{r, message=F}
 # treatments <- read_csv(here("raw_data/treatments.csv"))
 fitness <- read_csv(here("raw_data/main_fitness_data.csv"))
-mort <- read_csv(here("raw_data/main_mort_data.csv"))
+mort <- readRDS(here("raw_data/main_mort_edit.rds"))
 ```
 
 main_fitness_data.csv includes just fitness data and some metadata
@@ -107,8 +107,11 @@ mort %<>% filter(!male %in% c(1) & !missing %in% c(1)) %>% select(-c(male,missin
 
 prevalence <- mort %>% drop_na(inf) #remove observations with NA for infection status
 
-spores <- mort %>% drop_na(inf) %>% mutate(spore_yield = spore_RAW*(spore_water_added+1))
-spores %<>% mutate(ID = paste(temp, resource, species,sep = "_"))
+spores <- mort %>% drop_na(inf) %>% mutate(spore_yield = ((spore_RAW*(spore_water_added+1))/8)*10000) 
+#this doubles the spore count if the water was added because that would make it twice as dilute
+#spore yield is calculated by dividing total counted spores by 8 (number of cells used in hemocytomer) and then multiplying by 10000 to get spores/mL
+spores %<>% filter(spore_yield>0)
+spores %<>% mutate(log_yield = log(spore_yield),ID = paste(temp, resource, species,sep = "_"))
 
 
 mort %<>% mutate(inf_status = ifelse(inf==1, "I", "U")) %>% filter(inf_status %in% c("I","U"))
@@ -196,9 +199,9 @@ Summarize host body size (need to figure out mag correction)
 ```{r}
 length <- mort %>% group_by(ID) %>% 
   summarize(n=n(), 
-            mean_length = mean(length_RAW, na.rm = T), 
-            var = var(length_RAW, na.rm = T), 
-            se = sqrt(var(length_RAW,na.rm = T)/n()))
+            mean_length = mean(length, na.rm = T), 
+            var = var(length, na.rm = T), 
+            se = sqrt(var(length,na.rm = T)/n()))
 length %<>% left_join(.,treatment_factors)
 length %>% ggplot(., aes(x=ID, y=mean_length, fill=as.factor(resource))) +
   geom_col(position="dodge") +
@@ -216,7 +219,11 @@ spores %<>% filter(spore_yield>0) %>% group_by(ID) %>%
   summarize(mean_yield = mean(spore_yield, na.rm=T), 
             # NAs removed but there should be no NAs after the filter
             var = var(spore_yield, na.rm = T), 
-            se = sqrt(var(spore_yield, na.rm = T)/n()))
+            se = sqrt(var(spore_yield, na.rm = T)/n()),
+            log_mean_yield = mean(log_yield, na.rm=T), 
+            # NAs removed but there should be no NAs after the filter
+            log_var = var(log_yield, na.rm = T), 
+            log_se = sqrt(var(log_yield, na.rm = T)/n()))
 spores %<>% left_join(.,prev_treatment_factors)
 
 spores$ID <- factor(spores$ID, levels = prevOrder)
@@ -264,10 +271,10 @@ Just a test. Need to do calculation on infection prevalence to estimate transmis
 Summarize lifespan for all
 ```{r}
 lifespan <- mort %>% filter(!removed %in% c(1) & !KBP %in% c(1)) %>% select(-c(removed,KBP))
-lifespan %<>% select(ID, mortality_day)
+lifespan %<>% select(tube, ID, mortality_day)
 lifespan %<>% mutate(birth_day = "4/5/22")
 #mdy(lifespan$birth_date)
-lifespan %<>% transmute(ID=ID, birthday=mdy(birth_day), deathday=mdy(mortality_day))
+lifespan %<>% transmute(tube=tube, ID=ID, birthday=mdy(birth_day), deathday=mdy(mortality_day))
 lifespan %<>% mutate(span = deathday - birthday)
 
 
@@ -407,6 +414,16 @@ spores %>% filter(temperature %in% const_temp & species =="D") %>%
   labs(y = "Average Spore Yield", x = "Resource Concentration mgC/L") +
   theme_bw() 
 
+spores %>% filter(temperature %in% const_temp & species =="D") %>%  
+  ggplot(., aes(x=resource, y = log_mean_yield, color = T)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = temperature), position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = log_mean_yield-log_se, ymax = log_mean_yield+log_se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(temperature)) + 
+  scale_color_manual(values = "red") + 
+  labs(y = "Average Spore Yield", x = "Resource Concentration mgC/L") +
+  theme_bw() 
+
 ```
 
 
@@ -423,7 +440,7 @@ length %>% filter(temperature %in% const_temp & species =="D") %>%
   geom_errorbar(aes(ymin = mean_length-se, ymax = mean_length+se), position = position_dodge(width = 0.5)) + 
   facet_wrap(vars(temperature)) +
   scale_color_manual(values = c("red", "blue")) + 
-  labs(y = "Average Length (um)", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
+  labs(y = "Average Length (mm)", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
   theme_bw()
 
 ```
@@ -537,8 +554,23 @@ lt.summary_factors %>% filter(species=="daphnia", temp_var == 0) %>%
   labs(y = "Host net reproductive rate", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
   theme_bw()
 ```
+```{r}
+yield_analysis <- mort %>% drop_na(inf) %>% mutate(spore_yield = ((spore_RAW*(spore_water_added+1))/8)*10000)
+yield_analysis %<>% select(-c(temp, resource, species))
+yield_analysis %<>% left_join(., lifespan, by = "tube", "ID")
+yield_analysis %<>% filter(inf_status.x=="I")
+```
 
 
+spore yield ~ body size
+```{r}
+yield_analysis %>% ggplot(.,aes(x = length, y = log(spore_yield))) + geom_point() + geom_smooth(method = "lm")
+```
+
+spore yield ~ lifespan
+```{r}
+yield_analysis %>% ggplot(.,aes(x = span, y = log(spore_yield))) + geom_point() + geom_smooth(method = "lm")
+```
 
 
 
