@@ -290,8 +290,6 @@ mean_span <- lifespan %>% group_by(ID) %>% summarize(mean_span = mean(span, na.r
                                                      inf_status = unique(inf_status),
                                                      species = species)
 
-mean_span %<>% filter(ID!="2V_1_D_I")
-
 mean_span$species <- factor(mean_span$species, levels = c("D", "C"))
 
 mean_span %>% ggplot(.,aes(x=ID, y=as.numeric(mean_span), fill=as.factor(resource))) +
@@ -554,6 +552,7 @@ lt.summary_factors %>% filter(species=="daphnia", temp_var == 0) %>%
   labs(y = "Host net reproductive rate", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
   theme_bw()
 ```
+
 ```{r}
 yield_analysis <- mort %>% drop_na(inf) %>% mutate(spore_yield = ((spore_RAW*(spore_water_added+1))/8)*10000)
 yield_analysis %<>% select(-c(temp, resource, species))
@@ -566,6 +565,8 @@ spore yield ~ body size
 ```{r}
 yield_analysis %>% ggplot(.,aes(x = length, y = log(spore_yield))) + geom_point() + geom_smooth(method = "lm")
 ```
+
+
 
 spore yield ~ lifespan
 ```{r}
