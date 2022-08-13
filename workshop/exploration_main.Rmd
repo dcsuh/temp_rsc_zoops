@@ -578,7 +578,7 @@ clutches <- fitness %>% filter(is.na(male)) %>% pivot_longer(.,8:52, names_to = 
 clutch_summ <- clutches %>% group_by(temp, resource, species, date) %>% 
   summarize(mean_clutch = mean(value, na.rm=T),
             sum_clutch = sum(value, na.rm=T)) 
-#clutch_summ %<>% mutate(date = mdy(date))
+clutch_summ %<>% mutate(date = mdy(date))
 clutch_summ %>% filter(species=="D" & temp %in% const_temp) %>% 
   ggplot(.,aes(x=date, y=mean_clutch, group=interaction(resource,temp), color = resource)) + 
   geom_point() + 
