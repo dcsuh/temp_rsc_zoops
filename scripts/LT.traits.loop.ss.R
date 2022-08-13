@@ -99,7 +99,7 @@ little.r.calculator = function(rdat){
   # had previously died should be blank (or NA) so they are removed from this mean
   
   #DCS note: daphnia and ceriodaphnia started on different dates so they must use different age.at.start
-  if(rdat$species=="cerio"){
+  if(unique(rdat$species=="cerio")){
     age.at.start <- 4
   }
   
