@@ -35,7 +35,7 @@ treatment_factors %<>% distinct()
 treatment_factors$ID <- factor(treatment_factors$ID, levels = newOrder)
 
 
-##Prevalence
+##Probability of Infection (originall called this prevalence but decided to change to probability of infection)
 prevalence <- mort %>% drop_na(inf) %>% filter(exposed==1) #remove observations with NA for infection status
 prevalence %<>% mutate(ID = paste(temp, resource, species,sep = "_"))
 
