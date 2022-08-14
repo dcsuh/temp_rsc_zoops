@@ -118,13 +118,13 @@ day_columns <- c("4/10/22", "4/11/22", "4/12/22", "4/13/22",
 fecundity <- inner_join(fitness,mort)
 day_columns <- c(which(names(fecundity) %in% day_columns))
 fitness_mat <- fecundity %>% select(day_columns)
-fecundity %<>% select(tube, ID, temp, resource, species, male, REMOVED, KBP, inf_status)
+fecundity %<>% select(tube, ID, temp, resource, species, male, REMOVED, KBP, inf)
 
 birth_sums <- rowSums(fitness_mat, na.rm = T)
 fecundity$tot_births <- birth_sums
 
 fecundity %<>% filter(is.na(REMOVED) & is.na(KBP)) %>% 
-  group_by(temp, resource, species, inf_status) %>% 
+  group_by(temp, resource, species, inf) %>% 
   summarize(mean_births = mean(tot_births, na.rm=T),
             var = var(tot_births, na.rm = T),
             se = sqrt(var(tot_births, na.rm = T)/n()))
