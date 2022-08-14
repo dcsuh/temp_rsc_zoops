@@ -63,9 +63,10 @@ prevalence %<>% left_join(.,prev_treatment_factors)
 
 ##Spore Yield
 spores <- mort %>% drop_na(inf) %>% filter(exposed==1) %>%
-  mutate(spore_yield = ((spore_RAW*(spore_water_added+1))/8)*10000) 
+  mutate(spore_conc = ((spore_RAW/8)*10000))
 #this doubles the spore count if the water was added because that would make it twice as dilute
 #spore yield is calculated by dividing total counted spores by 8 (number of cells used in hemocytomer) and then multiplying by 10000 to get spores/mL
+spores %<>% mutate(spore_yield = ifelse(spore_water_added==1,spore_conc*0.5,spore_conc*0.25))
 spores %<>% mutate(log_yield = log(spore_yield),ID = paste(temp, resource, species,sep = "_"))
 
 spores %<>% filter(spore_yield>0) %>% group_by(ID) %>% 
