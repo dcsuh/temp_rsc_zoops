@@ -11,6 +11,6 @@ prevalence %>% filter(temp %in% const_temp & species =="D") %>%
   geom_bar(stat = "identity", aes(fill = temp), width = 0.5, position = position_dodge(width = 0.5), color = "black") +
   geom_linerange(aes(ymax=conf$upper, ymin=conf$lower), position = position_dodge(width = 0.5), color = "black") +
   scale_fill_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
-  labs(y = "Prevalence", x = "Resource Concentration mgC/L", fill = "Temperature") + 
+  labs(y = "Probability of Infection", x = "Resource Concentration mgC/L", fill = "Temperature") + 
   theme_bw()
 
