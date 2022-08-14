@@ -12,7 +12,13 @@ install_if_necessary <- function(x) {
 
 
 # all the necessary packages go here
-pckg_names <- c("tidyverse", "magrittr", "here", "lubridate")
+pckg_names <- c("tidyverse", 
+                "magrittr", 
+                "here", 
+                "lubridate", 
+                "epitools",
+                "ggpubr",
+                "rstatix")
 
 # load/install packages
 lapply(pckg_names, 
@@ -29,5 +35,5 @@ golden <- 1.618
 outwidth <- c(8.7, 11.4, 17.8)
 unit <- "in"
 
-
-# load packages
+#Some useful vectors
+const_temp <- c("15", "20", "25")

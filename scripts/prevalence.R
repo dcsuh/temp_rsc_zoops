@@ -1,32 +1,16 @@
+##prevalence figure
+
 library(here)
 
 source(here("base","src.R"))
 
-mort <- readRDS(here("processed_data", "mortality.rds"))
 prevalence <- readRDS(here("processed_data", "prevalence.rds"))
-treatment_factors <- readRDS(here("processed_data", "treatment_factors.rds"))
 
-#effects of resource and temperature on prevalence
+prevalence %>% filter(temp %in% const_temp & species =="D") %>%
+  ggplot(.,aes(x=resource, y = prev, group = temp, color = temp)) +
+  geom_bar(stat = "identity", aes(fill = temp), width = 0.5, position = position_dodge(width = 0.5), color = "black") +
+  geom_linerange(aes(ymax=conf$upper, ymin=conf$lower), position = position_dodge(width = 0.5), color = "black") +
+  scale_fill_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
+  labs(y = "Prevalence", x = "Resource Concentration mgC/L", fill = "Temperature") + 
+  theme_bw()
 
-prev <- prevalence %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
-  geom_col(position="dodge") + 
-  labs(title = "Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + proj_theme
-
-
-#optional set prev threshold
-
-threshold = 3125
-
-prev_adj <- get_threshold(threshold=threshold)
-
-prev_adj_title <- paste("Threshold-adjusted Prevalence: Threshold = ",threshold, " spores", sep="")
-
-adjusted_prev <- prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
-  geom_col(position="dodge") + 
-  labs(title = prev_adj_title, fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + proj_theme
-
-save(prev, file = here("figures","prev.RData"))
-ggsave("prev.png", prev, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = here("figures"))
-
-save(adjusted_prev, file = here("figures","adjusted_prev.RData"))
-ggsave("adjusted_prev.png", adjusted_prev, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = here("figures"))

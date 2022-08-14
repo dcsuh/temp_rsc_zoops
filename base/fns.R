@@ -9,3 +9,4 @@ get_threshold <- function(threshold, data = mort, factors = treatment_factors){
   prev_adj %<>% left_join(.,treatment_factors)
   return(prev_adj)
 }
+
