@@ -39,11 +39,11 @@ if(dir.exists(here("processed_data")) == FALSE) {
 }
 
 # please save data after this line 
-saveRDS(lifespan, file = here("processed_data","lifespan.rds"))
-saveRDS(fitness, file = here("processed_data","fitness.rds"))
-saveRDS(mort, file = here("processed_data","mortality.rds"))
-saveRDS(treatments, file = here("processed_data","treatment.rds"))
-saveRDS(treatment_factors, file = here("processed_data","treatment_factors.rds"))
-saveRDS(prevalence, file = here("processed_data", "prevalence.rds"))
+saveRDS(lifespan, file = here("pilot","processed_data","lifespan.rds"))
+saveRDS(fitness, file = here("pilot","processed_data","fitness.rds"))
+saveRDS(mort, file = here("pilot","processed_data","mortality.rds"))
+saveRDS(treatments, file = here("pilot","processed_data","treatment.rds"))
+saveRDS(treatment_factors, file = here("pilot","processed_data","treatment_factors.rds"))
+saveRDS(prevalence, file = here("pilot","processed_data", "prevalence.rds"))
 
 
