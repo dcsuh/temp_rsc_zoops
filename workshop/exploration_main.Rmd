@@ -56,6 +56,12 @@ Read in pilot data
 # treatments <- read_csv(here("raw_data/treatments.csv"))
 fitness <- read_csv(here("raw_data/main_fitness_data.csv"))
 mort <- readRDS(here("raw_data/main_mort_edit.rds"))
+
+#mort %<>% filter(exposed + inf != 1)
+#this line should remove all individuals who were exposed but not infected
+#without this line, exposed but infected individuals are included with unexposed controls
+#I ran this line as a test to see if it changed figures and it didn't
+#so we'll just go ahead with including them for now as more infection-free individuals
 ```
 
 main_fitness_data.csv includes just fitness data and some metadata
