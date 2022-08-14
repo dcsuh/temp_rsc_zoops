@@ -200,6 +200,7 @@ lt.summary_factors$ID <- factor(lt.summary_factors$ID, levels = c(   "daphnia_15
                                                                      "cerio_25_1_0",     "cerio_25_1_1"))
 lt.summary_factors$inf_status <- as.logical(lt.summary_factors$inf_status)
 
+saveRDS(lt.summary_factors, file = here("processed_data","lt_summary.rds"))
 
 lt.summary_factors %>% ggplot(.,aes(x=ID,y=S.r,color=inf_status, shape=species)) + 
   geom_point() + 
