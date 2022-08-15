@@ -28,8 +28,25 @@ fitness$resource <- as.factor(fitness$resource)
 
 
 #remove males, missing, removed, and killed by pipette
+mort %<>% filter(!male %in% c(1) & !missing %in% c(1) & species == "D")
+```
+
+Prep infection probability data
+```{r}
+prevalence <- mort %>% drop_na(inf) %>% filter(exposed==1 & temp %in% const_temp) #remove observations with NA for infection status
+```
+
+```{r}
+inf_prob_glm <- glm(inf ~ temp * resource, data = prevalence, family = binomial)
+
+summary(inf_prob_glm)
+```
+
+Everything after this uses the most filtered dataset
+```{r}
 mort %<>% filter(!male %in% c(1) & !missing %in% c(1) & !removed %in% c(1) & !KBP %in% c(1) & species == "D")
 ```
+
 
 Prep lifespan data
 ```{r}
