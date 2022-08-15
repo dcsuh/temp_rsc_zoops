@@ -44,7 +44,7 @@ summary(inf_prob_glm)
 
 Everything after this uses the most filtered dataset
 ```{r}
-mort %<>% filter(!male %in% c(1) & !missing %in% c(1) & !removed %in% c(1) & !KBP %in% c(1) & species == "D")
+mort %<>% filter(!male %in% c(1) & !missing %in% c(1) & !removed %in% c(1) & !KBP %in% c(1) & temp %in% const_temp & species == "D")
 ```
 
 
@@ -95,7 +95,14 @@ spores %<>% inner_join(.,lifespan)
 
 spore yield anova
 ```{r}
-spores_lm <- lm(spore_yield ~ span * length + resource + temp, data = spores)
+spores_aov <- aov(spore_yield ~ resource + temp, data = spores)
+
+summary(spores_aov)
+```
+
+spore yield lm
+```{r}
+spores_lm <- lm(spore_yield ~ span * length, data = spores)
 
 summary(spores_lm)
 
