@@ -83,7 +83,7 @@ shapiro_test(residuals(body_size_aov))
 
 Prep data for spore yield
 ```{r}
-spores <- mort %>% drop_na(inf) %>% filter(exposed==1 & inf==1) %>%
+spores <- mort %>% drop_na(inf) %>% filter(exposed==1 & inf==1 & temp %in% const_temp & species == "D") %>%
   mutate(spore_conc = ((spore_RAW/8)*10000))
 #this doubles the spore count if the water was added because that would make it twice as dilute
 #spore yield is calculated by dividing total counted spores by 8 (number of cells used in hemocytomer) and then multiplying by 10000 to get spores/mL
@@ -95,7 +95,7 @@ spores %<>% inner_join(.,lifespan)
 
 spore yield anova
 ```{r}
-spores_lm <- lm(spore_yield ~ span * length, data = spores)
+spores_lm <- lm(spore_yield ~ span * length + resource + temp, data = spores)
 
 summary(spores_lm)
 
