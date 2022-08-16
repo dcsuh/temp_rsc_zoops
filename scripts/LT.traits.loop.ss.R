@@ -198,7 +198,7 @@ lt.summary_factors$ID <- factor(lt.summary_factors$ID, levels = c(   "daphnia_15
                                                                      "daphnia_25_0.5_0", "daphnia_25_0.5_1", 
                                                                      "daphnia_25_1_0",   "daphnia_25_1_1",     
                                                                      "cerio_25_1_0",     "cerio_25_1_1"))
-lt.summary_factors$inf_status <- as.logical(lt.summary_factors$inf_status)
+lt.summary_factors$inf_status <- ifelse(lt.summary_factors$inf_status==1,"I","U")
 
 saveRDS(lt.summary_factors, file = here("processed_data","lt_summary.rds"))
 
