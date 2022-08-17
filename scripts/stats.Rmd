@@ -45,13 +45,13 @@ summary(inf_prob_glm)
 prevalence grouped by temp
 ```{r}
 prev_15 <- prevalence %>% filter(temp==15)
-inf_glm_15 <- glm(inf ~ resource, data = prev_15, family = binomial)
+inf_glm_15 <- glm(inf ~ as.numeric(resource), data = prev_15, family = binomial)
 
 prev_20 <- prevalence %>% filter(temp==20)
-inf_glm_20 <- glm(inf ~ resource, data = prev_20, family = binomial)
+inf_glm_20 <- glm(inf ~ as.numeric(resource), data = prev_20, family = binomial)
 
 prev_25 <- prevalence %>% filter(temp==25)
-inf_glm_25 <- glm(inf ~ resource, data = prev_25, family = binomial)
+inf_glm_25 <- glm(inf ~ as.numeric(resource), data = prev_25, family = binomial)
 
 summary(inf_glm_15)
 summary(inf_glm_20)
