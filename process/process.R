@@ -115,7 +115,8 @@ day_columns <- c("4/10/22", "4/11/22", "4/12/22", "4/13/22",
                  "5/8/22", "5/9/22", "5/10/22", "5/11/22",
                  "5/12/22", "5/13/22", "5/14/22", "5/15/22",
                  "5/16/22", "5/17/22", "5/18/22", "5/19/22",
-                 "5/20/22", "5/21/22", "5/22/22", "5/23/22")
+                 "5/20/22", "5/21/22", "5/22/22", "5/23/22", 
+                 "5/24/22")
 fecundity <- inner_join(fitness,mort)
 day_columns <- c(which(names(fecundity) %in% day_columns))
 fitness_mat <- fecundity %>% select(day_columns)
@@ -130,6 +131,10 @@ fecundity %<>% filter(is.na(REMOVED) & is.na(KBP)) %>%
             var = var(tot_births, na.rm = T),
             se = sqrt(var(tot_births, na.rm = T)/n()))
 fecundity$species <- factor(fecundity$species,  levels = c("D", "C"))
+
+clutches <- fitness %>% filter(is.na(male)) %>%
+  pivot_longer(., day_columns, names_to = "date", values_to = "clutch") %>%
+  select(-male)
 
 
 # please process data before this line 
