@@ -30,3 +30,4 @@ for (i in 1:nrow(mort)){
 }
 
 saveRDS(mort, file = here("raw_data", "main_mort_edit.rds"))
+write_csv(mort, file = here("raw_data", "main_mort_edit.csv"))
