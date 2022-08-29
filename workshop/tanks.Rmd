@@ -76,24 +76,49 @@ ggplot(data,aes(x=sample_date,y=cerio_uninf, color=temp))+ geom_point() + geom_l
 ```
 
 
+Average counts over time
 
 ```{r}
-summary <- data %>% group_by(treatment, sample_date) %>% summarize(mean_juvenile = mean(juvenile_daphnia_uninf),
-                                                                mean_adult = mean(adult_daphnia_uninf),
-                                                                mean_cerio = mean(cerio_uninf),
-                                                                mean_daphnia = mean(daphnia),
-                                                                mean_total = mean(total),
-                                                                temp = temp,
-                                                                community = community)
+mean_counts <- data %>% mutate(juve = juvenile_daphnia_inf + juvenile_daphnia_uninf,
+                               adult = adult_daphnia_inf + adult_daphnia_uninf,
+                               cerio = cerio_inf + cerio_uninf)
+
+summary <- mean_counts %>% group_by(treatment, sample_date, temp, community) %>% summarize(mean_juve = mean(juve),
+                                                                          juve_var = var(juve),
+                                                                          juve_se = sqrt(var(juve)/length(juve)),
+                                                                          mean_adult = mean(adult),
+                                                                          adult_var = var(adult),
+                                                                          adult_se = sqrt(var(adult)/length(adult)),
+                                                                          mean_cerio = mean(cerio),
+                                                                          cerio_var = var(cerio),
+                                                                          cerio_se = sqrt(var(cerio)/length(cerio)),
+                                                                          mean_daphnia = mean(daphnia),
+                                                                          daphnia_var = var(daphnia),
+                                                                          daphnia_se = sqrt(var(daphnia)/length(daphnia)),
+                                                                          mean_total = mean(total),
+                                                                          total_var = var(total),
+                                                                          total_se = sqrt(var(total)/length(total)))
 ```
 
 
 ```{r}
-ggplot(summary, aes(x=sample_date,y=mean_total, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_grid(rows= vars(temp), cols = vars(community)) 
+ggplot(summary, aes(x=sample_date,y=mean_total, color = temp)) + 
+  geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_total-total_se, ymax = mean_total+total_se)) +
+  facet_grid(rows = vars(temp), cols = vars(community)) 
 
-ggplot(summary, aes(x=sample_date,y=mean_daphnia, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_grid(rows= vars(temp), cols = vars(community)) 
+ggplot(summary, aes(x=sample_date,y=mean_daphnia, color = temp)) + 
+  geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_daphnia-daphnia_se, ymax = mean_daphnia+daphnia_se)) +
+  facet_grid(rows = vars(temp), cols = vars(community)) 
 
-ggplot(summary, aes(x=sample_date,y=mean_cerio, color = temp)) + geom_point() + geom_line(aes(group=treatment)) + facet_grid(rows= vars(temp), cols = vars(community)) 
+ggplot(summary, aes(x=sample_date,y=mean_cerio, color = temp)) + 
+  geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_cerio-cerio_se, ymax = mean_cerio+cerio_se)) +
+  facet_grid(rows = vars(temp), cols = vars(community)) 
 ```
 
 Daphnia:cerio ratio
