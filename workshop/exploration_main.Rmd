@@ -46,12 +46,14 @@ $$
 \text C = 0.1\ mg\ \text C/L \\
 $$
 
+
+Use bootstrap method to estimate host net reproductive rate from fecundity data using euler equation. see script for details
 ```{r, warning = F}
 source(here("scripts","LT.traits.loop.ss.R"))
 ```
 
 
-Read in pilot data
+Read in data
 ```{r, message=F}
 # treatments <- read_csv(here("raw_data/treatments.csv"))
 fitness <- read_csv(here("raw_data/main_fitness_data.csv"))
@@ -101,7 +103,7 @@ prev_threshold = 3125
 ```
 
 
-One difficulty that I faced during this pilot was confidently deeming an individual infected or not when spore yield was very low. At high spore yield, I can be confident that an individual is infected because visual inspection under the dissecting scope makes this clear and hemocytometry will clearly show a large volume of spores. At low spore yield, it can be difficult to assess infectivity upon visual inspection and hemocytometry is made difficult because of algae in the solution. It is possible that I am incorrectly identifying algal cells as spores and these can cause an individual to be marked as infected when they are not. As an initial test of this, I am comparing my initially recorded prevalence to an adjusted prevalence that only counts individuals as infected if their spore yield exceeds a certain threshold (i.e. > `r prev_threshold`; this is equivalent to counting 10 spores during hemocytometry)
+<!-- One difficulty that I faced during this pilot was confidently deeming an individual infected or not when spore yield was very low. At high spore yield, I can be confident that an individual is infected because visual inspection under the dissecting scope makes this clear and hemocytometry will clearly show a large volume of spores. At low spore yield, it can be difficult to assess infectivity upon visual inspection and hemocytometry is made difficult because of algae in the solution. It is possible that I am incorrectly identifying algal cells as spores and these can cause an individual to be marked as infected when they are not. As an initial test of this, I am comparing my initially recorded prevalence to an adjusted prevalence that only counts individuals as infected if their spore yield exceeds a certain threshold (i.e. > `r prev_threshold`; this is equivalent to counting 10 spores during hemocytometry) -->
 
 
 Recorded Prevalence
