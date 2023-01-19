@@ -1,7 +1,6 @@
 ---
 title: "Exploration"
 author: "Daniel Suh"
-date: "11/15/2021"
 output: html_document
 ---
 
@@ -21,7 +20,8 @@ library(here)
 
 ### Introduction
 
-The primary purpose of this pilot was to determine the average lifespan of *Metschnikowia bicuspidata*-infected *Daphnia dentifera* under different temperature and resource conditions. These data will be helpful in designing the main experiment where we will be attempting to measure the within-host production of the parasite in the host under different temperature and resource conditions. This research will be helpful for understanding how changes in environmental conditions such as temperature and resource will modulate the growth of the parasite in individual hosts. If temperature and resources cause variations in parasite growth within individuals then this can have implications on epidemics in the larger population. Another purpose of this research is to understand how plastic host competence (the ability to generate new infections) is under different conditions. Should we treat host competence as a robust trait that can be attributed to host species or is this still highly variable within a species and should be considered a flexible and plastic trait that should be attributed to the host individual? These distinctions can have implications for understanding how likely epidemics are to start in host populations and this becomes even more complex when considering generalist parasites.
+Interactions between hosts and their parasites can be moderated by their environment. Under varying resource conditions, hosts can improve their resistance or tolerance of parasites. Under varying temperature conditions, host responses to infection may also vary. While effects of temperature and resource conditions are well understood to have an effect on these interactions, it is less well understood, to what extent, these variables may interact to influence host-parasite interactions. Using the host *Daphnia dentifera* and the fungal parasite *Metschnikowia bicuspidata*, we can study the effects of resource and temperature conditions on a model system for studying host-parasite interactions. Are temperature effects consistent across different resource gradients and vice versa? This model system will allow for measurements of the probability of infection, parasite intensity, and effects of the parasite on host lifespan and body size. Furthermore, these data can be used to parameterize individual-based models of infection which may allow for scaling of these results to the population or community level. Altogether, this experiment allows us to answer the following questions: How does host lifespan, fecundity, and body size respond to infection under varying temperature and resource conditions? How does parasite intensity and infection probability respond to variation in temperature and resource conditions? Are temperature and resource effects consistent across a fully factorial design or do they interact?
+
 
 ### Hypotheses
 
