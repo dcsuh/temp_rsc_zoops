@@ -98,31 +98,34 @@ fitness$resource <- as.factor(fitness$resource)
 
 <!-- ### Summarize prevalence -->
 
-```{r, include=F}
-prev_threshold = 3125
-```
+<!-- ```{r, include=F} -->
+<!-- prev_threshold = 3125 -->
+<!-- ``` -->
 
 
 <!-- One difficulty that I faced during this pilot was confidently deeming an individual infected or not when spore yield was very low. At high spore yield, I can be confident that an individual is infected because visual inspection under the dissecting scope makes this clear and hemocytometry will clearly show a large volume of spores. At low spore yield, it can be difficult to assess infectivity upon visual inspection and hemocytometry is made difficult because of algae in the solution. It is possible that I am incorrectly identifying algal cells as spores and these can cause an individual to be marked as infected when they are not. As an initial test of this, I am comparing my initially recorded prevalence to an adjusted prevalence that only counts individuals as infected if their spore yield exceeds a certain threshold (i.e. > `r prev_threshold`; this is equivalent to counting 10 spores during hemocytometry) -->
 
 
-Recorded Prevalence
+# Recorded Prevalence
+I use the term prevalence but this is more accurately "probability of infection". I use probability of infection in any writing or presentations, but I started using prevalence when first writing this script so this is the name used for objects in the script.
 ```{r}
 
-inf_status <- mort %>% select(tube,inf)
+inf_status <- mort %>% select(tube,inf) #make vector with infection status for all tubes
 
-mort %<>% filter(!male %in% c(1) & !missing %in% c(1)) %>% select(-c(male,missing))
+mort %<>% filter(!male %in% c(1) & !missing %in% c(1)) %>% select(-c(male,missing)) #filter out individuals that were male or went missing through expt
 
 prevalence <- mort %>% drop_na(inf) #remove observations with NA for infection status
 
 spores <- mort %>% drop_na(inf) %>% mutate(spore_yield = ((spore_RAW*(spore_water_added+1))/8)*10000) 
 #this doubles the spore count if the water was added because that would make it twice as dilute
+#the volume of solvent was sometimes doubled or tripled depending on the density of the solution
+#we do this because a high density solution is much more difficult to count
 #spore yield is calculated by dividing total counted spores by 8 (number of cells used in hemocytomer) and then multiplying by 10000 to get spores/mL
-spores %<>% filter(spore_yield>0)
+spores %<>% filter(spore_yield>0) #filter out any individuals that were not infected (i.e. had no spore yield)
 spores %<>% mutate(log_yield = log(spore_yield),ID = paste(temp, resource, species,sep = "_"))
 
 
-mort %<>% mutate(inf_status = ifelse(inf==1, "I", "U")) %>% filter(inf_status %in% c("I","U"))
+mort %<>% mutate(inf_status = ifelse(inf==1, "I", "U")) %>% filter(inf_status %in% c("I","U")) #add variable for infection status as factor of I and U
 
 mort %<>% mutate(ID = paste(temp, resource, species, inf_status,sep = "_"))
 
@@ -131,7 +134,7 @@ newOrder <- c("15_0.1_D_U","15_0.1_D_I","15_0.5_D_U","15_0.5_D_I","15_1_D_U","15
               "20_0.1_D_U","20_0.1_D_I","20_0.5_D_U","20_0.5_D_I","20_1_D_U","20_1_D_I",
               "25_0.1_D_U","25_0.1_D_I","25_0.5_D_U","25_0.5_D_I","25_1_D_U","25_1_D_I",
               "15_1_C_U","15_1_C_I","20_1_C_U","20_1_C_I","25_1_C_U","25_1_C_I",
-              "2V_1_D_U","2V_1_D_I","6V_1_D_U","6V_1_D_I","14V_1_D_U","14V_1_D_I")
+              "2V_1_D_U","2V_1_D_I","6V_1_D_U","6V_1_D_I","14V_1_D_U","14V_1_D_I") #had to manually reorder treatment ID's
 
 mort$ID <- factor(mort$ID, levels = newOrder)
 
@@ -149,7 +152,7 @@ prevOrder <- c("15_0.1_D","15_0.5_D","15_1_D",
               "20_0.1_D","20_0.5_D","20_1_D",
               "25_0.1_D","25_0.5_D","25_1_D",
               "15_1_C","20_1_C","25_1_C",
-              "2V_1_D","6V_1_D","14V_1_D")
+              "2V_1_D","6V_1_D","14V_1_D") #manually reorder treament ID's
 
 prevalence$ID <- factor(prevalence$ID, levels = prevOrder)
 
@@ -160,7 +163,7 @@ prev_treatment_factors %<>% rename(.,temperature = temp)
 prev_treatment_factors %<>% distinct()
 prev_treatment_factors$ID <- factor(prev_treatment_factors$ID, levels = prevOrder)
 
-
+#make figure for probability of infection
 prevalence %<>% 
   group_by(ID) %>% 
   summarize(n = n(), 
@@ -178,6 +181,8 @@ prevalence %>% filter(resource==1) %>% ggplot(.,aes(x=as.factor(ID),y=prev)) +
   labs(title = "Prevalence for temperature treatments", x = "Treatment", y = "Prevalence") + theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
+
+
 
 Adjusted prevalence
 # ```{r}
@@ -203,7 +208,9 @@ Summarize fitness
 #   labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal()
 # ```
 
-Summarize host body size (need to figure out mag correction)
+# Summarize host body size
+Host length corrections were done manually in the excel sheet to account for the different magnifications used when measuring length
+The microscope uses an eyepiece ruler so the actual length had to be referenced using a micrometer under the scope
 ```{r}
 length <- mort %>% group_by(ID) %>% 
   summarize(n=n(), 
