@@ -69,6 +69,8 @@ mort <- readRDS(here("raw_data/main_mort_edit.rds"))
 main_fitness_data.csv includes just fitness data and some metadata
 main_fitness_edit.csv should be the same thing with more columns already added
   - probably better to keep these separate and merge in script but whatever
+main_mort_edit.rds is made from the length_correction.R script in /process
+  - this file includes the corrected lengths
 
 
 Declare some variables that will be used throughout
@@ -184,32 +186,32 @@ prevalence %>% filter(resource==1) %>% ggplot(.,aes(x=as.factor(ID),y=prev)) +
 
 
 
-Adjusted prevalence
-# ```{r}
-# mort %<>% mutate(inf_adj = ifelse(spore_yield>prev_threshold, 1, 0))
-# prev_adj <- mort %>% drop_na(inf_adj) #remove observations with NA for inf_adj
-# prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n()) 
-# prev_adj %<>% left_join(.,treatment_factors)
-# prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) +
-#   geom_col(position="dodge") +
-#   labs(title = "Threshold-adjusted Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal()
-# ```
+<!-- Adjusted prevalence -->
+<!-- # ```{r} -->
+<!-- # mort %<>% mutate(inf_adj = ifelse(spore_yield>prev_threshold, 1, 0)) -->
+<!-- # prev_adj <- mort %>% drop_na(inf_adj) #remove observations with NA for inf_adj -->
+<!-- # prev_adj %<>% group_by(ID) %>% summarize(n = n(), prev = sum(inf_adj)/n())  -->
+<!-- # prev_adj %<>% left_join(.,treatment_factors) -->
+<!-- # prev_adj %>% ggplot(.,aes(x=as.factor(temperature),y=prev, fill=as.factor(resource))) + -->
+<!-- #   geom_col(position="dodge") + -->
+<!-- #   labs(title = "Threshold-adjusted Prevalence", fill = "Resource mgC/L", x = "Temperature", y = "Prevalence") + theme_minimal() -->
+<!-- # ``` -->
 
 
-Summarize fitness
-# ```{r}
-# fit_by_ID_replicate <- fitness %>% group_by(ID, replicate) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs
-# fit_average <- fit_by_ID_replicate %>% group_by(ID) %>% 
-#   summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
-# fit_average %<>% left_join(.,treatment_factors)
-# fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
-#   geom_col(position="dodge") + 
-#   geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
-#   labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal()
-# ```
+<!-- Summarize fitness -->
+<!-- # ```{r} -->
+<!-- # fit_by_ID_replicate <- fitness %>% group_by(ID, replicate) %>% summarize(total_fit = sum(fitness, na.rm = T)) # removed NAs -->
+<!-- # fit_average <- fit_by_ID_replicate %>% group_by(ID) %>% -->
+<!-- #   summarize(n = n(), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs -->
+<!-- # fit_average %<>% left_join(.,treatment_factors) -->
+<!-- # fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) + -->
+<!-- #   geom_col(position="dodge") + -->
+<!-- #   geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) + -->
+<!-- #   labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal() -->
+<!-- # ``` -->
 
 # Summarize host body size
-Host length corrections were done manually in the excel sheet to account for the different magnifications used when measuring length
+Host length corrections were done using the script length_correction.R in /process
 The microscope uses an eyepiece ruler so the actual length had to be referenced using a micrometer under the scope
 ```{r}
 length <- mort %>% group_by(ID) %>% 
@@ -227,7 +229,7 @@ length %>% ggplot(., aes(x=ID, y=mean_length, fill=as.factor(resource))) +
 ```
 
 
-Summarize spore yield
+# Summarize spore yield
 ```{r}
 
 spores %<>% filter(spore_yield>0) %>% group_by(ID) %>% 
@@ -273,17 +275,9 @@ spores %>%
 
 ```
 
-Summarize spore yield * infection prevalence
-Just a test. Need to do calculation on infection prevalence to estimate transmission potential.
-```{r}
-# spore_prev <- left_join(spores, prevalence)
-# spore_prev %<>% mutate(.,potential = mean_yield*prev)
-# spore_prev %>% ggplot(.,aes(x=ID, y=potential)) + geom_col()
-```
 
 
-
-Summarize lifespan for all
+# Summarize lifespan for all
 ```{r}
 lifespan <- mort %>% filter(!removed %in% c(1) & !KBP %in% c(1)) %>% select(-c(removed,KBP))
 lifespan %<>% select(tube, ID, mortality_day)
@@ -325,36 +319,6 @@ mean_span %>% filter(temperature %in% const_temp) %>%
 # 
 # lifespan %>% drop_na() %>% ggplot(.,aes(x=ID, y = as.numeric(span), fill=as.factor(resource))) + geom_boxplot(position = "dodge") + 
 #   stat_summary(geom="text", fun=quantile, aes(label=sprintf("%1.1f", ..y..), color=factor(ID)), position=position_nudge(y=0.35), size=3.5) + theme_minimal() + guides(color=F) + labs(title = "Host lifespan", y = "days", fill = "Resource mgC/L")
-```
-
-
-```{r}
-
-```
-
-
-
-
-```{r}
-# fitness %<>% select(-c(temp:KBP))
-# fitness %<>% pivot_longer(.,cols=2:46, names_to = "date", values_to = "fitness")
-```
-
-THIS IS ALL SCREWED UP
-```{r}
-# fitness %<>% left_join(.,mort, by="tube")
-# fit_by_ID_date <- fitness %>% group_by(ID, tube) %>% summarize(daily_fit = sum(fitness, na.rm = T), ID=ID, n=n()) # removed NAs
-# fit_average <- fitness %>% group_by(ID, tube) %>%
-#   summarize(n = n(),total_fit = sum(fitness, na.rm = T), mean_fit = mean(total_fit, na.rm = T), var = var(total_fit, na.rm = T), se = sqrt(var(total_fit, na.rm = T)/n())) # remove NAs
-# fit_average %<>% left_join(.,treatment_factors)
-# 
-# fit_average$ID <- factor(fit_average$ID, levels = newOrder)
-# 
-# fit_average %>% ggplot(., aes(x=ID, y=mean_fit, fill=as.factor(resource))) +
-#   geom_col(position="dodge") +
-#   geom_linerange(aes(ymin = mean_fit-se, ymax = mean_fit+se)) +
-#   labs(title = "Average Total Fitness w/ SE", fill = "Resource mgC/L", x = "ID", y="Average Fitness") + theme_minimal() +
-#   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 
