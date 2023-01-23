@@ -78,6 +78,8 @@ Declare some variables that will be used throughout
 const_temp <- c("15", "20", "25")
 mort$resource <- as.factor(mort$resource)
 fitness$resource <- as.factor(fitness$resource)
+source(here("base","src.R"))
+
 ```
 
 
@@ -522,14 +524,17 @@ fecundity %>% filter(temp %in% const_temp & species == "D") %>%
 host growth rate (r)
 - fix starting age for ceriodaphnia
 ```{r}
-lt.summary_factors %>% filter(species=="daphnia", temp_var == 0) %>% 
-  ggplot(.,aes(x=as.factor(resource),y=S.r,color=inf_status)) + 
+little_r_U <- lt.summary_factors %>% filter(species=="daphnia", temp_var == 0, inf_status=="U") %>% 
+  ggplot(.,aes(x=as.factor(resource),y=S.r, color = inf_status)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_linerange(aes(ymax=S.r.975, ymin=S.r.025), position = position_dodge(width = 0.5)) +
   scale_color_manual(values = c("blue", "red")) + 
   facet_wrap(. ~ temp_id, nrow = 1) + 
-  labs(y = "Host net reproductive rate", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
-  theme_bw()
+  labs(y = "Host net reproductive rate", x = "Resource Concentration mgC/L", color = "Infection\nStatus"  ) +
+  theme_set(theme_bw(base_size = 20))
+
+ggsave("little_r.png", little_r_U, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = "/Users/dcsuh/Downloads")
+
 ```
 
 ```{r}
