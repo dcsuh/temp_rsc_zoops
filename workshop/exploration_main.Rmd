@@ -520,10 +520,9 @@ fecundity %>% filter(temp %in% const_temp & species == "D") %>%
 
 
 host growth rate (r)
-- fix starting age for ceriodaphnia
 ```{r}
-little_r_U <- lt.summary_factors %>% filter(species=="daphnia", temp_var == 0, inf_status=="U") %>% 
-  ggplot(.,aes(x=as.factor(resource),y=S.r, color = inf_status)) + 
+little_r <- lt.summary_factors  %>% 
+  ggplot(.,aes(x=as.factor(resource),y=S.r, color = inf_status, shape = species)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_linerange(aes(ymax=S.r.975, ymin=S.r.025), position = position_dodge(width = 0.5)) +
   scale_color_manual(values = c("blue", "red")) + 
@@ -531,8 +530,7 @@ little_r_U <- lt.summary_factors %>% filter(species=="daphnia", temp_var == 0, i
   labs(y = "Host net reproductive rate", x = "Resource Concentration mgC/L", color = "Infection\nStatus"  ) +
   theme_set(theme_bw(base_size = 20))
 
-ggsave("little_r.png", little_r_U, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = "/Users/dcsuh/Downloads")
-
+little_r
 ```
 
 ```{r}
