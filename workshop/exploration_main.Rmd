@@ -47,10 +47,7 @@ $$
 $$
 
 
-Use bootstrap method to estimate host net reproductive rate from fecundity data using euler equation. see script for details
-```{r, warning = F}
-source(here("scripts","LT.traits.loop.ss.R"))
-```
+
 
 
 Read in data
@@ -58,6 +55,7 @@ Read in data
 # treatments <- read_csv(here("raw_data/treatments.csv"))
 fitness <- read_csv(here("raw_data/main_fitness_data.csv"))
 mort <- readRDS(here("raw_data/main_mort_edit.rds"))
+lt.summary_factors <- readRDS(here("processed_data/lt_summary.rds"))
 
 #mort %<>% filter(exposed + inf != 1)
 #this line should remove all individuals who were exposed but not infected
