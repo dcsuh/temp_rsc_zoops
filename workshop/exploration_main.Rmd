@@ -782,17 +782,17 @@ Independence of observations: predictor variables shouldn't rely on each other a
 Normally-distributed dependent variable
  - need to make some histograms to check this
 
-histograms of dependent variables 
-# ```{r}
+histograms of dependent variables
+```{r}
 # lifespan %>% ggplot(.,aes(x=span)) + geom_histogram() + facet_grid(rows=vars(ID))
 # mort %>% ggplot(.,aes(x=spore_yield)) + geom_histogram() + facet_grid(rows=vars(ID))
 # fitness %>% ggplot(.,aes(x=fitness)) + geom_histogram() + facet_grid(rows=vars(ID))
 # mort %>% ggplot(.,aes(x=length)) + geom_histogram() + facet_grid(rows=vars(ID))
-# ```
-# close enough?
-# 
-# ANOVA
-# ```{r}
+```
+close enough?
+
+ANOVA
+```{r}
 # spores_anova <- left_join(mort,treatment_factors,by="ID")
 # spores_aov <-  aov(spore_yield ~ resource + temperature, data = spores_anova)
 # spores_aov_interaction <- aov(spore_yield ~ resource * temperature, data = spores_anova)
@@ -802,9 +802,8 @@ histograms of dependent variables
 # 
 # broom::glance(spores_aov)
 # broom::glance(spores_aov_interaction)
-# ```
-# 
-# 
+```
+
 # *Seems like the outputs for the SEMs in markdown files just come out weird. not sure what is up with that but the model summaries should be executed in the console*
 # 
 # *Actually it just kind of looks like the results get split up into separate sections panels.*

@@ -23,9 +23,10 @@ fitness <- read_csv(here("raw_data/main_fitness_data.csv"))
 mort <- readRDS(here("raw_data/main_mort_edit.rds"))
 
 #change classes as necessary
-mort$resource <- as.factor(mort$resource)
-fitness$resource <- as.factor(fitness$resource)
-
+mort$resource_f <- as.factor(mort$resource)
+fitness$resource_f <- as.factor(fitness$resource)
+mort$temp_c <- as.numeric(mort$temp)
+fitness$resource_c <- as.numeric(fitness$temp)
 
 #remove males, missing, removed, and killed by pipette
 mort %<>% filter(!male %in% c(1) & !missing %in% c(1) & species == "D")
@@ -36,13 +37,22 @@ Prep infection probability data
 prevalence <- mort %>% drop_na(inf) %>% filter(exposed==1 & temp %in% const_temp) #remove observations with NA for infection status
 ```
 
-```{r}
-inf_prob_glm <- glm(inf ~ temp * resource, data = prevalence, family = binomial)
 
-summary(inf_prob_glm)
+GLM with predictor variables treated as continuous
+```{r}
+inf_prob_glm_c <- glm(inf ~ temp_c * resource, data = prevalence, family = binomial)
+
+summary(inf_prob_glm_c)
+```
+GLM with predictor variables treated as factor
+```{r}
+inf_prob_glm_f <- glm(inf ~ temp * resource_f, data = prevalence, family = binomial)
+
+summary(inf_prob_glm_f)
 ```
 
-prevalence grouped by temp
+
+Prevalence grouped by temp
 ```{r}
 prev_15 <- prevalence %>% filter(temp==15)
 inf_glm_15 <- glm(inf ~ as.numeric(resource), data = prev_15, family = binomial)
