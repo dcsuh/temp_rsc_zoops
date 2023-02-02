@@ -22,7 +22,7 @@ read data
 ```{r, message = F}
 meta <- read_csv(here("raw_data/tank_metadata.csv"))
 counts <- read_csv(here("raw_data/tank_counts.csv"))
-#ysi <- read_csv(here("raw_data/ysi_data.csv"),locale = locale(encoding = "latin1"))
+ysi <- read_csv(here("raw_data/ysi_data.csv"),locale = locale(encoding = "latin1"))
 ```
 
 
@@ -146,7 +146,7 @@ size_ratio %>% filter(community %in% c("D", "DCM", "DM")) %>% ggplot(., aes(x=sa
 ```{r}
 size_ratio_summ <- size_ratio %>% group_by(treatment, sample_date) %>% summarize(mean_perc = mean(j_ratio), temp = temp)
 
-ggplot(., aes(x=sample_date, y=j_ratio, color = temp)) + geom_point()
+#ggplot(size_ratio_summ, aes(x=sample_date, y=j_ratio, color = temp)) + geom_point()
 ```
 
 
