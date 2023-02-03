@@ -6,6 +6,8 @@ source(here("base","src.R"))
 
 lifespan <- readRDS(here("processed_data", "lifespan.rds"))
 
+#lifespan data includes information about exposure but these summarized data pool all uninfected (exposed and unexposed) individuals together
+#i.e. effects of exposure are not considered — unexposed and exposed uninfecteds are treated the same
 
 lifespan_fig <- lifespan %>% filter(temp %in% const_temp & species == "D") %>%
   ggplot(.,aes(x=resource, y = as.numeric(mean_span),color = inf_status)) + 

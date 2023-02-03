@@ -1,0 +1,45 @@
+---
+title: "cerio"
+author: "Daniel Suh"
+date: "2023-02-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=F}
+library(here)
+
+source(here("base","src.R"))
+```
+
+```{r}
+fecundity <- readRDS(here("processed_data", "fecundity.rds"))
+length <- readRDS(here("processed_data", "length.rds"))
+lifespan <- readRDS(here("processed_data", "lifespan.rds"))
+lt_summary <- readRDS(here("processed_data", "lt_summary.rds"))
+prevalence <- readRDS(here("processed_data", "prevalence.rds"))
+spore_yield <- readRDS(here("processed_data", "spore_yield.rds"))
+```
+
+lifespan 
+currently, 
+```{r}
+lifespan %>% filter(temp %in% const_temp & resource == 1) %>%
+  ggplot(.,aes(x=temp, y = as.numeric(mean_span),color = inf_status)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = interaction(temp, inf_status)), position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(species), nrow=1) +
+  scale_color_manual(values = c("red", "blue")) + 
+  labs(y = "Average Lifespan (Days)", x = "Temperature (C)", color = "Infection\nStatus" ) +
+  proj_theme
+
+lifespan %>% filter(temp %in% const_temp & resource == 1) %>% 
+  group_by(temp, species) %>% 
+  summarize()
+```
+
+
