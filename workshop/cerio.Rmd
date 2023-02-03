@@ -34,12 +34,21 @@ lifespan %>% filter(temp %in% const_temp & resource == 1) %>%
   geom_errorbar(aes(ymin = mean_span-se, ymax = mean_span+se), position = position_dodge(width = 0.5)) +
   facet_wrap(vars(species), nrow=1) +
   scale_color_manual(values = c("red", "blue")) + 
-  labs(y = "Average Lifespan (Days)", x = "Temperature (C)", color = "Infection\nStatus" ) +
-  proj_theme
+  labs(y = "Average Lifespan (Days)", x = "Temperature (C)", color = "Infection\nStatus" )
 
 lifespan %>% filter(temp %in% const_temp & resource == 1) %>% 
   group_by(temp, species) %>% 
-  summarize()
+  summarize(diff = first(mean_span) - last(mean_span)) %>%
+  ggplot(.,aes(x = temp, y = diff, fill = species)) + 
+  geom_col(position="dodge") + 
+  labs(y = "Difference in lifespan\ndue to infection (days)", x = "Temperature (C)")
+
+lifespan %>% filter(temp %in% const_temp & resource == 1) %>% 
+  group_by(temp, species) %>% 
+  summarize(perc = ((first(mean_span) - last(mean_span))/first(mean_span))) %>%
+  ggplot(.,aes(x = temp, y = perc, fill = species)) + 
+  geom_col(position="dodge") + 
+  labs(y = "Difference in lifespan\ndue to infection (percent)", x = "Temperature (C)")
 ```
 
 
