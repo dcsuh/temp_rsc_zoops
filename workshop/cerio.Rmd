@@ -45,7 +45,7 @@ lifespan %>% filter(temp %in% const_temp & resource == 1) %>%
 
 lifespan %>% filter(temp %in% const_temp & resource == 1) %>% 
   group_by(temp, species) %>% 
-  summarize(perc = ((first(mean_span) - last(mean_span))/first(mean_span))) %>%
+  summarize(perc = ((first(as.numeric(mean_span)) - last(as.numeric(mean_span)))/first(as.numeric(mean_span)))) %>%
   ggplot(.,aes(x = temp, y = perc, fill = species)) + 
   geom_col(position="dodge") + 
   labs(y = "Difference in lifespan\ndue to infection (percent)", x = "Temperature (C)")
