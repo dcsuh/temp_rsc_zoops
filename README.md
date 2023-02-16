@@ -15,3 +15,10 @@ All data can be found in the /raw_data directory.
 All scripts that generate figures can be found in the /scripts directory.
 
 "exploration.Rmd" in /workshop has some quick summary stats and visualizations of the data. Work in progress.
+
+Some work in progress:
+
+[build](/workshop.html)
+[exploration_main](/workshop/exploration_main.html)
+[tanks](/workshop/tanks.html)
+[cerio](/workshop/cerio.html)
