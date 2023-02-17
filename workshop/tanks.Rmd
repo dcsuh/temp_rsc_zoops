@@ -70,7 +70,7 @@ ggplot(data,aes(x=sample_date,y=total, color=temp))+ geom_point() + geom_line(ae
 
 ggplot(data,aes(x=sample_date,y=daphnia, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() +  facet_wrap(vars(community)) 
 
-ggplot(data,aes(x=sample_date,y=cerio_uninf, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + facet_wrap(vars(community)) 
+ggplot(data,aes(x=sample_date,y=cerio, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + facet_wrap(vars(community)) 
 
 ```
 
@@ -79,7 +79,7 @@ ggplot(data,aes(x=sample_date,y=total, color=temp))+ geom_point() + geom_line(ae
 
 ggplot(data,aes(x=sample_date,y=daphnia, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + facet_grid(rows= vars(temp), cols = vars(community)) 
 
-ggplot(data,aes(x=sample_date,y=cerio_uninf, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + facet_grid(rows= vars(temp), cols = vars(community)) 
+ggplot(data,aes(x=sample_date,y=cerio, color=temp))+ geom_point() + geom_line(aes(group = bucket)) + scale_color_discrete() + facet_grid(rows= vars(temp), cols = vars(community)) 
 
 ```
 
@@ -162,16 +162,39 @@ daphnia <- data %>% filter(community %in% c("D","DM"))
 
 
 Incidence (i.e. positive case counts)
+should na.rm be set to true? If there is an NA, then that means that at that sample that there were no individuals found (denominator = 0) when measuring incidence
+Is this a significant measurement or not? Should it be counted as true zero or just ommitted?
 ```{r}
 mean_inc <- data %>% group_by(treatment, sample_date, temp, community) %>% summarize(mean_inc = mean(total_inc),
-                                                                                      inc_se = sqrt(var(total_inc)/length(total_inc)))
+                                                                                     inc_se = sqrt(var(total_inc)/length(total_inc)),
+                                                                                     mean_daph_inc = mean(daphnia_inc),
+                                                                                     daph_inc_se = sqrt(var(daphnia_inc)/length(daphnia_inc)),
+                                                                                     mean_cer_inc = mean(cerio_inc),
+                                                                                     cer_inc_se = sqrt(var(cerio_inc)/length(cerio_inc)))
+
+mean_inc <- data %>% group_by(treatment, sample_date, temp, community) %>% summarize(mean_inc = mean(total_inc, na.rm = T),
+                                                                                     inc_se = sqrt(var(total_inc, na.rm = T)/length(total_inc)),
+                                                                                     mean_daph_inc = mean(daphnia_inc, na.rm = T),
+                                                                                     daph_inc_se = sqrt(var(daphnia_inc, na.rm = T)/length(daphnia_inc)),
+                                                                                     mean_cer_inc = mean(cerio_inc, na.rm = T),
+                                                                                     cer_inc_se = sqrt(var(cerio_inc, na.rm = T)/length(cerio_inc)))
 ```
 
 ```{r}
-mean_inc %>% ggplot(.,aes(x=sample_date, y=mean_inc)) + geom_point() + 
+mean_inc %>% ggplot(.,aes(x=sample_date, y=mean_inc, color = temp)) + geom_point() + 
   geom_line(aes(group=treatment)) + 
   geom_errorbar(aes(ymin = mean_inc-inc_se, ymax = mean_inc+inc_se)) +
-  facet_grid(rows = vars(temp), cols = vars(community)) 
+  facet_grid(rows = vars(temp), cols = vars(community)) + labs(title="Total (Daphnia + Cerio) Incidence over Time")
+
+mean_inc %>% ggplot(.,aes(x=sample_date, y=mean_daph_inc, color = temp)) + geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_daph_inc-daph_inc_se, ymax = mean_daph_inc+daph_inc_se)) +
+  facet_grid(rows = vars(temp), cols = vars(community))  + labs(title="Daphnia Incidence over Time")
+
+mean_inc %>% ggplot(.,aes(x=sample_date, y=mean_cer_inc, color = temp)) + geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_cer_inc-cer_inc_se, ymax = mean_cer_inc+cer_inc_se)) +
+  facet_grid(rows = vars(temp), cols = vars(community))  + labs(title="Cerio Incidence over Time")
 ```
 
 
