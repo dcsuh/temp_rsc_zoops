@@ -45,15 +45,23 @@ counts$bucket <- as.factor(counts$bucket)
 ```
 
 
-*Zoop Data*
 
-```{r}
+# *Zoop Data*
+
+Data Processing
+```{r, Data Processing}
 data <- left_join(counts, meta, by = "bucket")
 data$community <- as.factor(data$community)
 data$sample_date <- mdy(data$sample_date)
 data %<>% mutate(total = rowSums(across(juvenile_daphnia_uninf:cerio_inf), na.rm = T), 
                  daphnia = rowSums(across(juvenile_daphnia_uninf:adult_daphnia_inf), na.rm = T),
                  treatment = paste(community, temp, sep="_"))
+
+data %<>% mutate(cerio = cerio_inf + cerio_uninf, d_ratio = daphnia/total)
+
+data %<>% mutate(daphnia_inc = (juvenile_daphnia_inf+adult_daphnia_inf)/daphnia,
+                 cerio_inc = (cerio_inf)/cerio,
+                 total_inc = (juvenile_daphnia_inf+adult_daphnia_inf+cerio_inf)/total)
 ```
 
 Totals
@@ -122,10 +130,6 @@ ggplot(summary, aes(x=sample_date,y=mean_cerio, color = temp)) +
 ```
 
 Daphnia:cerio ratio
-```{r}
-
-data %<>% mutate(cerio = cerio_inf + cerio_uninf, d_ratio = daphnia/total)
-```
 
 ```{r}
 data %>% filter(community=="DCM") %>% ggplot(., aes(x=sample_date,y=d_ratio, color = temp)) + geom_point() +geom_line(aes(group = bucket)) + facet_wrap(vars(temp)) + labs(y = "Percent Daphnia")
@@ -157,7 +161,24 @@ daphnia <- data %>% filter(community %in% c("D","DM"))
 ```
 
 
-*YSI DATA*
+Incidence (i.e. positive case counts)
+```{r}
+mean_inc <- data %>% group_by(treatment, sample_date, temp, community) %>% summarize(mean_inc = mean(total_inc),
+                                                                                      inc_se = sqrt(var(total_inc)/length(total_inc)))
+```
+
+```{r}
+mean_inc %>% ggplot(.,aes(x=sample_date, y=mean_inc)) + geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_inc-inc_se, ymax = mean_inc+inc_se)) +
+  facet_grid(rows = vars(temp), cols = vars(community)) 
+```
+
+
+
+
+
+# *YSI DATA*
 
 ysi
 ```{r}
