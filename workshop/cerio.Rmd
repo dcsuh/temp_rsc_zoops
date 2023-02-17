@@ -63,4 +63,31 @@ prob_inf <- prevalence %>% filter(temp %in% const_temp & species =="C") %>%
 prob_inf
 ```
 
+Reproductive Rate
+```{r}
+little_r_fig <- lt_summary %>% filter(temp_var == 0, resource ==1) %>% 
+  ggplot(.,aes(x=as.factor(resource),y=S.r,color=inf_status, shape = species)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_linerange(aes(ymax=S.r.975, ymin=S.r.025), position = position_dodge(width = 0.5)) +
+  scale_color_manual(values = c("red", "blue")) + 
+  facet_wrap(vars(temp_id,species), nrow = 1) + 
+  labs(y = "Host net reproductive rate", x = "Resource Concentration mgC/L", color = "Infection\nStatus" ) +
+  proj_theme
+little_r_fig
+```
+
+
+Spore Yield
+```{r}
+spores_fig <- spore_yield %>% filter(temp %in% const_temp & species =="C") %>%  
+  ggplot(., aes(x=resource, y = log_mean_yield)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = temp), position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = log_mean_yield-log_se, ymax = log_mean_yield+log_se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(temp)) + 
+  labs(y = "ln(Average Spore Yield)", x = "Resource Concentration (mgC/L)") +
+  proj_theme
+spores_fig
+```
+
 
