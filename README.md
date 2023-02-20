@@ -18,7 +18,7 @@ All scripts that generate figures can be found in the /scripts directory.
 
 Some work in progress:
 
-[build](/workshop.html)
+[build](/build.html)
 
 [exploration_main](/workshop/exploration_main.html)
 
