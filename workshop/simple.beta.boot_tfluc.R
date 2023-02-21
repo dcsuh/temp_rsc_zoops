@@ -31,7 +31,7 @@ beta.summary <- data.frame(trt = trts)
 for(i in 1:length(trts)){
   dsub <- dataset[dataset$trt==trts[i],]
   beta.summary$temp[i] <- dsub$temp[1]
-  beta.summary$resource[i] <- dsub$resouce[1]
+  beta.summary$resource[i] <- dsub$resource[1]
   beta.summary$species[i] <- dsub$species[1]
   beta.summary$prev[i] <- sum(dsub$inf)/nrow(dsub)
   
