@@ -81,7 +81,10 @@ beta.summary %>% filter(species=="D" & trt %in% c("2V 1 D", "6V 1 D", "14V 1 D",
   geom_errorbar(aes(ymin = beta.est-beta.025, ymax = beta.est+beta.975), position = position_dodge(width = 0.5)) +
   theme_minimal()
 
-
+beta.summary %>% ggplot(.,aes(x=trt, y = beta.est, color = temp)) +
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = beta.est-beta.025, ymax = beta.est+beta.975), position = position_dodge(width = 0.5)) +
+  theme_minimal()
 
 
 
