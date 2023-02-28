@@ -1,0 +1,30 @@
+---
+title: "Beta"
+author: "Daniel Suh"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+```{r, message=F}
+library(here)
+
+source(here("base","src.R"))
+```
+
+```{r}
+beta.summary <- readRDS(here("processed_data", "beta_summary.rds"))
+```
+
+```{r}
+beta.summary %>% filter(species=="D" & temp %in% c(15, 20, 25)) %>% ggplot(.,aes(x=trt, y = beta.est, color = temp)) +
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = beta.025, ymax = beta.975), position = position_dodge(width = 0.5)) +
+  theme_minimal()
+
+beta.summary %>% ggplot(.,aes(x=trt, y = beta.est, color = temp)) +
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = beta.025, ymax = beta.975), position = position_dodge(width = 0.5)) +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 75, vjust = 0.5))
+```
+
