@@ -25,3 +25,5 @@ Some work in progress:
 [tanks](/workshop/tanks.html)
 
 [cerio](/workshop/cerio.html)
+
+[beta](/workshop/beta.html)
