@@ -16,15 +16,30 @@ beta.summary <- readRDS(here("processed_data", "beta_summary.rds"))
 ```
 
 ```{r}
-beta.summary %>% filter(species=="D" & temp %in% c(15, 20, 25)) %>% ggplot(.,aes(x=trt, y = beta.est, color = temp)) +
+beta.summary %>% filter(species=="D" & temp %in% const_temp) %>% ggplot(.,aes(x=trt, y = beta.est, color = temp)) +
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_errorbar(aes(ymin = beta.025, ymax = beta.975), position = position_dodge(width = 0.5)) +
-  theme_minimal()
+  theme_minimal() + labs(title = "Beta")
 
-beta.summary %>% ggplot(.,aes(x=trt, y = beta.est, color = temp)) +
-  geom_point(aes(), position = position_dodge(width = 0.5)) + 
-  geom_errorbar(aes(ymin = beta.025, ymax = beta.975), position = position_dodge(width = 0.5)) +
-  theme_minimal() + 
-  theme(axis.text.x = element_text(angle = 75, vjust = 0.5))
 ```
+
+```{r}
+prevalence <- readRDS(here("processed_data", "prevalence.rds"))
+```
+
+```{r}
+prevalence %>% filter(temp %in% const_temp & species =="D") %>%
+  ggplot(.,aes(x=ID, y = prev, group = temp, color = temp))  +
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_errorbar(aes(ymin = conf$lower, ymax = conf$upper), position = position_dodge(width = 0.5)) +
+  theme_minimal() + labs(title = "Probability of Infection")
+```
+
+
+```{r}
+path <- here("figures", "prob_inf.png")
+```
+
+
+![](`r path`)
 
