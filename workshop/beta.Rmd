@@ -2,7 +2,9 @@
 title: "Beta"
 author: "Daniel Suh"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 ```{r, message=F}
@@ -15,6 +17,8 @@ source(here("base","src.R"))
 beta.summary <- readRDS(here("processed_data", "beta_summary.rds"))
 ```
 
+Beta was estimated by bootstrapping 95% confidence intervals around a mean using data on probability of infection, exposure dose, exposure time, and exposure volume.
+
 ```{r}
 beta.summary %>% filter(species=="D" & temp %in% const_temp) %>% ggplot(.,aes(x=trt, y = beta.est, color = temp)) +
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
@@ -22,6 +26,8 @@ beta.summary %>% filter(species=="D" & temp %in% const_temp) %>% ggplot(.,aes(x=
   theme_minimal() + labs(y = "Beta", x = "ID", title = "Beta: Transmission Parameter")
 
 ```
+
+Exposure dose, time, and volume were meant to be consistent across all treatments which means that Beta should end up as a function of the probability of infection. As expected, the patterns in Beta and probabilities of infection match well.
 
 ```{r}
 prevalence <- readRDS(here("processed_data", "prevalence.rds"))
