@@ -5,8 +5,10 @@
 
 library(here)
 library(tidyverse)
+library(magrittr)
 library(bbmle)
 dataset <- read.csv(here("workshop/post_death_meas.csv")) 
+set.seed(8878896)
 
 dataset$uninf <- 1-dataset$inf # could do it either way
 dataset$time <- 1 # best guess at duration of exposure?
@@ -23,7 +25,7 @@ beta.est <- mle2(uninf ~ dbinom(size=1, prob=exp(-beta*spore_exposure*1000*time)
 print(coef(beta.est))
 
 # will loop through all treatments:
-dataset$trt <- paste(dataset$temp, dataset$resource, dataset$species)
+dataset$trt <- paste(dataset$temp, dataset$resource, dataset$species, sep = "_")
 trts <- unique(dataset$trt)
 trts
 beta.summary <- data.frame(trt = trts)
@@ -33,6 +35,7 @@ for(i in 1:length(trts)){
   beta.summary$temp[i] <- dsub$temp[1]
   beta.summary$resource[i] <- dsub$resource[1]
   beta.summary$species[i] <- dsub$species[1]
+  beta.summary$trt[i] <- dsub$trt[1]
   beta.summary$prev[i] <- sum(dsub$inf)/nrow(dsub)
   
   beta.est <- mle2(uninf ~ dbinom(size=1, prob=exp(-beta*spore_exposure*1000*time)),
@@ -50,7 +53,7 @@ plot(beta.summary$prev, beta.summary$beta.est) # make sure that beta and prevale
 
 
 # okay, next, I'll bootstrap confidence intervals around each of those. 
-iterations <- 100   # 100 iterations will take ~2 minutes to run through all treatments.
+iterations <- 1000   # 100 iterations will take ~2 minutes to run through all treatments.
 # i would recommend 1,000 or even 10,000 to be really confident on the confidence intervals
 
 for(i in 1:length(trts)){
@@ -70,11 +73,8 @@ for(i in 1:length(trts)){
 
 beta.summary
 
-beta.summary$trt <- factor(beta.summary$trt, levels = c( "2V 1 D", "6V 1 D", "14V 1 D", 
-                                                         "15 0.1 D", "15 0.5 D", "15 1 D", 
-                                                         "20 0.1 D", "20 0.5 D", "20 1 D", 
-                                                         "25 0.1 D", "25 0.5 D", "25 1 D",   
-                                                         "15 1 C",   "20 1 C",  "25 1 C")) 
+saveRDS(beta.summary, file = here("processed_data","beta_summary.rds"))
+
 
 beta.summary %>% filter(species=="D" & trt %in% c("2V 1 D", "6V 1 D", "14V 1 D", "20 1 D")) %>% ggplot(.,aes(x=trt, y = beta.est)) +
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
