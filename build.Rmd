@@ -22,17 +22,19 @@ Effects of temperature and resources on lifespan
 ![avg_span](figures/lifespan.png)
 
 Effects of temperature and resources on prevalence
-![prevalence](figures/prev.png)
+![prevalence](figures/prob_inf.png)
 
 Effects of temperature and resources on body size
 ![body_size](figures/body_size.png)
 
 Effects of lifespan on spore yield
-![span_yield](figures/lifespan_spores.png)
+![span_yield](figures/spores_lifespan.png)
 
 Effects of length on spore yield
-![body_size_yield](figures/body_size_spores.png)
+![body_size_yield](figures/spores_length.png)
 
+Effects of temperature and resources on host net reproductive rate
+![little r](figures/little_r.png)
 
 
 
