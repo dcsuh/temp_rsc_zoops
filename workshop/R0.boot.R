@@ -10,7 +10,7 @@ source(here("base","src.R"))
 
 lt.summary_factors <- readRDS(here("processed_data", "lt_summary.rds"))
 #this data includes bootstrapped values for host intrinsic growth rate (r)
-#alternatively, we can bootstrap this when we bootstrap for host density but for now we will just use the already-bootstrapped values
+#alternatively, we can bootstrap this when we bootstrap for R naught but for now we will just use the already-bootstrapped values
 
 
 #parameters used
