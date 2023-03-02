@@ -130,7 +130,7 @@ little.r.calculator = function(rdat){
 
 lt.summary=data.frame(ID=treatments) # will fill out this summary spreadsheet as
 # we loop through each clone
-iterations = 10 # how many samples to use in bootstrap
+iterations = 1000 # how many samples to use in bootstrap
 
 for (j in 1:length(treatments)){
   print(j) # ask R to tell you where it is in the loop 
