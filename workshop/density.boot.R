@@ -20,10 +20,10 @@ lt.summary_factors <- readRDS(here("processed_data", "lt_summary.rds"))
 #r = resource growth rate (assumed constant)
 #f = foraging rate (assumed constant)
 
-r <- 1
-K <- 1
-f <- 10
+r <- 0.9
+K <- 250
+f <- 2
 
-lt.summary_factors %<>% mutate(R = S.d/S.b,
-                               S = (r*(1-((S.d/S.b)/K)))/f)
+density.summary <- lt.summary_factors %>% mutate(R = S.d/S.b,
+                                                 S = (r*(1-((S.d/S.b)/K)))/f)
 
