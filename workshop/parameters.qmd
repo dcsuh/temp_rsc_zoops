@@ -32,20 +32,17 @@ This table goes through all of the different treatment conditions. I should upda
 
 Previous experiments using this system have estimated R0 according to this formula. I'll have to go through this and do it myself later but for now we can trust them.
 
-$$
-R\emptyset = \frac { \beta S^* \sigma }{ \mu } \\
+\$\$ R\emptyset = \frac { \beta S^* \sigma }{ \mu } \\
 
 \beta = transmission rate \\
 
-S^*= equilibrium\ susceptible\ host\ density \\
+S\^\*= equilibrium susceptible host density \\
 
-\sigma = spore\ yield \\
+\sigma = spore yield \\
 
-\mu = degradation\ rate \\ 
-$$
+\mu = degradation rate \\ \$\$
 
 Okay gotta go back and figure out how to fix the latex to render properly in quarto.
-
 
 ```{r, packages, include = F}
 library(here)
@@ -54,9 +51,6 @@ source(here("base","src.R"))
 library(bbmle)
 ```
 
-
 ```{r, beta}
 
 ```
-
-
