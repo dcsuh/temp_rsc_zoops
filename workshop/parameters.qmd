@@ -44,13 +44,18 @@ S\^\*= equilibrium susceptible host density \\
 
 Okay gotta go back and figure out how to fix the latex to render properly in quarto.
 
-```{r, packages, include = F}
+```{r}
+#| label: load_packages
+#| include: false
+
 library(here)
 
 source(here("base","src.R"))
 library(bbmle)
 ```
 
-```{r, beta}
+```{r}
+#| label: beta
+
 
 ```
