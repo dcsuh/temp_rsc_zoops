@@ -173,6 +173,8 @@ $$
 
 $$
 
+
+The loop in here isn't working properly
 ```{r}
 dataset$spore_exposure <- 200
 dataset$uninf <- 1-dataset$inf # could do it either way
@@ -193,10 +195,10 @@ print(coef(beta.est))
 dataset$trt <- paste(dataset$temp, dataset$resource, dataset$species, sep = "_")
 trts <- unique(dataset$trt)
 trts
-beta.summary <- data.frame(treatment = treatments)
+beta.summary <- data.frame(treatment = trts)
 
-for(i in 1:length(treatments)){
-  dsub <- dataset[dataset$ID==treatments[i],]
+for(i in 1:length(trts)){
+  dsub <- dataset[dataset$trt==trts[i],]
   beta.summary$temp[i] <- dsub$temp[1]
   beta.summary$resource[i] <- dsub$resource[1]
   beta.summary$species[i] <- dsub$species[1]
@@ -258,6 +260,7 @@ M <- 0.2
 lt.summary=data.frame(ID=treatments) # will fill out this summary spreadsheet as
 # we loop through each clone
 iterations = 10 # how many samples to use in bootstrap
+
 
 for (j in 1:length(treatments)){
   print(j) # ask R to tell you where it is in the loop 
@@ -337,6 +340,7 @@ for (j in 1:length(treatments)){
 
 
 ### used for spore yield start ###
+
 yield_data <- S.boot.data[!is.na(S.boot.data$spore_yield),]
     boot.summary$yield[k] <- mean(yield_data$spore_yield)
     
@@ -412,3 +416,13 @@ boot.summary$R_naught.boot[k] <- (boot.summary$S.boot[k]*beta.list$beta[k]*boot.
 
 ```
 
+
+# Some notes
+
+So scripting this seems to be going pretty well but there are some challenges with bootstrapping everything together because different parameters estimate using different subset of the data.
+
+Beta uses both infected and uninfected individuals because it relies upon prevalence
+
+growth rate (r) treats infected and uninfected individuals separately since we are interested in susceptible host density
+
+So I can run this assuming that infected and uninfected individuals are separate treatments or pool them togther. Alternatively we do bootstraps separately
