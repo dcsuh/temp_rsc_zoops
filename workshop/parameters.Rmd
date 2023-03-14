@@ -24,14 +24,23 @@ S^*= equilibrium\ susceptible\ host\ density \\
 \mu = degradation\ rate \\ 
 $$
 ```{r, read data}
-fitness <- read_csv(here("raw_data/main_fitness_edit.csv"))
+fitness <- read.csv(here("raw_data/main_fitness_edit.csv")) #must be read.csv
 mort <- read_csv(here("raw_data/main_mort_edit.csv"))
+
+fitness %<>% mutate(species = ifelse(species=="daphnia", "D", "C"))
+fitness %<>% select(-c(end_data_date, mortality_day))
+mort %<>% select(-c(end_data_date, mortality_day))
+
 
 dataset <- left_join(fitness, mort)
 ```
 
+
+
+
+
 ```{r}
-set.seed(9738878896)
+set.seed(30605)
 ```
 
 euler-lotka
@@ -39,8 +48,11 @@ $$
 
 $$
 
+
+
+
+I need to figure out why the line that makes "inf_status" and "dead" is removing rows
 ```{r, little r}
-set.seed(8878896)
 
 
 #DCS Note: if using read_csv so that dataset is a tibble then dates are properly encoded
@@ -52,7 +64,16 @@ dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22")
 
 #dataset <- read.csv("/Users/dcsuh/Desktop/Traits1-3.csv", na.strings=c("NA", "NULL"))
 
-dataset %<>% mutate(inf_status = replace_na(inf, 0), dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0)) %>% mutate(ID = paste(species, temp_id, resource, inf_status, sep = "_"))
+dataset %<>% mutate(inf_status = replace_na(inf, 0), dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0)) %>% mutate(ID = paste(species, temp_id, resource, inf_status, sep = "_")) #why is this removing rows?
+
+
+##Spore Yield
+dataset %<>% mutate(spore_conc = ((spore_RAW/8)*10000))
+#this doubles the spore count if the water was added because that would make it twice as dilute
+#spore yield is calculated by dividing total counted spores by 8 (number of cells used in hemocytomer) and then multiplying by 10000 to get spores/mL
+dataset %<>% mutate(spore_yield = ifelse(spore_water_added==1,spore_conc*0.5,spore_conc*0.25))
+
+
 
 treatment_factors <- dataset %>% select(ID, species, temp_id, mean_temp, temp_var, resource, inf_status) %>% distinct()
 
@@ -153,6 +174,7 @@ $$
 $$
 
 ```{r}
+dataset$spore_exposure <- 200
 dataset$uninf <- 1-dataset$inf # could do it either way
 dataset$time <- 1 # best guess at duration of exposure?
 dataset <- dataset[!is.na(dataset$uninf),] # remove NAs
@@ -171,14 +193,14 @@ print(coef(beta.est))
 dataset$trt <- paste(dataset$temp, dataset$resource, dataset$species, sep = "_")
 trts <- unique(dataset$trt)
 trts
-beta.summary <- data.frame(trt = trts)
+beta.summary <- data.frame(treatment = treatments)
 
 for(i in 1:length(treatments)){
-  dsub <- dataset[dataset$treatment==trts[i],]
+  dsub <- dataset[dataset$ID==treatments[i],]
   beta.summary$temp[i] <- dsub$temp[1]
   beta.summary$resource[i] <- dsub$resource[1]
   beta.summary$species[i] <- dsub$species[1]
-  beta.summary$trt[i] <- dsub$trt[1]
+  beta.summary$treatment[i] <- dsub$ID[1]
   beta.summary$prev[i] <- sum(dsub$inf)/nrow(dsub)
   
   beta.est <- mle2(uninf ~ dbinom(size=1, prob=exp(-beta*spore_exposure*1000*time)),
@@ -203,18 +225,46 @@ iterations <- 1000   # 100 iterations will take ~2 minutes to run through all tr
 ```
 
 
+Some stuff we need for estimating R0
+
+```{r, R0}
+#parameters used
+#d = death rate (taken from bootstrap estimate)
+#b = birth rate (taken from bootstrap estimate)
+#K = carrying capacity (assumed constant)
+#r = resource growth rate (assumed constant)
+#f = foraging rate (assumed constant)
+
+#parameters used for R0 include
+#S = susceptible host density (estimated from bootstrap data)
+#B = transmission parameter (estimated from bootstrap)
+#A = spore yield
+#M = degradation rate
+
+
+r <- 0.9
+K <- 250
+f <- 2
+M <- 0.2
+```
+
+
+
+
 ```{r, loop}
 #########################################################
 # 4) loop through clones and calculate for each one:
 
 lt.summary=data.frame(ID=treatments) # will fill out this summary spreadsheet as
 # we loop through each clone
-iterations = 1000 # how many samples to use in bootstrap
+iterations = 10 # how many samples to use in bootstrap
 
 for (j in 1:length(treatments)){
   print(j) # ask R to tell you where it is in the loop 
   #j=1   # if something is broken in your loop in can be helpful to set the value 
   # of j and go through the inside of the loop line by line to figure out what is wrong
+
+### used for little r start###
   
   clonedata <- dataset[dataset$ID==treatments[j],]
   # subset the data so you are just looking at clone j. this will get copied over each time
@@ -234,8 +284,23 @@ for (j in 1:length(treatments)){
   # now create another summary sheet where we'll save all of the bootstrapped
   # parameter estimates.. make it as long as # iterations you decided earlier
   boot.summary <- data.frame(iterations=1:iterations)
+  
+### used for little r end###
+
+  
+#### used for beta start####
+  
+  dsub <- dataset[dataset$ID==treatments[j],]
+  beta.list <- data.frame(beta=numeric(iterations)) #create empty list to fill in w bootstrap  
+  
+#### used for beta end####
+
+### start of bootstrap loop ###
   for(k in 1:iterations){
     boot.rows <- sample(1:nrow(S.data), size=nrow(S.data), replace=TRUE)
+
+### used for little r start###
+    
     S.boot.data <- S.data[boot.rows,]
     little.r.calculator(rdat=S.boot.data)
     boot.summary$r.boot[k] <- little.r
@@ -245,28 +310,55 @@ for (j in 1:length(treatments)){
                               data=list(ddata=ddata), skip.hessian=T))))
     boot.summary$d.boot[k] <- as.numeric(d)
     boot.summary$b.boot[k] <- boot.summary$d.boot[k] + boot.summary$r.boot[k]
-  }
-  print("little r for one treatment done")
+    
+### used for little r end###
 
-  
-  
-  print("start beta boot")
-  print(j)
-  dsub <- dataset[dataset$ID==treatments[j],]
-  beta.list <- data.frame(beta=numeric(iterations)) #create empty list to fill in w bootstrap
-  for(k in 1:iterations){
-    boot.sample <- dsub[sample.int(nrow(dsub),size=nrow(dsub), replace=TRUE),]
+    
+    
+    
+    
+#### used for beta start####
+    
     beta.boot <- mle2(uninf ~ dbinom(size=1, prob=exp(-beta*spore_exposure*1000*time)),
-                      start=list(beta = 0.000001), data=boot.sample, control=list(parscale = c(beta = 0.000001)),
+                      start=list(beta = 0.000001), data=S.boot.data, control=list(parscale = c(beta = 0.000001)),
                       skip.hessian=F,method="L-BFGS-B", lower=.00000001, upper=0.0001)
     beta.list$beta[k] <- coef(beta.boot)[1]
+    
+#### used for beta end####
+    
+    
+    
+
+### used for S* start###
+    
+    boot.summary$S.boot[k] <- r*(1-((boot.summary$d.boot[k]/boot.summary$b.boot[k])/K))/f
+
+### used for S* end###
+
+
+### used for spore yield start ###
+yield_data <- S.boot.data[!is.na(S.boot.data$spore_yield),]
+    boot.summary$yield[k] <- mean(yield_data$spore_yield)
+    
+### used for spore yield start ###
+    
+    
+### used for R0 start###
+    
+boot.summary$R_naught.boot[k] <- (boot.summary$S.boot[k]*beta.list$beta[k]*boot.summary$yield[k])/M
+    
+### used for R0 end###
+    
+    
+### end of bootstrap loop ###
   }
-  print("beta for one treatment done")
+
   
   
 
   beta.summary$beta.025[j] <- quantile(beta.list$beta, probs=seq(0.025, 0.975, 0.95))[1] # lower 95% confidence interval
   beta.summary$beta.975[j] <- quantile(beta.list$beta, probs=seq(0.025, 0.975, 0.95))[2] # upper 95% confidence interval
+
   
   # save upper and lower 95% CI's from bootstrapped params:
   lt.summary$S.r.975[j] <- quantile(boot.summary$r.boot, probs=seq(0.025, 0.975, 0.95))[2]  
@@ -276,6 +368,14 @@ for (j in 1:length(treatments)){
   lt.summary$S.b.975[j] <- quantile(boot.summary$b.boot, probs=seq(0.025, 0.975, 0.95))[2]  
   lt.summary$S.b.025[j] <- quantile(boot.summary$b.boot, probs=seq(0.025, 0.975, 0.95))[1]  
   
+  lt.summary$S.S.975[j] <- quantile(boot.summary$S.boot, probs=seq(0.025, 0.975, 0.95))[2]  
+  lt.summary$S.S.025[j] <- quantile(boot.summary$S.boot, probs=seq(0.025, 0.975, 0.95))[1]
+
+  lt.summary$yield[j] <- boot.summary$yield[k]
+  
+  lt.summary$S.R_naught.975[j] <- quantile(boot.summary$R_naught.boot, probs=seq(0.025, 0.975, 0.95), na.rm=T)[2]  
+  lt.summary$S.R_naught.025[j] <- quantile(boot.summary$R_naught.boot, probs=seq(0.025, 0.975, 0.95), na.rm=T)[1]  
+  
 }
 
 
@@ -285,38 +385,30 @@ for (j in 1:length(treatments)){
 
 
 
-for(i in 1:length(treatments)){
-
-}
 
 
 
-
-
-
-
-
-# take a look at the results!  (you can save as csv if you want)
-lt.summary
-
-lt.summary_factors <- left_join(lt.summary, treatment_factors, by = "ID")
-
-lt.summary_factors$ID <- factor(lt.summary_factors$ID, levels = c(   "daphnia_15_0.1_0", "daphnia_15_0.1_1", 
-                                                                     "daphnia_15_0.5_0", "daphnia_15_0.5_1", 
-                                                                     "daphnia_15_1_0",   "daphnia_15_1_1",
-                                                                     "cerio_15_1_0",     "cerio_15_1_1", 
-                                                                     "daphnia_20_0.1_0", "daphnia_20_0.1_1", 
-                                                                     "daphnia_20_0.5_0", "daphnia_20_0.5_1",
-                                                                     "daphnia_20_1_0",   "daphnia_20_1_1",
-                                                                     "cerio_20_1_0",     "cerio_20_1_1",
-                                                                     "daphnia_2V_1_0",   "daphnia_2V_1_1",  
-                                                                     "daphnia_6V_1_0",   "daphnia_6V_1_1",   
-                                                                     "daphnia_14V_1_0",  "daphnia_14V_1_1",     
-                                                                     "daphnia_25_0.1_0", "daphnia_25_0.1_1", 
-                                                                     "daphnia_25_0.5_0", "daphnia_25_0.5_1", 
-                                                                     "daphnia_25_1_0",   "daphnia_25_1_1",     
-                                                                     "cerio_25_1_0",     "cerio_25_1_1"))
-lt.summary_factors$inf_status <- ifelse(lt.summary_factors$inf_status==1,"I","U")
+# # take a look at the results!  (you can save as csv if you want)
+# lt.summary
+# 
+# lt.summary_factors <- left_join(lt.summary, treatment_factors, by = "ID")
+# 
+# lt.summary_factors$ID <- factor(lt.summary_factors$ID, levels = c(   "daphnia_15_0.1_0", "daphnia_15_0.1_1", 
+#                                                                      "daphnia_15_0.5_0", "daphnia_15_0.5_1", 
+#                                                                      "daphnia_15_1_0",   "daphnia_15_1_1",
+#                                                                      "cerio_15_1_0",     "cerio_15_1_1", 
+#                                                                      "daphnia_20_0.1_0", "daphnia_20_0.1_1", 
+#                                                                      "daphnia_20_0.5_0", "daphnia_20_0.5_1",
+#                                                                      "daphnia_20_1_0",   "daphnia_20_1_1",
+#                                                                      "cerio_20_1_0",     "cerio_20_1_1",
+#                                                                      "daphnia_2V_1_0",   "daphnia_2V_1_1",  
+#                                                                      "daphnia_6V_1_0",   "daphnia_6V_1_1",   
+#                                                                      "daphnia_14V_1_0",  "daphnia_14V_1_1",     
+#                                                                      "daphnia_25_0.1_0", "daphnia_25_0.1_1", 
+#                                                                      "daphnia_25_0.5_0", "daphnia_25_0.5_1", 
+#                                                                      "daphnia_25_1_0",   "daphnia_25_1_1",     
+#                                                                      "cerio_25_1_0",     "cerio_25_1_1"))
+# lt.summary_factors$inf_status <- ifelse(lt.summary_factors$inf_status==1,"I","U")
 
 ```
 
