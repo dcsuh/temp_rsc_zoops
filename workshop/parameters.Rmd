@@ -250,7 +250,7 @@ for (j in 1:length(treatments)){
 
   
   
-  
+  print("start beta boot")
   print(j)
   dsub <- dataset[dataset$ID==treatments[j],]
   beta.list <- data.frame(beta=numeric(iterations)) #create empty list to fill in w bootstrap
@@ -261,7 +261,7 @@ for (j in 1:length(treatments)){
                       skip.hessian=F,method="L-BFGS-B", lower=.00000001, upper=0.0001)
     beta.list$beta[k] <- coef(beta.boot)[1]
   }
-  
+  print("beta for one treatment done")
   
   
 
