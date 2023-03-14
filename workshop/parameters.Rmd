@@ -12,3 +12,19 @@ source(here("base","src.R"))
 library(bbmle)
 ```
 
+$$ 
+R\emptyset = \frac { \beta S^* \sigma }{ \mu } \\
+
+\beta = transmission\ rate \\
+
+S^*= equilibrium\ susceptible\ host\ density \\
+
+\sigma = spore\ yield \\
+
+\mu = degradation\ rate \\ 
+$$
+```{r, read data}
+post_death <- read.csv(here("workshop/post_death_meas.csv")) 
+
+```
+
