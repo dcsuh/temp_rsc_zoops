@@ -439,7 +439,7 @@ boot.summary$R_naught.boot[k] <- (boot.summary$S.U.boot[k]*beta.list$beta[k]*boo
   lt.summary$S.S.975[j] <- quantile(boot.summary$S.U.boot, probs=seq(0.025, 0.975, 0.95))[2]  
   lt.summary$S.S.025[j] <- quantile(boot.summary$S.U.boot, probs=seq(0.025, 0.975, 0.95))[1]
 
-  lt.summary$yield[j] <- boot.summary$yield[k]
+  lt.summary$S.yield[j] <- boot.summary$yield[k]
   
   lt.summary$S.R_naught.975[j] <- quantile(boot.summary$R_naught.boot, probs=seq(0.025, 0.975, 0.95), na.rm=T)[2]  
   lt.summary$S.R_naught.025[j] <- quantile(boot.summary$R_naught.boot, probs=seq(0.025, 0.975, 0.95), na.rm=T)[1]  
