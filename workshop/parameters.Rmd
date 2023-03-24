@@ -481,11 +481,13 @@ boot.summary$R_naught.boot[k] <- (boot.summary$S.U.boot[k]*beta.list$beta[k]*boo
 ```
 
 ```{r}
-saveRDS(lt.summary, file = here("processed_data","lt_full_summary.rds"))
 
 treatment_factors <- dataset %>% select(species, temp_id, mean_temp, temp_var, resource, trt) %>% distinct()
 
 lt.summary_factors <- left_join(lt.summary, treatment_factors)
+
+saveRDS(lt.summary_factors, file = here("processed_data","lt_full_summary.rds"))
+
 
 lt.summary_factors %>% filter(species=="D", temp_id %in% c(15, 20, 25)) %>% ggplot(.,aes(x=trt, y=S.R_naught)) + geom_point() + geom_linerange(aes(ymin=S.R_naught.025, ymax=S.R_naught.975)) + theme(axis.text.x = element_text(angle=90)) + geom_hline(yintercept=1)
 
