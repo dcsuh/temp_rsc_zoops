@@ -248,7 +248,7 @@ M <- 0.2
 
 
 
-```{r, loop, message=F}
+```{r, loop, warning=F}
 #########################################################
 # 4) loop through clones and calculate for each one:
 
@@ -317,7 +317,7 @@ for (j in 1:length(treatments)){
 
 ### used for spore yield start ###
 
-yield_data <- S.data[!is.na(S.data$spore_yield),]
+    yield_data <- S.data[!is.na(S.data$spore_yield),]
     lt.summary$S.yield[j] <- mean(yield_data$spore_yield)
     
 ### used for spore yield start ###
@@ -325,7 +325,7 @@ yield_data <- S.data[!is.na(S.data$spore_yield),]
     
 ### used for R0 start###
     
-lt.summary$S.R_naught[j] <- (lt.summary$S.S.U[j]*beta.summary$beta.est[j]*lt.summary$S.yield[j])/M
+  lt.summary$S.R_naught[j] <- (lt.summary$S.S.U[j]*beta.summary$beta.est[j]*lt.summary$S.yield[j])/M
     
 ### used for R0 end###
 
@@ -381,6 +381,7 @@ lt.summary$S.R_naught[j] <- (lt.summary$S.S.U[j]*beta.summary$beta.est[j]*lt.sum
     beta.boot <- mle2(uninf ~ dbinom(size=1, prob=exp(-beta*spore_exposure*1000*time)),
                       start=list(beta = 0.000001), data=S.boot.data, control=list(parscale = c(beta = 0.000001)),
                       skip.hessian=F,method="L-BFGS-B", lower=.00000001, upper=0.0001)
+    #this produces a warning: NaNs produced - not sure if this is an issue since beta is estimating properly
     beta.list$beta[k] <- coef(beta.boot)[1]
     
 #### used for beta end####
@@ -397,7 +398,7 @@ lt.summary$S.R_naught[j] <- (lt.summary$S.S.U[j]*beta.summary$beta.est[j]*lt.sum
 
 ### used for spore yield start ###
 
-yield_data <- S.boot.data[!is.na(S.boot.data$spore_yield),]
+    yield_data <- S.boot.data[!is.na(S.boot.data$spore_yield),]
     boot.summary$yield[k] <- mean(yield_data$spore_yield)
     
 ### used for spore yield start ###
