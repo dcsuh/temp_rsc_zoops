@@ -15,37 +15,76 @@ source(here("base","src.R"))
 
 ```{r}
 beta.summary <- readRDS(here("processed_data", "beta_summary.rds"))
+lt_full <- readRDS(here("processed_data", "lt_full_summary.rds"))
+spores <- readRDS(here("processed_data", "spore_yield.rds"))
 ```
 
 Beta was estimated by bootstrapping 95% confidence intervals around a mean using data on probability of infection, exposure dose, exposure time, and exposure volume.
 
 ```{r}
-beta.summary %>% filter(species=="D" & temp %in% const_temp) %>% ggplot(.,aes(x=trt, y = beta.est, color = temp)) +
+beta.summary %>% filter(species=="D" & temp %in% const_temp) %>% 
+  ggplot(.,aes(x=temp, y = beta.est, color = temp)) +
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
-  geom_errorbar(aes(ymin = beta.025, ymax = beta.975), position = position_dodge(width = 0.5)) +
-  theme_minimal() + labs(y = "Beta", x = "ID", title = "Beta: Transmission Parameter")
+  geom_linerange(aes(ymin = beta.025, ymax = beta.975), position = position_dodge(width = 0.5)) + 
+  facet_wrap(. ~ as.factor(resource), nrow = 1) + 
+  labs(y = "Beta", x = "Temp (C)")
 
 ```
 
-Exposure dose, time, and volume were meant to be consistent across all treatments which means that Beta should end up as a function of the probability of infection. As expected, the patterns in Beta and probabilities of infection match well.
+<!-- Exposure dose, time, and volume were meant to be consistent across all treatments which means that Beta should end up as a function of the probability of infection. As expected, the patterns in Beta and probabilities of infection match well. -->
 
-```{r}
-prevalence <- readRDS(here("processed_data", "prevalence.rds"))
-```
+<!-- ```{r} -->
+<!-- prevalence <- readRDS(here("processed_data", "prevalence.rds")) -->
+<!-- ``` -->
 
+<!-- ```{r} -->
+<!-- prevalence %>% filter(temp %in% const_temp & species =="D") %>% -->
+<!--   ggplot(.,aes(x=ID, y = prev, group = temp, color = temp))  + -->
+<!--   geom_point(aes(), position = position_dodge(width = 0.5)) +  -->
+<!--   geom_errorbar(aes(ymin = conf$lower, ymax = conf$upper), position = position_dodge(width = 0.5)) + -->
+<!--   theme_minimal() + labs(title = "Probability of Infection") -->
+<!-- ``` -->
+
+Susceptible host density
 ```{r}
-prevalence %>% filter(temp %in% const_temp & species =="D") %>%
-  ggplot(.,aes(x=ID, y = prev, group = temp, color = temp))  +
+lt_full %>% filter(species=="D", temp_var == 0) %>% 
+  ggplot(.,aes(x=as.factor(temp_id),y=S.S.U, color=temp_id)) + 
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
-  geom_errorbar(aes(ymin = conf$lower, ymax = conf$upper), position = position_dodge(width = 0.5)) +
-  theme_minimal() + labs(title = "Probability of Infection")
+  geom_linerange(aes(ymin=S.S.025, ymax=S.S.975)) + 
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
+  facet_wrap(. ~ as.factor(resource), nrow = 1) + 
+  labs(y = "Susceptible Host Density", x = "Temp (C)" )
+
 ```
 
-
+Spore yield
 ```{r}
-path <- here("figures", "prob_inf.png")
+spores %>% filter(temp %in% const_temp & species =="D") %>%  
+  ggplot(., aes(x=temp, y = log_mean_yield)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = temp), position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = log_mean_yield-log_se, ymax = log_mean_yield+log_se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(resource)) + 
+  labs(y = "ln(Average Spore Yield)", x = "Temp (C)")
+
+spores %>% filter(temp %in% const_temp & species =="D") %>%  
+  ggplot(., aes(x=temp, y = mean_yield)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_line(aes(group = temp), position = position_dodge(width = 0.5)) +
+  geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se), position = position_dodge(width = 0.5)) +
+  facet_wrap(vars(resource)) + 
+  labs(y = "Average Spore Yield", x = "Temp (C)")
 ```
 
 
-![](`r path`)
+R0
+```{r}
+lt_full %>% filter(species=="D", temp_var == 0) %>% 
+  ggplot(.,aes(x=as.factor(temp_id),y=S.R_naught, color=temp_id)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_linerange(aes(ymin=S.R_naught.025, ymax=S.R_naught.975)) + 
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
+  facet_wrap(. ~ as.factor(resource), nrow = 1) + 
+  labs(y = "R0", x = "Temp (C)" )
+```
 
