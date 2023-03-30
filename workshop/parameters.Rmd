@@ -498,10 +498,3 @@ lt.summary_factors %>% filter(species=="D", temp_id %in% c(15, 20, 25)) %>% ggpl
 
 # Some notes
 
-So scripting this seems to be going pretty well but there are some challenges with bootstrapping everything together because different parameters estimate using different subset of the data.
-
-Beta uses both infected and uninfected individuals because it relies upon prevalence
-
-growth rate (r) treats infected and uninfected individuals separately since we are interested in susceptible host density
-
-So I can run this assuming that infected and uninfected individuals are separate treatments or pool them togther. Alternatively we do bootstraps separately
