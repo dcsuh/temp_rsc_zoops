@@ -36,4 +36,4 @@ Effects of temperature and resources on host net reproductive rate
 
 Effects of temperature and resources on parasite basic reproductive number
 ![R0](figures/R0.png)
-
+![R0_temp](figures/R0_temp.png)
