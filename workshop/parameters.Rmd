@@ -184,10 +184,6 @@ little.r.calculator = function(rdat){
 
 
 modified beta
-$$
-
-$$
-
 
 ```{r}
 
