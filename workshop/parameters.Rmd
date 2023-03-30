@@ -184,6 +184,10 @@ little.r.calculator = function(rdat){
 
 
 modified beta
+$$
+
+$$
+
 
 ```{r}
 
@@ -224,7 +228,7 @@ Some stuff we need for estimating R0
 #parameters used
 #d = death rate (taken from bootstrap estimate)
 #b = birth rate (taken from bootstrap estimate)
-#K = carrying capacity (assumed constant)
+#K = algal carrying capacity (assumed constant)
 #r = resource growth rate (assumed constant)
 #f = foraging rate (assumed constant)
 
@@ -236,8 +240,8 @@ Some stuff we need for estimating R0
 
 
 r <- 0.9
-K <- 250
-f <- 2
+K <- .250
+f <- 20
 M <- 0.2
 ```
 
@@ -306,7 +310,7 @@ for (j in 1:length(treatments)){
   
 ### used for S* start###
     
-    lt.summary$S.S.U[j] <- r*(1-((lt.summary$S.d.U[j]/lt.summary$S.b.U[j])/K))/f
+    lt.summary$S.S.U[j] <- r*(1-((lt.summary$S.d.U[j]/lt.summary$S.b.U[j])/K))/f 
 
 ### used for S* end###
 
@@ -486,7 +490,7 @@ lt.summary_factors <- left_join(lt.summary, treatment_factors)
 saveRDS(lt.summary_factors, file = here("processed_data","lt_full_summary.rds"))
 
 
-lt.summary_factors %>% filter(species=="D", temp_id %in% c(15, 20, 25)) %>% ggplot(.,aes(x=trt, y=S.R_naught)) + geom_point() + geom_linerange(aes(ymin=S.R_naught.025, ymax=S.R_naught.975)) + theme(axis.text.x = element_text(angle=90)) + geom_hline(yintercept=1)
+lt.summary_factors %>% filter(species=="D", temp_id %in% c(15, 20, 25)) %>% ggplot(.,aes(x=trt, y=S.R_naught)) + geom_point() + geom_linerange(aes(ymin=S.R_naught.025, ymax=S.R_naught.975)) + theme(axis.text.x = element_text(angle=90))
 
 ```
 
