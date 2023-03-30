@@ -17,3 +17,12 @@ r_naught_fig <- lt_full %>% filter(species=="D", temp_var == 0) %>%
 ggsave("R0.png", r_naught_fig, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = here("figures"))
 
 
+r_naught_fig_temp <- lt_full %>% filter(species=="D", temp_var == 0) %>% 
+  ggplot(.,aes(x=as.factor(temp_id),y=S.R_naught)) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_linerange(aes(ymin=S.R_naught.025, ymax=S.R_naught.975)) + 
+  facet_wrap(. ~ as.factor(resource), nrow = 1) + 
+  labs(y = "R0", x = "Temp (C)" )
+
+ggsave("R0_temp.png", r_naught_fig_temp, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = here("figures"))
+
