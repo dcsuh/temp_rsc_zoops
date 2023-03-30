@@ -1,5 +1,5 @@
 ---
-title: "Beta"
+title: "Epidemiological Traits"
 author: "Daniel Suh"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: 

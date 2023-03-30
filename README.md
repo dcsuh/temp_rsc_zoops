@@ -26,4 +26,4 @@ Some work in progress:
 
 [cerio](/workshop/cerio.html)
 
-[beta](/workshop/beta.html)
+[traits](/workshop/traits.html)
