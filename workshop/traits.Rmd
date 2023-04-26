@@ -117,11 +117,11 @@ lt_full %>% filter(species=="D", temp_var == 0) %>%
 
 ```{r}
 beta.summary %>% filter(species=="D" & temp %in% const_temp) %>% 
-  ggplot(.,aes(x=resource, y = beta.est, color = temp)) +
+  ggplot(.,aes(x=as.factor(resource), y = beta.est, color = temp)) +
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_linerange(aes(ymin = beta.025, ymax = beta.975), position = position_dodge(width = 0.5)) + 
   facet_wrap(. ~ as.factor(temp), nrow = 1) + 
-  labs(y = "Beta", x = "Temp (C)")
+  labs(y = "Beta", x = "Resource")
 
 ```
 
@@ -148,7 +148,7 @@ lt_full %>% filter(species=="D", temp_var == 0) %>%
   geom_linerange(aes(ymin=S.S.025, ymax=S.S.975)) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
   facet_wrap(. ~ as.factor(temp_id), nrow = 1) + 
-  labs(y = "Susceptible Host Density", x = "Temp (C)" )
+  labs(y = "Susceptible Host Density", x = "Resource" )
 
 ```
 
@@ -170,7 +170,7 @@ spores %>% filter(temp %in% const_temp & species =="D") %>%
   geom_errorbar(aes(ymin = mean_yield-se, ymax = mean_yield+se), position = position_dodge(width = 0.5)) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
   facet_wrap(vars(temp)) + 
-  labs(y = "Average Spore Yield", x = "Temp (C)")
+  labs(y = "Average Spore Yield", x = "Resource")
 ```
 
 
@@ -203,5 +203,5 @@ lt_full %>% filter(species=="D", temp_var == 0) %>%
   geom_linerange(aes(ymin=S.R_naught.025, ymax=S.R_naught.975)) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
   facet_wrap(. ~ as.factor(temp_id), nrow = 1) + 
-  labs(y = "R0", x = "Temp (C)" )
+  labs(y = "R0", x = "Resource" )
 ```
