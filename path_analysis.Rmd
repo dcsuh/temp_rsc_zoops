@@ -1,0 +1,13 @@
+---
+title: "path analysis"
+author: "Daniel Suh"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r, source message=F}
+library(here)
+
+source(here("base","src.R"))
+```
+
