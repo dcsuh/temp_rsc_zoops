@@ -296,4 +296,33 @@ ggplot(ysi_summ, aes(x=Date, y=chlor_conc, color = temp)) + geom_point() + geom_
 
 
 
+# Metsch Infections in Daphnia across Temp
+
+```{r}
+summary %>% filter(community %in% c("D","DM")) %>% ggplot(., aes(x=sample_date,y=mean_daphnia, color = temp)) + 
+  geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_daphnia-daphnia_se, ymax = mean_daphnia+daphnia_se)) +
+  facet_grid(rows = vars(temp), cols = vars(community)) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1))
+
+summary %>% filter(community %in% c("D","DM")) %>% ggplot(., aes(x=sample_date,y=mean_daphnia, color = temp)) + 
+  geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_daphnia-daphnia_se, ymax = mean_daphnia+daphnia_se)) +
+  facet_grid(rows = vars(community), cols = vars(temp)) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1))
+
+```
+
+```{r}
+mean_inc %>% filter(community %in% c("DM")) %>% ggplot(.,aes(x=sample_date, y=mean_inc, color = temp)) + geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  geom_errorbar(aes(ymin = mean_inc-inc_se, ymax = mean_inc+inc_se)) +
+  facet_grid(rows = vars(temp), cols = vars(community)) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1))
+
+```
+
+
 
