@@ -27,3 +27,5 @@ Some work in progress:
 [cerio](/workshop/cerio.html)
 
 [traits](/workshop/traits.html)
+
+[foraging](/workshop/foraging.html)
