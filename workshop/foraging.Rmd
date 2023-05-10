@@ -13,6 +13,8 @@ source(here("base","src.R"))
 ```{r}
 data <- read_csv(here("raw_data","foraging.csv"))
 ```
+Effects of temperature and resources on prevalence
+![prevalence](figures/prob_inf.png)
 
 
 ```{r}
