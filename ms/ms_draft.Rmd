@@ -1,0 +1,27 @@
+---
+title: "Manuscript Draft"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+
+Main Ideas
+
+===
+
+* Host competence within species (and within genotype) can be moderated by environmental conditions such as ambient temperature and resource availability
+
+* Effects of temperature on disease dynamics are well-studied
+ + Altizer et al. 2013 - effects of climate change on disease
+ + temperature can affect population growth rates
+ 
+* Effects of resource availability on disease also well-studied
+ + increased carrying capacity
+ + increasing host density from resource aggregation
+ 
+* Effects of temperature and resource conditions can influence each other and interact in interesting ways
+
+* Daphnia-Metschnikowia useful model system for studying interactions between temperature and resources
+ + Host (daphnia) highly sensitive to ambient temperature
+    - Daphnia foraging rates increase with temperature - foraging rate analogous to transmission rate
+    - host growth rate sensitive to temperature
