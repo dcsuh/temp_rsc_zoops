@@ -5,10 +5,6 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 packages
 ```{r, message = F}
 library(tidyverse)
@@ -16,6 +12,7 @@ library(magrittr)
 library(here)
 library(ggnewscale)
 library(lubridate)
+library(epitools)
 ```
 
 read data
@@ -67,9 +64,12 @@ data %<>% mutate(total = rowSums(across(juvenile_daphnia_uninf:cerio_inf), na.rm
 
 data %<>% mutate(cerio = cerio_inf + cerio_uninf, d_ratio = daphnia/total)
 
-data %<>% mutate(daphnia_inc = (juvenile_daphnia_inf+adult_daphnia_inf)/daphnia,
-                 cerio_inc = (cerio_inf)/cerio,
-                 total_inc = (juvenile_daphnia_inf+adult_daphnia_inf+cerio_inf)/total)
+data %<>% mutate(daphnia_inc = (juvenile_daphnia_inf+adult_daphnia_inf),
+                 cerio_inc = (cerio_inf),
+                 total_inc = (juvenile_daphnia_inf+adult_daphnia_inf+cerio_inf),
+                 daphnia_prev = (juvenile_daphnia_inf+adult_daphnia_inf)/daphnia,
+                 cerio_prev = (cerio_inf)/cerio,
+                 total_prev = (juvenile_daphnia_inf+adult_daphnia_inf+cerio_inf)/total)
 ```
 
 Totals
@@ -122,19 +122,22 @@ ggplot(summary, aes(x=sample_date,y=mean_total, color = temp)) +
   geom_point() + 
   geom_line(aes(group=treatment)) + 
   geom_errorbar(aes(ymin = mean_total-total_se, ymax = mean_total+total_se)) +
-  facet_grid(rows = vars(temp), cols = vars(community)) 
+  facet_grid(rows = vars(temp), cols = vars(community)) + 
+  labs(title = "Average abundance over time")
 
 ggplot(summary, aes(x=sample_date,y=mean_daphnia, color = temp)) + 
   geom_point() + 
   geom_line(aes(group=treatment)) + 
   geom_errorbar(aes(ymin = mean_daphnia-daphnia_se, ymax = mean_daphnia+daphnia_se)) +
-  facet_grid(rows = vars(temp), cols = vars(community)) 
+  facet_grid(rows = vars(temp), cols = vars(community))  + 
+  labs(title = "Average daphnia abundance over time")
 
 ggplot(summary, aes(x=sample_date,y=mean_cerio, color = temp)) + 
   geom_point() + 
   geom_line(aes(group=treatment)) + 
   geom_errorbar(aes(ymin = mean_cerio-cerio_se, ymax = mean_cerio+cerio_se)) +
-  facet_grid(rows = vars(temp), cols = vars(community)) 
+  facet_grid(rows = vars(temp), cols = vars(community))  + 
+  labs(title = "Average ceriodaphnia abundance over time")
 ```
 
 Daphnia:cerio ratio
@@ -173,19 +176,21 @@ Incidence (i.e. positive case counts)
 should na.rm be set to true? If there is an NA, then that means that at that sample that there were no individuals found (denominator = 0) when measuring incidence
 Is this a significant measurement or not? Should it be counted as true zero or just ommitted?
 ```{r}
-mean_inc <- data %>% group_by(treatment, sample_date, temp, community) %>% summarize(mean_inc = mean(total_inc),
-                                                                                     inc_se = sqrt(var(total_inc)/length(total_inc)),
-                                                                                     mean_daph_inc = mean(daphnia_inc),
-                                                                                     daph_inc_se = sqrt(var(daphnia_inc)/length(daphnia_inc)),
-                                                                                     mean_cer_inc = mean(cerio_inc),
-                                                                                     cer_inc_se = sqrt(var(cerio_inc)/length(cerio_inc)))
+mean_inc <- data %>% group_by(treatment, sample_date, temp, community) %>% 
+  summarize(mean_inc = mean(total_inc),
+  inc_se = sqrt(var(total_inc)/length(total_inc)),
+  mean_daph_inc = mean(daphnia_inc),
+  daph_inc_se = sqrt(var(daphnia_inc)/length(daphnia_inc)),
+  mean_cer_inc = mean(cerio_inc),
+  cer_inc_se = sqrt(var(cerio_inc)/length(cerio_inc)))
 
-mean_inc <- data %>% group_by(treatment, sample_date, temp, community) %>% summarize(mean_inc = mean(total_inc, na.rm = T),
-                                                                                     inc_se = sqrt(var(total_inc, na.rm = T)/length(total_inc)),
-                                                                                     mean_daph_inc = mean(daphnia_inc, na.rm = T),
-                                                                                     daph_inc_se = sqrt(var(daphnia_inc, na.rm = T)/length(daphnia_inc)),
-                                                                                     mean_cer_inc = mean(cerio_inc, na.rm = T),
-                                                                                     cer_inc_se = sqrt(var(cerio_inc, na.rm = T)/length(cerio_inc)))
+mean_inc <- data %>% group_by(treatment, sample_date, temp, community) %>% 
+  summarize(mean_inc = mean(total_inc, na.rm = T),
+  inc_se = sqrt(var(total_inc, na.rm = T)/length(total_inc)),
+  mean_daph_inc = mean(daphnia_inc, na.rm = T),
+  daph_inc_se = sqrt(var(daphnia_inc, na.rm = T)/length(daphnia_inc)),
+  mean_cer_inc = mean(cerio_inc, na.rm = T),
+  cer_inc_se = sqrt(var(cerio_inc, na.rm = T)/length(cerio_inc)))
 ```
 
 ```{r}
@@ -304,14 +309,16 @@ summary %>% filter(community %in% c("D","DM")) %>% ggplot(., aes(x=sample_date,y
   geom_line(aes(group=treatment)) + 
   geom_errorbar(aes(ymin = mean_daphnia-daphnia_se, ymax = mean_daphnia+daphnia_se)) +
   facet_grid(rows = vars(temp), cols = vars(community)) +
-  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + 
+  labs(title = "Average Daphnia abundance over time")
 
 summary %>% filter(community %in% c("D","DM")) %>% ggplot(., aes(x=sample_date,y=mean_daphnia, color = temp)) + 
   geom_point() + 
   geom_line(aes(group=treatment)) + 
   geom_errorbar(aes(ymin = mean_daphnia-daphnia_se, ymax = mean_daphnia+daphnia_se)) +
   facet_grid(rows = vars(community), cols = vars(temp)) +
-  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + 
+  labs(title = "Average Daphnia abundance over time")
 
 ```
 
@@ -324,5 +331,42 @@ mean_inc %>% filter(community %in% c("DM")) %>% ggplot(.,aes(x=sample_date, y=me
 
 ```
 
+Let's look at Infection Prevalence in Daphnia over temperatures for daphnia and ceriodaphnia treatments
+
+```{r}
+prev_summary <- data %>% 
+  group_by(treatment, sample_date, temp, community) %>%
+  summarize(n = n(),
+            daph_prev = mean(daphnia_prev),
+            cerio_prev = mean(cerio_prev),
+            total_prev = mean(total_prev))
+```
+
+```{r}
+prev_summary %>% filter(community %in% c("CM", "DCM", "DM")) %>% ggplot(.,aes(x=sample_date, y=daph_prev, color = temp)) + geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  facet_grid(rows = vars(temp), cols = vars(community)) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs(title = "Daphnia prevalence over time")
+
+
+prev_summary %>% filter(community %in% c("CM", "DCM", "DM")) %>% ggplot(.,aes(x=sample_date, y=daph_prev, color = temp)) + geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  facet_grid(cols = vars(temp), rows = vars(community)) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs(title = "Daphnia prevalence over time")
+
+
+prev_summary %>% filter(community %in% c("CM", "DCM", "DM")) %>% ggplot(.,aes(x=sample_date, y=cerio_prev, color = temp)) + geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  facet_grid(rows = vars(temp), cols = vars(community)) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs(title = "Cerioaphnia prevalence over time")
+
+
+prev_summary %>% filter(community %in% c("CM", "DCM", "DM")) %>% ggplot(.,aes(x=sample_date, y=total_prev, color = temp)) + geom_point() + 
+  geom_line(aes(group=treatment)) + 
+  facet_grid(rows = vars(temp), cols = vars(community)) +
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs(title = "Daphnia+Cerio prevalence over time")
+```
+
+In terms of prevalence, daphnia had larger epidemics in the presence of ceriodaphnia rather than not but there weren't that many ceriodaphnia anyways. We need to look at what the treaments actually ended up being since we can't really trust how we set them up to be. One interesting thing is that the timing of epidemics for daphnia only treaments seemed to always be earlier than daphnia+cerio treatments. 
 
 
