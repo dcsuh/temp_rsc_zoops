@@ -22,8 +22,6 @@ Some work in progress:
 
 [exploration_main](/workshop/exploration_main.html)
 
-[tanks](/workshop/tanks.html)
-
 [cerio](/workshop/cerio.html)
 
 [traits](/workshop/traits.html)
