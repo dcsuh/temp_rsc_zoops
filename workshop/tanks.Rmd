@@ -370,3 +370,9 @@ prev_summary %>% filter(community %in% c("CM", "DCM", "DM")) %>% ggplot(.,aes(x=
 In terms of prevalence, daphnia had larger epidemics in the presence of ceriodaphnia rather than not but there weren't that many ceriodaphnia anyways. We need to look at what the treaments actually ended up being since we can't really trust how we set them up to be. One interesting thing is that the timing of epidemics for daphnia only treaments seemed to always be earlier than daphnia+cerio treatments. 
 
 
+Epidemiological characteristics to look at
+ - Maximum prevalence
+ - severity (sign and size of standardized regression coefficients)
+ - timing of start and peak prevalence
+ - integral of infection prevalence
+
