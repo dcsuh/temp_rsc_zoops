@@ -13,6 +13,7 @@ library(here)
 library(ggnewscale)
 library(lubridate)
 library(epitools)
+library(pracma)
 ```
 
 read data
@@ -27,6 +28,10 @@ read all ysi
 ysi_location <- list.files(path=here("raw_data/ysi_data"))
 
 ysi <- readr::read_csv(here("raw_data","ysi_data",ysi_location), id = "filename", locale = locale(encoding = "latin1"))
+```
+
+```{r local variables}
+start_date <- mdy("06/27/2022")
 ```
 
 
@@ -375,4 +380,13 @@ Epidemiological characteristics to look at
  - severity (sign and size of standardized regression coefficients)
  - timing of start and peak prevalence
  - integral of infection prevalence
+
+```{r}
+prev_summary %<>% mutate(time = as.numeric(sample_date-start_date))
+
+prev_auc <- prev_summary %>% group_by(treatment) %>% summarize(daph_auc = trapz(x = time, y = daph_prev),
+                                                   cerio_auc = trapz(x = time, y = cerio_prev),
+                                                   total_auc = trapz(x = time, y = total_prev))
+```
+
 
