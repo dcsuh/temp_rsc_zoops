@@ -18,7 +18,9 @@ pckg_names <- c("tidyverse",
                 "lubridate", 
                 "epitools",
                 "ggpubr",
-                "rstatix")
+                "rstatix",
+                "lhs",
+                "deSolve")
 
 # load/install packages
 lapply(pckg_names, 

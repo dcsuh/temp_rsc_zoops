@@ -11,6 +11,8 @@ library(here)
 source(here("base","src.R"))
 ```
 
+
+
 Let's try a global sensitivity analysis using latin hypercube sampling and partial rank correlation coefficients.
 
 To start, I need to sample from a range of parameter values. We do this using latin hypercube sampling (LHS). After assuming some sort of probability density function for each parameter, LHS divides these evenly and samples from each division. These values are then used as parameters for the model and a model output can be obtained. We do this N number of times and generate a lot of different outputs for all of our inputs (we use matrices to keep this all organized). Using the model outputs, we can then create scatter plots of outputs (y-axis) relative to the parameter of interest (x-axis). If the relationship is non-linear and monotonic, then Partial Rank Correlation Coefficients can be used. If the relationship is non-linear and non-monotonic, then another method should be used (efAST). For now, we are hoping that we can use PRCC. PRCC's are calculated and can be used to estimated sensitivity of an output for a given input (parameter) and these PRCC's can be tested for significant differences from each other or from 0.
@@ -20,3 +22,13 @@ And this is their website with code for implementation: http://malthus.micro.med
 
 
 One question is how to assess sensitivity of an output of interest (e.g. R0) for different environmental conditions. We can say which parameter R0 is most sensitive to under different temperature and resource conditions, but can we say whether R0 is more sensitive to changes in temperature or resource conditions? I guess I'm not even sure how we would relativize that since temperature and resources are on completely different scales.
+
+
+I guess first thing to do is to define the model
+
+
+```{r}
+
+```
+
+
