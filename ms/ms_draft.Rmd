@@ -4,34 +4,39 @@ output: html_document
 date: "`r Sys.Date()`"
 ---
 
-
 Main Ideas
 
 ===
 
-* Host competence within species (and within genotype) can be moderated by environmental conditions such as ambient temperature and resource availability
+-   Host competence within species (and within genotype) can be moderated by environmental conditions such as ambient temperature and resource availability
 
-* Effects of temperature on disease dynamics are well-studied
- + Altizer et al. 2013 - effects of climate change on disease
- + temperature can affect population growth rates
- 
-* Effects of resource availability on disease also well-studied
- + increased carrying capacity
- + increasing host density from resource aggregation
- 
-* Effects of temperature and resource conditions can influence each other and interact in interesting ways
+-   Effects of temperature on disease dynamics are well-studied
 
-* Daphnia-Metschnikowia useful model system for studying interactions between temperature and resources
- + Host (daphnia) highly sensitive to ambient temperature
-    - Daphnia foraging rates increase with temperature - foraging rate analogous to transmission rate
-    - host growth rate sensitive to temperature
-    
-    
+-   Altizer et al. 2013 - effects of climate change on disease
+
+-   temperature can affect population growth rates
+
+-   Effects of resource availability on disease also well-studied
+
+-   increased carrying capacity
+
+-   increasing host density from resource aggregation
+
+-   Effects of temperature and resource conditions can influence each other and interact in interesting ways
+
+-   Daphnia-Metschnikowia useful model system for studying interactions between temperature and resources
+
+-   Host (daphnia) highly sensitive to ambient temperature
+
+    -   Daphnia foraging rates increase with temperature - foraging rate analogous to transmission rate
+    -   host growth rate sensitive to temperature
+
+-   
+
 Some more narrative thoughts:
 
 Host competence (the ability to uptake and generate infections) is a complex multifactorial trait. As a trait, it can be measured by studying individual-level factors related to parasite transmission. It can also be studied at a population scale, but competence must then be inferred in this situation (assuming an inability to study individual variation in a population-level experiment). In this study, we use individual-level measurements of relevant factors to estimate competence and infer the effects of competence at a population scale. Furthermore, competence is unlikely to be a fixed trait since it is multifactorial and will likely vary depending on environmental conditions. Because of this, we measure host competence under different constant temperature and resource conditions. Using data on individuals under different conditions, we measure relevant traits and then apply these to a dynamical model that can be used to estimate how these factors might scale to the population-level. There are many qualities of this population that can be inferred and R0, the basic reproductive number of the parasite, is a popular one to study. We can use these individual measurements to parameterize a model that can estimate R0 under different temperature and resource conditions. With data for parameter estimation and a model, we can then understand the effects of different temperature and resource conditions on R0 and estimate the sensitivty of R0 to different parameters under these different conditions.
 
-There are many limitations to this approach, but this is a fruitful method for understanding this question at a fundamental level. Some of these limitations include the fact that we are estimating population-level characteristics from measurements that were made at the individual level. Because of this, we are inherently removing any interactions between individuals that may have arisen in an actual population (e.g. competition or indirect effects). We are also making an assumption of a system at equilibrium, which is a common method, but is known to be poorly reflective of systems in their natural setting. Furthermore, competence may more accurately be measured with a finer-scale dose-response method (i.e. how many infectious propagules are produced by a single individual given an inoculation of a number of infectious propagules; also though of as ratio of parasites made over parasites used for infection). Future studies should consider transient dynamics of a population (what is happening NOT at equilibrium) and extend these experimental manipulations to a population scale. 
-
+There are many limitations to this approach, but this is a fruitful method for understanding this question at a fundamental level. Some of these limitations include the fact that we are estimating population-level characteristics from measurements that were made at the individual level. Because of this, we are inherently removing any interactions between individuals that may have arisen in an actual population (e.g. competition or indirect effects). We are also making an assumption of a system at equilibrium, which is a common method, but is known to be poorly reflective of systems in their natural setting. Furthermore, competence may more accurately be measured with a finer-scale dose-response method (i.e. how many infectious propagules are produced by a single individual given an inoculation of a number of infectious propagules; also though of as ratio of parasites made over parasites used for infection). Future studies should consider transient dynamics of a population (what is happening NOT at equilibrium) and extend these experimental manipulations to a population scale.
 
 Note: I'm not yet sure but it seems that the method for global sensitivity analysis that I am looking at can be used over time (essentially looking at PRCC's at different time points which basically just means using different outputs) so is that a method for observing sensitivity over transient dynamics (i.e. before a system reaches equilibrium)? But I guess this doesn't make sense if we are talking about R0. So can we look at time-varying Reffective and get PRCC's to look at sensitivity of parameters over time for a dynamic effective reproductive number? Just thoughts. After reading the paper a bit more, it seems like this might be the exact kind of the thing we can do.
