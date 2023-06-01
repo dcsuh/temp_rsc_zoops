@@ -23,7 +23,7 @@ Another thing. Can I get the probability density function from the boostrapped c
 
 I guess first thing to do is to define the model
 
-Simplified model from Strauss et al. 2018 ecol letters. Resource density modeled as a constant rather than a variable.
+Simplified model from Strauss et al. 2018 ecol letters. Resource density modeled as a constant rather than a variable. Multiple parameters summarized (birth rate, susceptible and infected death rate, transmission rate)
 
 ![Daphnia-Metschnikowia](/Users/dcsuh/Documents/GitHub/temp_rsc_zoops/papers/daphnia_model.png)
 
@@ -36,14 +36,17 @@ daphnia <- function(t, x, params){
   Z <- x[3]
   N <- S+I
   
+  # calculated parameters
+  susc <- (params$fora*Z0)/params$beta
+  
   # rates
-  r1 <- conv*fora*resource*N # susceptible births
-  r2 <- death*S # susceptible deaths
-  r3 <- susc*fora*Z*S # transmission
-  r4 <- death*viru*I # infected deaths
-  r5 <- yield*resource # per individual yield
-  r6 <- fora*Z*N # spore removal
-  r7 <- loss*Z # spore degradation
+  r1 <- params$birth*N # susceptible births
+  r2 <- params$death*S # susceptible deaths
+  r3 <- susc*params$fora*Z*S # transmission
+  r4 <- params$death*I # infected deaths
+  r5 <- params$yield # per individual yield
+  r6 <- params$fora*Z*N # spore removal
+  r7 <- params$loss*Z # spore degradation
 
   # derivatives
   dS <- r1 - r2 - r3
@@ -57,16 +60,14 @@ daphnia <- function(t, x, params){
 
 ```{r}
 times <- seq(0, 60, by=1)  #solve for 60 days
-params <- list(resource=2.532, # resource density
-               conv=0.012, # conversion efficiency
-               fora=0.462, # foraging rate
-               death=7/12, # death rate
-               susc=7/4.2, # susceptibility
-               viru=7/10, # virulence
-               yield=7/2, # spore yield
-               loss = 7/8) # spore loss
-pop.size <- 
-Z0 <- 
+params <- list(birth=0.25, # birth rate
+               fora=0.0029898716, # foraging rate
+               death=0.005319150, # death rate
+               beta=0.000002209164, # transmission rate
+               yield=55496.324, # spore yield
+               loss=0.2) # spore loss
+pop.size <- params$birth/params$death
+Z0 <- 200000
 xstart <- c(S=pop.size, I=0 , Z=Z0)
 out <- as.data.frame(ode(xstart, times, daphnia, params))
 ```
