@@ -80,3 +80,51 @@ out %>% ggplot(.,aes(x=time))+
   scale_colour_manual(values = c("red","green","black"))+
   labs(y="N",x="Time",col="Population")
 ```
+
+
+```{r}
+h <- 1000               #choose number of points
+set.seed(8878896)
+lhs<-maximinLHS(h,6)   #simulate
+```
+
+```{r}
+beta.summary <- readRDS(here("processed_data", "beta_summary.rds"))
+lt_full <- readRDS(here("processed_data", "lt_full_summary.rds"))
+spores <- readRDS(here("processed_data", "spore_yield.rds"))
+foraging <- readRDS(here("processed_data", "foraging.rds"))
+```
+
+```{r}
+i <- 9
+j <- 6
+
+birth_min = lt_full$S.b.U.025[i]
+birth_max = lt_full$S.b.U.975[i]
+fora_min = foraging$rate_mean - foraging$rate_se[j]
+fora_max = foraging$rate_mean + foraging$rate_se[j]
+death_min = lt_full$S.d.U.025[i]
+death_max = lt_full$S.d.U.975[i]
+beta_min = beta.summary$beta.025[i]
+beta_max = beta.summary$beta.975[i]
+yield_min = spores$mean_yield[i] - spores$se[i]
+yield_max = spores$mean_yield[i] + spores$se[i]
+loss_min = 0.2 - 0.05
+loss_max = 0.2 + 0.05
+```
+
+```{r}
+params.set <- cbind(
+  birth <- lhs[,1]*(birth_max - birth_min) + birth_min,
+  fora <- lhs[,2]*(fora_max - fora_min) + fora_min,
+  death <- lhs[,3]*(death_max - death_min) + death_min,
+  beta <- lhs[,4]*(beta_max - beta_min) + beta_min,
+  yield <- lhs[,5]*(yield_max - yield_min) + yield_min,
+  loss <- lhs[,6]*(loss_max - loss_min) + loss_min
+)
+```
+
+```{r}
+
+```
+
