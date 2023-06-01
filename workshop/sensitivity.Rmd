@@ -37,7 +37,7 @@ daphnia <- function(t, x, params){
   N <- S+I
   
   # calculated parameters
-  susc <- (params$fora*Z0)/params$beta
+  susc <- params$beta/params$fora
   
   # rates
   r1 <- params$birth*N # susceptible births
@@ -59,15 +59,24 @@ daphnia <- function(t, x, params){
 ```
 
 ```{r}
-times <- seq(0, 60, by=1)  #solve for 60 days
+times <- seq(0, 500, by=1)  #solve for 60 days
 params <- list(birth=0.25, # birth rate
                fora=0.0029898716, # foraging rate
-               death=0.005319150, # death rate
+               death=0.01, # death rate
                beta=0.000002209164, # transmission rate
                yield=55496.324, # spore yield
                loss=0.2) # spore loss
-pop.size <- params$birth/params$death
+pop.size <- 1
 Z0 <- 200000
 xstart <- c(S=pop.size, I=0 , Z=Z0)
 out <- as.data.frame(ode(xstart, times, daphnia, params))
+```
+
+```{r}
+out %>% ggplot(.,aes(x=time))+
+  geom_line(aes(y=S,col="Susceptible"))+
+  geom_line(aes(y=I,col="Infected"))+
+  geom_line(aes(y=Z,col="Spores"))+
+  scale_colour_manual(values = c("red","green","black"))+
+  labs(y="N",x="Time",col="Population")
 ```
