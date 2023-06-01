@@ -11,27 +11,62 @@ library(here)
 source(here("base","src.R"))
 ```
 
-
-
 Let's try a global sensitivity analysis using latin hypercube sampling and partial rank correlation coefficients.
 
 To start, I need to sample from a range of parameter values. We do this using latin hypercube sampling (LHS). After assuming some sort of probability density function for each parameter, LHS divides these evenly and samples from each division. These values are then used as parameters for the model and a model output can be obtained. We do this N number of times and generate a lot of different outputs for all of our inputs (we use matrices to keep this all organized). Using the model outputs, we can then create scatter plots of outputs (y-axis) relative to the parameter of interest (x-axis). If the relationship is non-linear and monotonic, then Partial Rank Correlation Coefficients can be used. If the relationship is non-linear and non-monotonic, then another method should be used (efAST). For now, we are hoping that we can use PRCC. PRCC's are calculated and can be used to estimated sensitivity of an output for a given input (parameter) and these PRCC's can be tested for significant differences from each other or from 0.
 
-This is a useful paper for understanding these methods: https://doi.org/10.1016/j.jtbi.2008.04.011
-And this is their website with code for implementation: http://malthus.micro.med.umich.edu/lab/usanalysis.html
-
+This is a useful paper for understanding these methods: <https://doi.org/10.1016/j.jtbi.2008.04.011> And this is their website with code for implementation: <http://malthus.micro.med.umich.edu/lab/usanalysis.html>
 
 One question is how to assess sensitivity of an output of interest (e.g. R0) for different environmental conditions. We can say which parameter R0 is most sensitive to under different temperature and resource conditions, but can we say whether R0 is more sensitive to changes in temperature or resource conditions? I guess I'm not even sure how we would relativize that since temperature and resources are on completely different scales.
 
-
 Another thing. Can I get the probability density function from the boostrapped confidence intervals for the parameter estimates? And then can I base the range and pdf shape from that?
-
 
 I guess first thing to do is to define the model
 
+Simplified model from Strauss et al. 2018 ecol letters. Resource density modeled as a constant rather than a variable.
+
+![Daphnia-Metschnikowia](/Users/dcsuh/Documents/GitHub/temp_rsc_zoops/papers/daphnia_model.png)
 
 ```{r}
+daphnia <- function(t, x, params){
 
+  # states
+  S <- x[1]
+  I <- x[2]
+  Z <- x[3]
+  N <- S+I
+  
+  # rates
+  r1 <- conv*fora*resource*N # susceptible births
+  r2 <- death*S # susceptible deaths
+  r3 <- susc*fora*Z*S # transmission
+  r4 <- death*viru*I # infected deaths
+  r5 <- yield*resource # per individual yield
+  r6 <- fora*Z*N # spore removal
+  r7 <- loss*Z # spore degradation
+
+  # derivatives
+  dS <- r1 - r2 - r3
+  dI <- r3 - r4
+  dZ <- r5*r4 - r6 - r7
+    
+  #output
+  out <- list(c(dS, dI, dZ))
+}
 ```
 
-
+```{r}
+times <- seq(0, 60, by=1)  #solve for 60 days
+params <- list(resource=2.532, # resource density
+               conv=0.012, # conversion efficiency
+               fora=0.462, # foraging rate
+               death=7/12, # death rate
+               susc=7/4.2, # susceptibility
+               viru=7/10, # virulence
+               yield=7/2, # spore yield
+               loss = 7/8) # spore loss
+pop.size <- 
+Z0 <- 
+xstart <- c(S=pop.size, I=0 , Z=Z0)
+out <- as.data.frame(ode(xstart, times, daphnia, params))
+```
