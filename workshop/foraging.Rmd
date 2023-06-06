@@ -98,7 +98,7 @@ data_summ %>% ggplot(aes(x=ID, y=amt_mean)) +
   geom_point() + 
   geom_linerange(aes(ymin=amt_mean-amt_se, ymax=amt_mean+amt_se)) + 
   theme(axis.text.x = element_text(angle = 75, vjust = 1, hjust = 1)) + 
-  labs(y = "mL/minute",
+  labs(y = "amount consumed",
        x = "treatment")
 ```
 
