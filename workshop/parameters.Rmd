@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r}
+```{r packages, message = F}
 library(here)
 
 source(here("base","src.R"))
@@ -39,7 +39,7 @@ dataset <- left_join(fitness, mort)
 
 
 
-```{r}
+```{r seed}
 set.seed(30605)
 ```
 
@@ -189,7 +189,7 @@ $$
 $$
 
 
-```{r}
+```{r starting values}
 
 
 for(i in 1:length(trts)){
@@ -284,7 +284,7 @@ for (j in 1:length(treatments)){
   lt.summary$S.b.U[j] = lt.summary$S.r.U[j] + lt.summary$S.d.U[j] # and calculate b as b = r+d
 
 ### little r for infected individuals
-  S.I.data <- S.data[S.data$inf_status==0,] #filter for only infected individuals
+  S.I.data <- S.data[S.data$inf_status==1,] #filter for only infected individuals
 
   little.r.calculator(rdat=S.I.data) # this function saves r to global environment
     lt.summary$S.r.I[j] <- little.r # add it to the summary spreadsheet
