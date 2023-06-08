@@ -56,16 +56,17 @@ daphnia <- function(t, x, params){
   #output
   out <- list(c(dS, dI, dZ))
 }
+
 ```
 
 ```{r}
-times <- seq(0, 500, by=1)  #solve for 60 days
-params <- list(birth=0.25, # birth rate
-               fora=0.0029898716, # foraging rate
+times <- seq(0, 60, by=0.1)  #solve for 
+params <- list(birth=0.25, # birth rate; births per day
+               fora=0.0029898716*1.44, # foraging rate; liters per day
                death=0.01, # death rate
                beta=0.000002209164, # transmission rate
                yield=55496.324, # spore yield
-               loss=0.2) # spore loss
+               loss=0.02) # spore loss
 pop.size <- 1
 Z0 <- 200000
 xstart <- c(S=pop.size, I=0 , Z=Z0)
