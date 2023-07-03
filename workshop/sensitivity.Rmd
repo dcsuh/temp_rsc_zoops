@@ -142,8 +142,8 @@ for (i in 1:length(treatments)){
   yield_min = spores$mean_yield[i] - spores$se[i]
   yield_max = spores$mean_yield[i] + spores$se[i]
   
-  loss_min = 0.2 - 0.05
-  loss_max = 0.2 + 0.05
+  loss_min = 0.2 - 0.1
+  loss_max = 0.2 + 0.1
   
   resource = rep(lt_full$resource.x[i], h)
   temp = rep(lt_full$temp[i], h)
@@ -178,7 +178,7 @@ S^*= equilibrium\ susceptible\ host\ density \\
 
 \sigma = spore\ yield \\
 
-\mu = degradation\ rate \\ 
+\mu = spore\ loss\ rate \\ 
 $$
 
 
@@ -203,4 +203,4 @@ prcc_results %>% arrange(original) %>%
   labs(x = "Coefficient", y = "Parameter")
 ```
 
-
+This iteration of the sensitivity analysis uses a range of 0.1 to 0.3 for degradation rate. The sensitivity of R0 to degradation/loss rate will depend on which range we choose so it just needs to be something reasonable.
