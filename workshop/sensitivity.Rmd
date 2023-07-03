@@ -86,7 +86,7 @@ out %>% ggplot(.,aes(x=time))+
 ```{r}
 h <- 1000               #choose number of points
 set.seed(8878896)
-lhs<-maximinLHS(h,6)   #simulate
+lhs<-maximinLHS(h,7)   #simulate
 ```
 
 ```{r}
@@ -102,30 +102,70 @@ j <- 6
 
 birth_min = lt_full$S.b.U.025[i]
 birth_max = lt_full$S.b.U.975[i]
-fora_min = foraging$rate_mean - foraging$rate_se[j]
-fora_max = foraging$rate_mean + foraging$rate_se[j]
+
+fora_min = 0
+fora_max = foraging$rate_mean[j] + foraging$rate_se[j]
+
 death_min = lt_full$S.d.U.025[i]
 death_max = lt_full$S.d.U.975[i]
+
 beta_min = beta.summary$beta.025[i]
 beta_max = beta.summary$beta.975[i]
+
+susc_min = lt_full$S.S.025[i]
+susc_max = lt_full$S.S.975[i]
+
 yield_min = spores$mean_yield[i] - spores$se[i]
 yield_max = spores$mean_yield[i] + spores$se[i]
+
 loss_min = 0.2 - 0.05
 loss_max = 0.2 + 0.05
 ```
 
 ```{r}
-params.set <- cbind(
-  birth <- lhs[,1]*(birth_max - birth_min) + birth_min,
-  fora <- lhs[,2]*(fora_max - fora_min) + fora_min,
-  death <- lhs[,3]*(death_max - death_min) + death_min,
-  beta <- lhs[,4]*(beta_max - beta_min) + beta_min,
-  yield <- lhs[,5]*(yield_max - yield_min) + yield_min,
-  loss <- lhs[,6]*(loss_max - loss_min) + loss_min
-)
+params.set <- as_tibble(cbind(
+  birth = lhs[,1]*(birth_max - birth_min) + birth_min,
+  fora = lhs[,2]*(fora_max - fora_min) + fora_min,
+  death = lhs[,3]*(death_max - death_min) + death_min,
+  beta = lhs[,4]*(beta_max - beta_min) + beta_min,
+  susc = lhs[,5]*(susc_max - susc_min) + susc_min,
+  yield = lhs[,6]*(yield_max - yield_min) + yield_min,
+  loss = lhs[,7]*(loss_max - loss_min) + loss_min
+))
 ```
+
+For now, we don't even need to simulate model dynamics to get sensitivity of R0 for multiple params. I can just plug in the analytical version of R0 which is:
+
+$$ 
+R\emptyset = \frac { \beta S^* \sigma }{ \mu } \\
+
+\beta = transmission\ rate \\
+
+S^*= equilibrium\ susceptible\ host\ density \\
+
+\sigma = spore\ yield \\
+
+\mu = degradation\ rate \\ 
+$$
+
+Also, to start, we will just do the sensitivity analysis for a single set of conditions. 15 Degrees at high food. Afterwards, I can rewrite this as a loop so that I can loop through all conditions.
+
 
 ```{r}
-
+data <- tibble(params.set, R0 = NA)
+data %<>% na_if(., .)
 ```
+
+
+
+```{r}
+for(k in 1:h){
+  data[k,1:7] <- params <- as.list(c(params.set[k,]))
+  tmp <- (params.set$beta[k]*params.set$susc[k]*params.set$yield[k])/params.set$loss[k] #calculate R0
+  data[k, 8] <- tmp
+}
+```
+
+
+
 
