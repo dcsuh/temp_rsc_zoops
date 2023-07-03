@@ -196,7 +196,7 @@ prcc_results %<>% rownames_to_column(., var = "parameter") %>% rename(min_ci = `
 
 ```{r}
 prcc_results %>% arrange(original) %>%  
-  mutate(parameter=factor(parameter, levels=parameter)) %>%   # This trick update the factor levels
+  mutate(parameter=factor(parameter, levels=parameter)) %>%   # This updates the factor levels
   ggplot(., aes(x = original, y = parameter)) + 
   geom_pointrange(aes(xmin = min_ci, xmax = max_ci)) + 
   geom_vline(xintercept = 0) + 
