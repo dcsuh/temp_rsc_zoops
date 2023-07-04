@@ -11,27 +11,20 @@ library(here)
 ```
 
 
-
-Proposed Temperature and Resource Effects
-![paths](figures/Tmp rsc paths.jpg)
-
-Effects of temperature and resources on lifespan
-![avg_span](figures/lifespan.png)
-
 Effects of temperature and resources on prevalence
 ![prevalence](figures/prob_inf.png)
 
-Effects of temperature and resources on body size
-![body_size](figures/body_size.png)
 
-Effects of lifespan on spore yield
-![span_yield](figures/spores_lifespan.png)
+
+Effects of temperature and resources on host net reproductive rate
+![little r](figures/little_r.png)
+
+
+
 
 Effects of length on spore yield
 ![body_size_yield](figures/spores_length.png)
 
-Effects of temperature and resources on host net reproductive rate
-![little r](figures/little_r.png)
 
 
 Effects of temperature and resources on parasite basic reproductive number
