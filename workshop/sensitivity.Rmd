@@ -195,7 +195,7 @@ prcc_results %<>% rownames_to_column(., var = "parameter") %>% rename(min_ci = `
 ```
 
 ```{r}
-prcc_results %>% arrange(original) %>%  
+sensitivity_fig <- prcc_results %>% arrange(original) %>%  
   mutate(parameter=factor(parameter, levels=parameter)) %>%   # This updates the factor levels
   ggplot(., aes(x = original, y = parameter)) + 
   geom_pointrange(aes(xmin = min_ci, xmax = max_ci)) + 
@@ -204,3 +204,9 @@ prcc_results %>% arrange(original) %>%
 ```
 
 This iteration of the sensitivity analysis uses a range of 0.1 to 0.3 for degradation rate. The sensitivity of R0 to degradation/loss rate will depend on which range we choose so it just needs to be something reasonable.
+
+
+```{r}
+ggsave("sensitivity.png", sensitivity_fig, width = outwidth[1], height = outwidth[1]/golden, unit = "in", path = here("figures"))
+```
+
