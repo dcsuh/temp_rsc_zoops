@@ -28,4 +28,4 @@ Some work in progress:
 
 [foraging](/workshop/foraging.html)
 
-
+[sensitivity](/workshop/sensitivity.html)
