@@ -22,12 +22,13 @@ spores <- readRDS(here("processed_data", "spore_yield.rds"))
 # Beta
 
 ```{r}
-beta.summary %>% filter(species=="D" & temp %in% const_temp) %>% 
+beta_fig <- beta.summary %>% filter(species=="D" & temp %in% const_temp) %>% 
   ggplot(.,aes(x=temp, y = beta.est, color = temp)) +
   geom_point(aes(), position = position_dodge(width = 0.5)) + 
   geom_linerange(aes(ymin = beta.025, ymax = beta.975), position = position_dodge(width = 0.5)) + 
   facet_wrap(. ~ as.factor(resource), nrow = 1) + 
   labs(y = "Beta", x = "Temp (C)")
+
 
 ```
 

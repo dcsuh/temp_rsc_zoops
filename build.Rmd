@@ -11,25 +11,49 @@ library(here)
 ```
 
 
-Effects of temperature and resources on prevalence
-![prevalence](figures/prob_inf.png)
+# Effects of temperature and resources on prevalence
+
+ - Probability of infection is consistent across resources at high temperature
+ - Prob. of inf. decreases with increasing resources at 20 degrees but increases with increasing resources at 15 degrees
+
+![](figures/prob_inf.png)
 
 
 
-Effects of temperature and resources on host net reproductive rate
-![little r](figures/little_r.png)
+# Effects of temperature and resources on host net reproductive rate
+
+ - Temperature and Resource availability have a positive effect on host net reproductive rate
+ - In some cases, increases due to temperature can compensate for low resource availability
+ - In some cases, resource availability appears to limit reproductive rates at higher temperatures
+    - This appears to be the case when going from mid to high food at 20 degrees and low to mid food at 25 degrees
+
+![](figures/little_r.png)
 
 
 
 
-Effects of length on spore yield
-![body_size_yield](figures/spores_length.png)
+# Effects of resource and temperature on length and spore yield
+
+ - Temperature and Resource concentration contributes to greater lengths and spore yields
+ - Spore yield correlates with larger body sizes
+
+![](figures/spores_length.png)
 
 
 
-Effects of temperature and resources on parasite basic reproductive number
-![R0](figures/R0.png)
-![R0_temp](figures/R0_temp.png)
+# Effects of temperature and resources on parasite basic reproductive number
 
-![Sensitivity](figures/sensitivity.png)
+ - Temperature and resources combine to enhance the invasion potential of the parasite
+ - At 20 degrees, higher resource concentration may reduce invasion potential
+ - At 25 degrees, higher resource concentration enhances invasion potential
+ 
+![](figures/R0.png)
+![](figures/R0_temp.png)
+
+# Sensitivity of R0 to different parameters
+
+ - R0 is most sensitive to changes in transmission rates
+ - Temperature may have a negative effect on R0 via reductions in transmission rates 
+
+![](figures/sensitivity.png)
 
