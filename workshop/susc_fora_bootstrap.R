@@ -120,9 +120,19 @@ for(i in 1:length(trts)){
     fora.list$fora[j] <- mean(boot.sample$rate)
   }
   fora.summary$susc.025[i] <- quantile(fora.list$susc, probs=seq(0.025, 0.975, 0.95))[1] 
-  fora.summary$susc.975[i] <- quantile(fora.list$susc, probs=seq(0.025, 0.975, 0.95))[2] 
+  fora.summary$susc.975[i] <- quantile(fora.list$susc, probs=seq(0.025, 0.975, 0.95))[2]
+  fora.summary$susc[i] <- mean(fora.list$susc)
   fora.summary$fora.025[i] <- quantile(fora.list$fora, probs=seq(0.025, 0.975, 0.95))[1] 
-  fora.summary$fora.975[i] <- quantile(fora.list$fora, probs=seq(0.025, 0.975, 0.95))[2] 
+  fora.summary$fora.975[i] <- quantile(fora.list$fora, probs=seq(0.025, 0.975, 0.95))[2]
+  fora.summary$fora[i] <- mean(fora.list$fora)
 }
 
-beta.summary
+fora.summary
+
+beta.summary %>% ggplot(.,aes(x=ID, y=beta.est)) + geom_point()
+
+fora.summary %>% ggplot(.,aes(x=ID, y=fora)) + geom_point() + geom_pointrange(aes(ymin=fora.summary$fora.025, ymax=fora.summary$fora.975))
+
+fora.summary %>% ggplot(.,aes(x=ID, y=susc)) + geom_point() + geom_pointrange(aes(ymin=susc.025, ymax=susc.975))
+
+fora.summary %>% ggplot(.,aes(x=ID, y=susc*fora)) + geom_point()
