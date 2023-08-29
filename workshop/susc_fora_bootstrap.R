@@ -35,6 +35,8 @@ foraging %<>% filter(trt=="trt") %>%
   mutate(rate = log(control_read/read)*(vol/time),
          amt_time = (control_read - read)/time)
 
+foraging %<>% mutate(rate = rate*1440) #convert rate from ml/min to ml/day
+
 
 dataset$uninf <- 1-dataset$inf # could do it either way
 dataset$time <- 1 # best guess at duration of exposure?
