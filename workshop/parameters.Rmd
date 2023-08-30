@@ -31,6 +31,8 @@ fitness %<>% mutate(species = ifelse(species=="daphnia", "D", "C"))
 fitness %<>% select(-c(end_data_date, mortality_day))
 mort %<>% select(-c(end_data_date, mortality_day))
 
+foraging <- readRDS(here("processed_data", "foraging.rds"))
+
 
 dataset <- left_join(fitness, mort)
 ```

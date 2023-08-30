@@ -55,13 +55,21 @@ beta.est <- mle2(uninf ~ dbinom(size=1, prob=exp(-beta*spore_exposure*1000*time)
 print(coef(beta.est))
 
 # will loop through all treatments:
+dataset %<>% filter(temp %in% c(15, 20, 25)) %>% filter(species == "D")
+
+
 dataset$trt <- paste(dataset$temp, dataset$resource, dataset$species, sep = "_")
+foraging %<>% filter(trt == "trt") %>% mutate(ID = paste(temp, resource, "D", sep = "_"))
+IDs <- unique(foraging$ID)
 trts <- unique(dataset$trt)
 trts
 beta.summary <- data.frame(trt = trts)
+beta.summary$ID <- beta.summary$trt
+
 
 for(i in 1:length(trts)){
   dsub <- dataset[dataset$trt==trts[i],]
+  fora_dsub <- foraging[foraging$ID==IDs[i],]
   beta.summary$temp[i] <- dsub$temp[1]
   beta.summary$resource[i] <- dsub$resource[1]
   beta.summary$species[i] <- dsub$species[1]
@@ -72,6 +80,8 @@ for(i in 1:length(trts)){
                    start=list(beta = 0.000001), data=dsub, control=list(parscale = c(beta = 0.000001)),
                    skip.hessian=F,method="L-BFGS-B", lower=.00000001, upper=0.0001)
   beta.summary$beta.est[i] <- coef(beta.est)
+  beta.summary$fora.est[i] <- mean(fora_dsub$rate)
+  beta.summary$susc.est[i] <- beta.summary$beta.est[i]/beta.summary$fora.est[i]
 }
 
 warnings()  # these are fine. 
@@ -86,13 +96,6 @@ plot(beta.summary$prev, beta.summary$beta.est) # make sure that beta and prevale
 iterations <- 1000   # 100 iterations will take ~2 minutes to run through all treatments.
 # i would recommend 1,000 or even 10,000 to be really confident on the confidence intervals
 
-foraging %<>% filter(trt == "trt") %>% mutate(ID = paste(temp, resource, "D", sep = "_"))
-beta.summary %<>% filter(temp %in% c(15, 20, 25)) %>% filter(species == "D")
-beta.summary$ID <- beta.summary$trt
-
-IDs <- unique(foraging$ID)
-
-fora.summary <- data.frame(ID = IDs)
 
 for(i in 1:length(trts)){
   print(i)
@@ -113,8 +116,10 @@ for(i in 1:length(trts)){
   }
   beta.summary$beta.025[i] <- quantile(beta.list$beta, probs=seq(0.025, 0.975, 0.95))[1] # lower 95% confidence interval
   beta.summary$beta.975[i] <- quantile(beta.list$beta, probs=seq(0.025, 0.975, 0.95))[2] # upper 95% confidence interval
-  beta.summary$fora[i] <- mean(beta.list$fora)
-  beta.summary$susc[i] <- mean(beta.list$susc)
+  beta.summary$fora.025[i] <- quantile(beta.list$fora, probs=seq(0.025, 0.975, 0.95))[1]
+  beta.summary$fora.975[i] <- quantile(beta.list$fora, probs=seq(0.025, 0.975, 0.95))[2]
+  beta.summary$susc.025[i] <- quantile(beta.list$susc, probs=seq(0.025, 0.975, 0.95))[1]
+  beta.summary$susc.975[i] <- quantile(beta.list$susc, probs=seq(0.025, 0.975, 0.95))[2]
 }
 
 beta.summary %<>% mutate(beta.prod = susc*fora,
