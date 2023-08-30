@@ -31,10 +31,34 @@ fitness %<>% mutate(species = ifelse(species=="daphnia", "D", "C"))
 fitness %<>% select(-c(end_data_date, mortality_day))
 mort %<>% select(-c(end_data_date, mortality_day))
 
-foraging <- readRDS(here("processed_data", "foraging.rds"))
-
+foraging <- read_csv(here("raw_data","foraging.csv"))
 
 dataset <- left_join(fitness, mort)
+```
+
+```{r}
+
+
+#calculate foraging rates for each individual
+foraging %<>% mutate(length = as.numeric(length),
+                     start_min = time_in_hr*60+time_in_min,
+                     end_min = time_measured_hr*60+time_measured_min,
+                     time = end_min-start_min,
+                     vol = 15)
+
+control <- foraging %>% filter(trt=="C") %>% 
+  group_by(temp, resource, block) %>% 
+  summarize(control_read = mean(read, na.rm=T))
+
+foraging %<>% left_join(., control)
+
+foraging %<>% filter(trt=="trt") %>% 
+  mutate(rate = log(control_read/read)*(vol/time),
+         amt_time = (control_read - read)/time)
+
+foraging %<>% mutate(rate = rate*1440) #convert rate from ml/min to ml/day
+foraging %<>% filter(trt == "trt") %>% mutate(ID = paste(temp, resource, "D", sep = "_"))
+
 ```
 
 
@@ -217,8 +241,6 @@ plot(beta.summary$prev, beta.summary$beta.est) # make sure that beta and prevale
 
 
 # okay, next, I'll bootstrap confidence intervals around each of those. 
-iterations <- 1000   # 100 iterations will take ~2 minutes to run through all treatments.
-# i would recommend 1,000 or even 10,000 to be really confident on the confidence intervals
 
 
 ```
@@ -257,6 +279,7 @@ M <- 0.2
 lt.summary=data.frame(trt=treatments) # will fill out this summary spreadsheet as
 # we loop through each clone
 iterations = 1000 # how many samples to use in bootstrap
+# i would recommend 1,000 or even 10,000 to be really confident on the confidence intervals
 
 
 for (j in 1:length(treatments)){
@@ -316,6 +339,23 @@ for (j in 1:length(treatments)){
 
 ### used for S* end###
 
+### used for fora start###
+  
+  fora_data <- foraging[foraging$ID==treatments[j],]
+  lt.summary$fora[j] <- mean(fora_data$rate)
+  
+### used for fora end###
+  
+
+### used for susc start###
+  if (!is.na(lt.summary$fora[j] & lt.summary$fora[j]>0)){
+  lt.summary$susc[j] <- beta.summary$beta.est[j]/lt.summary$fora[j]
+  }
+  else {
+  lt.summary$susc[j] <- NA
+  }
+### used for susc end###
+  
 
 ### used for spore yield start ###
 
@@ -326,8 +366,13 @@ for (j in 1:length(treatments)){
     
     
 ### used for R0 start###
-    
+
+if (!is.na(lt.summary$fora[j]) & lt.summary$fora[j]>0) {
+  lt.summary$S.R_naught[j] <- (lt.summary$S.S.U[j]*lt.summary$fora[j]*lt.summary$susc[j]*lt.summary$S.yield[j])/M
+} 
+else {
   lt.summary$S.R_naught[j] <- (lt.summary$S.S.U[j]*beta.summary$beta.est[j]*lt.summary$S.yield[j])/M
+}
     
 ### used for R0 end###
 
@@ -396,6 +441,22 @@ for (j in 1:length(treatments)){
     boot.summary$S.U.boot[k] <- r*(1-((boot.summary$d.U.boot[k]/boot.summary$b.U.boot[k])/K))/f
 
 ### used for S* end###
+    
+### used for fora start###
+    fora.boot.rows <- sample(1:nrow(fora_data), size=nrow(fora_data), replace=TRUE)
+    fora.boot.data <- fora_data[fora.boot.rows,]
+    boot.summary$fora.boot[k] <- mean(fora.boot.data$rate)
+### used for fora end###
+    
+### used for susc start###
+    if (!is.na(boot.summary$fora.boot[k] & boot.summary$fora.boot[k]>0)){
+    boot.summary$susc.boot[k] <- beta.list$beta[k]/boot.summary$fora.boot[k]
+    }    
+    else {
+    boot.summary$susc.boot[k] <- NA
+    }
+    
+### used for susc end###
 
 
 ### used for spore yield start ###
@@ -407,8 +468,13 @@ for (j in 1:length(treatments)){
     
     
 ### used for R0 start###
-    
+
+if (!is.na(boot.summary$fora.boot[k]) & boot.summary$fora.boot[k]>0) {
+boot.summary$R_naught.boot[k] <- (boot.summary$S.U.boot[k]*boot.summary$fora.boot[k]*boot.summary$susc.boot[k]*boot.summary$yield[k])/M
+}
+else {
 boot.summary$R_naught.boot[k] <- (boot.summary$S.U.boot[k]*beta.list$beta[k]*boot.summary$yield[k])/M
+}
     
 ### used for R0 end###
     
@@ -442,6 +508,12 @@ boot.summary$R_naught.boot[k] <- (boot.summary$S.U.boot[k]*beta.list$beta[k]*boo
   lt.summary$S.S.975[j] <- quantile(boot.summary$S.U.boot, probs=seq(0.025, 0.975, 0.95))[2]  
   lt.summary$S.S.025[j] <- quantile(boot.summary$S.U.boot, probs=seq(0.025, 0.975, 0.95))[1]
 
+  lt.summary$fora.975[j] <- quantile(boot.summary$fora.boot, probs=seq(0.025, 0.975, 0.95),na.rm = T)[2]
+  lt.summary$fora.025[j] <- quantile(boot.summary$fora.boot, probs=seq(0.025, 0.975, 0.95),na.rm = T)[1]
+  
+  lt.summary$susc.975[j] <- quantile(boot.summary$susc.boot, probs=seq(0.025, 0.975, 0.95),na.rm = T)[2]
+  lt.summary$susc.025[j] <- quantile(boot.summary$susc.boot, probs=seq(0.025, 0.975, 0.95),na.rm = T)[1]
+  
   lt.summary$S.yield[j] <- boot.summary$yield[k]
   
   lt.summary$S.R_naught.975[j] <- quantile(boot.summary$R_naught.boot, probs=seq(0.025, 0.975, 0.95), na.rm=T)[2]  

@@ -122,14 +122,14 @@ for(i in 1:length(trts)){
   beta.summary$susc.975[i] <- quantile(beta.list$susc, probs=seq(0.025, 0.975, 0.95))[2]
 }
 
-beta.summary %<>% mutate(beta.prod = susc*fora,
+beta.summary %<>% mutate(beta.prod = susc.est*fora.est,
                          beta.diff = beta.est-beta.prod)
 
-beta.summary %>% ggplot(.,aes(x=ID, y=beta.est)) + geom_point()
+beta.summary %>% ggplot(.,aes(x=ID, y=beta.est)) + geom_point() + geom_pointrange(aes(ymin = beta.025, ymax = beta.975))
 
-beta.summary %>% ggplot(.,aes(x=ID, y=fora)) + geom_point()
+beta.summary %>% ggplot(.,aes(x=ID, y=fora.est)) + geom_point() + geom_pointrange(aes(ymin = fora.025, ymax = fora.975))
 
-beta.summary %>% ggplot(.,aes(x=ID, y=susc)) + geom_point()
+beta.summary %>% ggplot(.,aes(x=ID, y=susc.est)) + geom_point() + geom_pointrange(aes(ymin = susc.025, ymax = susc.975))
 
 beta.summary %>% ggplot(.,aes(x=ID, y=beta.prod)) + geom_point()
 

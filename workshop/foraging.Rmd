@@ -58,7 +58,9 @@ data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(ra
 # data_summ %<>% mutate(ID = paste(temp,resource, sep = "_"),
 #                       block_ID = paste(temp, resource, block, sep = "_"))
 
-data_summ %<>% mutate(ID = paste(temp,resource, sep = "_"))
+
+data_summ %<>% mutate(species = "D",
+                      ID = paste(temp,resource,species, sep = "_"))
 
 
 saveRDS(data_summ, file = here("processed_data", "foraging.rds"))
