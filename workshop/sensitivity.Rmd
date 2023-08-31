@@ -88,19 +88,17 @@ out %>% ggplot(.,aes(x=time))+
 ```{r}
 h <- 1000               #choose number of points
 set.seed(8878896)
-lhs<-maximinLHS(h,7)   #simulate
+lhs<-maximinLHS(h,6)   #simulate
 ```
 
 ```{r}
 beta.summary <- readRDS(here("processed_data", "beta_summary.rds"))
 lt_full <- readRDS(here("processed_data", "lt_full_summary.rds"))
 spores <- readRDS(here("processed_data", "spore_yield.rds"))
-foraging <- readRDS(here("processed_data", "foraging.rds"))
 
 lt_full %<>% filter(species == "D") %>% filter(temp_id %in% const_temp) %>% mutate(ID = paste(temp_id, resource, sep = "_"))
 
 
-lt_full %<>% left_join(., foraging, by = "ID")
 
 ```
 
@@ -124,6 +122,8 @@ treatments <- lt_full$ID
 data <- tibble(resource = as.numeric(NA),
                temp = as.numeric(NA),
                beta = as.numeric(NA),
+               dens = as.numeric(NA),
+               fora = as.numeric(NA),
                susc = as.numeric(NA),
                yield = as.numeric(NA),
                loss = as.numeric(NA),
@@ -136,8 +136,14 @@ for (i in 1:length(treatments)){
   beta_min = beta.summary$beta.025[i]
   beta_max = beta.summary$beta.975[i]
   
-  susc_min = lt_full$S.S.025[i]
-  susc_max = lt_full$S.S.975[i]
+  dens_min = lt_full$S.S.025[i]
+  dens_max = lt_full$S.S.975[i]
+  
+  fora_min = lt_full$fora.025[i]
+  fora_max = lt_full$fora.975[i]
+  
+  susc_min = lt_full$susc.025[i]
+  susc_max = lt_full$susc.975[i]
   
   yield_min = spores$mean_yield[i] - spores$se[i]
   yield_max = spores$mean_yield[i] + spores$se[i]
@@ -145,24 +151,31 @@ for (i in 1:length(treatments)){
   loss_min = 0.2 - 0.1
   loss_max = 0.2 + 0.1
   
-  resource = rep(lt_full$resource.x[i], h)
-  temp = rep(lt_full$temp[i], h)
+  resource = rep(lt_full$resource[i], h)
+  temp = as.numeric(rep(lt_full$temp_id[i], h))
   
   
   params.set <- tibble(
     resource = resource,
     temp = temp,
     beta = lhs[,1]*(beta_max - beta_min) + beta_min,
-    susc = lhs[,2]*(susc_max - susc_min) + susc_min,
-    yield = lhs[,3]*(yield_max - yield_min) + yield_min,
-    loss = lhs[,4]*(loss_max - loss_min) + loss_min
+    dens = lhs[,2]*(dens_max - dens_min) + dens_min,
+    fora = lhs[,3]*(fora_max - fora_min) + fora_min,
+    susc = lhs[,4]*(susc_max - susc_min) + susc_min,
+    yield = lhs[,5]*(yield_max - yield_min) + yield_min,
+    loss = lhs[,6]*(loss_max - loss_min) + loss_min
   )
   
     for(k in 1:h){
     params <- as.list(c(params.set[k,]))
-    data[k+(i-1)*h,1:6] <- params
-    tmp <- (params.set$beta[k]*params.set$susc[k]*params.set$yield[k])/params.set$loss[k] #calculate R0
-    data[k+(i-1)*h, 7] <- tmp
+    data[k+(i-1)*h,1:8] <- params
+    if (params.set$fora[k] > 0 & params.set$susc[k] > 0){
+    tmp <- (params.set$fora[k]*params.set$susc[k]*params.set$dens[k]*params.set$yield[k])/params.set$loss[k] 
+    } else {
+    tmp <- (params.set$beta[k]*params.set$dens[k]*params.set$yield[k])/params.set$loss[k] 
+    }
+    #calculate R0
+    data[k+(i-1)*h, 9] <- tmp
   }
 }
 ```
@@ -181,11 +194,25 @@ S^*= equilibrium\ susceptible\ host\ density \\
 \mu = spore\ loss\ rate \\ 
 $$
 
+$$ 
+R\emptyset = \frac { \epsilon \psi S^* \sigma }{ \mu } \\
+
+\epsilon = foraging\ rate \\
+
+\psi = per\ spore\ susceptibility \\
+
+S^*= equilibrium\ susceptible\ host\ density \\
+
+\sigma = spore\ yield \\
+
+\mu = spore\ loss\ rate \\ 
+$$
+
 
 
 ```{r}
 bonferroni.alpha <- 0.05/6
-prcc <- pcc(data[,1:6], data[,7], nboot = 1000, rank=TRUE, conf=1-bonferroni.alpha)
+prcc <- pcc(data[,3:8], data[,9], nboot = 1000, rank=TRUE, conf=1-bonferroni.alpha)
 ```
 
 
