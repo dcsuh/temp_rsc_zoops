@@ -210,12 +210,15 @@ tmp = data$amt_time
 ```
 
 
+dnorm produces a probability density function (PDF) for observing a value assuming a normal distribution.
+so dnorm will produce a vector of probabilities. 
+
 
 functional response II function for negative log-likelihood
 ```{r}
-LL2 <- function(x, y, z, data = tmp) {
-  mu <- (x*y)/(1 + x*y*z)
-  return(-sum(dnorm(mu, data, log=T)))
+LL2 <- function(y, data = tmp) {
+  mu <- (0.5*y)/(1 + 0.5*y*1)
+  return(-sum(dnorm(data, mu, log=T)))
 }
 ```
 
@@ -234,13 +237,13 @@ library(bbmle)
 MLE for II
 ```{r}
 m2 <- mle2(minuslogl = LL2, 
-           start = list(x = 0.5,
-                        y = 1,
-                        z = 1),
+           start = list(y=1),
            control = list(maxit = 5000))
 ```
 
 
 
+current issue:
 
+I am not really understanding the negative log likelihood function. If I am understanding it properly, then this function should be generating a set of individual likelihoods and then summing these to get the full negative log-likelihood. I am just not sure where the actual data are being used here. I don't understand how dnorm takes both the generated data and the actual data and provides the negative log-likelihood. Unless the log-likelihood is similar to summing the error between the generated and actual data but this seems wrong.
 
