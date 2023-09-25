@@ -141,7 +141,12 @@ How do we fit a function to these data at each given temperature?
 Four steps:
  - define a function to describe our model
  - define a function to calculate negative log-likelihood
+    what is a negative log-likelihood function? this is a function that will generate the negative log-likelihood given a certain parameter value.
+    what is negative log-likelihood? negative log-likelihood is one way of measuring the likelihood of observing a full dataset and is obtained by summing all of the negative log-likelihoods for each observed data point
  - use function to perform non-linear search for best parameter values
+ 
+What are we trying to do here?
+We have data that are generated from a biological process. In this case, we have the foraging rate data for daphnia under different temperature and resource conditions. We can write a model that represents this process. In our case, functional feeding responses are a set of models that already attempt to do exactly this. Given a gradient of resource concentrations, they attempt to describe how this relates to the amount of a resource an organism consumes in a given amount of time. After defining our model, we can compare model results to the data that we actually have to determine how likely it is that our model could generate those data. If we do this for many different parameter estimates, then we can compare these outputs to determine which set of parameters are most likely to generate the data that we observed. We can then make reasonable statements about the process that could have generated these data and compare the likelihood that different models and parameter estimates could ahve generated these data. 
  
 define functions
 functional feeding response II
@@ -168,7 +173,7 @@ dat2 %<>% mutate(mu = (x*y)/(1 + x*y*z))
 
 
 
-functional feeding response 3
+functional feeding response III
 ```{r}
 #x = attack rate
 #y = resource concentration
@@ -200,10 +205,42 @@ dat2 %>% ggplot(.,aes(x=y, y=mu)) + geom_point() + labs(title = "feeding respons
 dat3 %>% ggplot(.,aes(x=y, y=mu)) + geom_point() + labs(title = "feeding response III")
 ```
 
-function for negative log-likelihood
 ```{r}
-LL2 <- function(a, b, y = data) {
-  
+tmp = data$amt_time
+```
+
+
+
+functional response II function for negative log-likelihood
+```{r}
+LL2 <- function(x, y, z, data = tmp) {
+  mu <- (x*y)/(1 + x*y*z)
+  return(-sum(dnorm(mu, data, log=T)))
 }
 ```
+
+functional response III function for negative log-likelihood
+```{r}
+LL3 <- function(x, y, z, k, data) {
+  mu <- (x*y^k)/(1 + x*z*y^k)
+  return(-sum(dnorm(mu, data, log=T)))
+}
+```
+
+```{r}
+library(bbmle)
+```
+
+MLE for II
+```{r}
+m2 <- mle2(minuslogl = LL2, 
+           start = list(x = 0.5,
+                        y = 1,
+                        z = 1),
+           control = list(maxit = 5000))
+```
+
+
+
+
 
