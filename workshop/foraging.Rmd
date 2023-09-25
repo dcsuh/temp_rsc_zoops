@@ -63,7 +63,7 @@ data_summ %<>% mutate(species = "D",
                       ID = paste(temp,resource,species, sep = "_"))
 
 
-saveRDS(data_summ, file = here("processed_data", "foraging.rds"))
+#saveRDS(data_summ, file = here("processed_data", "foraging.rds"))
 
 ```
 
@@ -123,5 +123,87 @@ data_summ %>% ggplot(.,aes(x=length_mean, y=rate_mean, color = as.factor(temp), 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
   labs(x = "Average Length (raw)", y = "feeding rate (mL/min)", color = "Temp", shape = "Resource")
 
+```
+
+
+Given the raw data, what is the relationship between resource concentration and feeding rate at a given temperature? What function best fits the data?
+
+Start with plotting raw data for feeding rate given resource concentration at each temperature
+
+```{r}
+data %>% ggplot(., aes(x = resource, y = rate)) + geom_point() + facet_wrap(vars(temp))
+```
+
+Foraging rate increases with temperature
+Foraging rate decreases with increasing resource concentration. The greater the resource concentration, the less foraging is required to meet a minimum amount of resource foraged.
+
+How do we fit a function to these data at each given temperature?
+Four steps:
+ - define a function to describe our model
+ - define a function to calculate negative log-likelihood
+ - use function to perform non-linear search for best parameter values
+ 
+define functions
+functional feeding response II
+```{r}
+#x = attack rate
+#y = resource concentration
+#z = handling time
+feed_2 <- function(x, y, z) {
+  mu <- (x*y)/(1 + x*y*z)
+  return(mu)
+}
+
+x <- 0.5
+
+z <- 1
+
+dat2 <- tibble(y = runif(100, 0, 10),
+            x = x,
+            z = z)
+
+dat2 %<>% mutate(mu = (x*y)/(1 + x*y*z))
+```
+ 
+
+
+
+functional feeding response 3
+```{r}
+#x = attack rate
+#y = resource concentration
+#z = handling time
+#k = encounters
+feed_3 <- function(x, y, z, k) {
+  mu <- (x*y^k)/(1 + x*z*y^k)
+  return(mu)
+}
+
+x <- 0.5
+
+z <- 1
+
+k <- 4
+
+dat3 <- tibble(y = runif(100, 0, 10),
+            x = x,
+            z = z,
+            k = k)
+
+dat3 %<>% mutate(mu = (x*y^k)/(1 + x*z*y^k))
+```
+ 
+
+```{r}
+dat2 %>% ggplot(.,aes(x=y, y=mu)) + geom_point() + labs(title = "feeding response II")
+
+dat3 %>% ggplot(.,aes(x=y, y=mu)) + geom_point() + labs(title = "feeding response III")
+```
+
+function for negative log-likelihood
+```{r}
+LL2 <- function(a, b, y = data) {
+  
+}
 ```
 
