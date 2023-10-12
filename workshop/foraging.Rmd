@@ -210,8 +210,7 @@ tmp = data$amt_time
 ```
 
 
-dnorm produces a probability density function (PDF) for observing a value assuming a normal distribution.
-so dnorm will produce a vector of probabilities. 
+dnorm calculates the normal likelihood for a data set. log is set to "T" to get the log-likelihood. the wrapper -sum() measures the sum of the negative log-likelihood for all of the observed data. The defined negative log-likelihood function that we wrote 
 
 
 functional response II function for negative log-likelihood
