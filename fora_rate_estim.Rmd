@@ -1,0 +1,63 @@
+---
+title: "estimate foraging rate"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, message=FALSE}
+library(here)
+library(tidyverse)
+library(deSolve)
+library(magrittr)
+
+```
+
+
+The purpose of this document is to estimate foraging rate using maximum likelihood estimation and multiple models for foraging rate. At its simplest, foraging rate is a constant unaffected by any external conditions. However, we hypothesize that temperature and resource concentration wil influence foraging rate. Under different resource conditions, we expect foraging rate to change with changes in resource concentration as a type II functional response. Under a type II functional response, foraging rate increases non-linearly with resource concentration and will asymptote at a sufficiently high resource concentration. Mechanistically, this is due to the inclusion of handling time. At a certain point, feeding rate is constrained by handling time, even if there is a seemingly endless amount of food available. Temperature is also expected to change foraging rate behavior. Temperature may increase encounter rates with food and cause the consumer to forage at a higher rate. We attempt to incorporate the effects of temperature using an Arrhenius equation, an equation typically used to model temperature affects on reaction rates. 
+
+Overall, we will develop four models that can be used to describe foraging rate. Our independent model assumes no affects of temperature or resource conditions. Our resource-dependent model assumes a type II functional response. Our temperature-dependent model incorporates an affect of temperature using an Arrhenius equation. Our full model incoporates effects of both resource and temperature.
+
+We will use each of these models to develop parameter estimates for foraging rate. Each model is an equation and can be used to generate data. We generate data for a range of parameter estimates and measure the likelihood of these simulated data given our actual observed data. We choose the parameter estimate under each model that maximizes the likelihood. We choose the model with the highest likelihood. 
+
+
+# Model 1 - Independent model
+
+Model 1 will also serve as an example for the more detailed methods used.
+
+First, we can write out our equations. To do this, we should think about our experiment. In our foraging rate assay, we measured the change in resource (algae) concentration in a tube over time after adding a single daphnia to the tube. So we can write an equation to model the change in resource concentration over time.
+
+We use a first-order linear differential equation to represent foraging rate because we expect the rate of change of foraging to depend on the amount of resources available. Normally, the rate of change of the resource (our state variable) might also include an expression for growth (usually logistic), but because we conducted this experiment in the dark we can assume that no growth is occurring and can omit omit that expression. We are left with just the loss term (how much is being foraged). Our loss term should also be a per-capita term and depend on the number of individuals foraging, but in our experiment there is only a single daphnia ever foraging per assay.
+$$
+\begin{equation}
+f(R) = R + \frac{dR}{dt} \\
+\frac{dR}{dt} = -fRS \\
+\frac{dR}{dt} = -fR \\
+\end{equation}
+$$
+Now that we have our differential equation, we can use this to estimate the amount of algae after a given amount of time. We can do this by numerically solving our differential equation and seeing how much algae remains after a given amount of time. We can also solve the differential equation by writing a function that represents the change of algae over time. We'll do both of these here.
+
+```{r, m1_num_sol}
+m1_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -f*R
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 8
+times <- seq(0,maxTime,by=0.1)
+
+params <- c(f=0.5)
+
+xstart <- c(R=1)
+
+output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+```
+
+NEED TO ADD ADJUSTMENT FOR LENGTH
