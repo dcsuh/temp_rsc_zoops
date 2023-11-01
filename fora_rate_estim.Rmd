@@ -78,11 +78,11 @@ We have the raw data so we will have to do a little bit of housekeeping before w
 
 
 ```{r, real data}
-data <- readRDS(here("processed_data","foraging.rds"))
+data <- readRDS(here("processed_data","foraging_raw.rds"))
 
 data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement into mm
 
-
+data %<>% mutate(amt_rem = resource - amt_consumed)
 ```
 
 
