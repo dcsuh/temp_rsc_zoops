@@ -17,7 +17,7 @@ library(magrittr)
 ```
 
 
-The purpose of this document is to estimate foraging rate using maximum likelihood estimation and multiple models for foraging rate. At its simplest, foraging rate is a constant unaffected by any external conditions. However, we hypothesize that temperature and resource concentration wil influence foraging rate. Under different resource conditions, we expect foraging rate to change with changes in resource concentration as a type II functional response. Under a type II functional response, foraging rate increases non-linearly with resource concentration and will asymptote at a sufficiently high resource concentration. Mechanistically, this is due to the inclusion of handling time. At a certain point, feeding rate is constrained by handling time, even if there is a seemingly endless amount of food available. Temperature is also expected to change foraging rate behavior. Temperature may increase encounter rates with food and cause the consumer to forage at a higher rate. We attempt to incorporate the effects of temperature using an Arrhenius equation, an equation typically used to model temperature affects on reaction rates. 
+The purpose of this document is to estimate foraging rate using maximum likelihood estimation and multiple models for foraging rate. At its simplest, foraging rate is a constant unaffected by any external conditions. However, we hypothesize that temperature and resource concentration will influence foraging rate. Under different resource conditions, we expect foraging rate to change with changes in resource concentration as a type II functional response. Under a type II functional response, foraging rate increases non-linearly with resource concentration and will asymptote at a sufficiently high resource concentration. Mechanistically, this is due to the inclusion of handling time. At a certain point, feeding rate is constrained by handling time, even if there is a seemingly endless amount of food available. Temperature is also expected to change foraging rate behavior. Temperature may increase encounter rates with food and cause the consumer to forage at a higher rate. We attempt to incorporate the effects of temperature using an Arrhenius equation, an equation typically used to model temperature affects on reaction rates. 
 
 Overall, we will develop four models that can be used to describe foraging rate. Our independent model assumes no affects of temperature or resource conditions. Our resource-dependent model assumes a type II functional response. Our temperature-dependent model incorporates an affect of temperature using an Arrhenius equation. Our full model incoporates effects of both resource and temperature.
 
@@ -38,13 +38,20 @@ f(R) = R + \frac{dR}{dt} \\
 \frac{dR}{dt} = -fR \\
 \end{equation}
 $$
-Now that we have our differential equation, we can use this to estimate the amount of algae after a given amount of time. We can do this by numerically solving our differential equation and seeing how much algae remains after a given amount of time. We can also solve the differential equation by writing a function that represents the change of algae over time. We'll do both of these here.
+
+Foraging rate is also expected to depend on the size of the individual. We incorporate length as a factor with a power coefficient. 
+
+$$
+\frac{dR}{dt} = -fR L^{\gamma} \\
+$$
+
+Now that we have our full equation, we can use this to estimate the amount of algae after a given amount of time. We can do this by numerically solving our differential equation and seeing how much algae remains after a given amount of time. We can also solve the differential equation by writing a function that represents the change of algae over time. We'll do both of these here.
 
 ```{r, m1_num_sol}
 m1_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -f*R
+    dR <- -f*R*length^gamma
     res <- c(dR)
     list(res)}
     )
@@ -53,11 +60,33 @@ m1_num_sol <- function(t, x, params){
 maxTime <- 8
 times <- seq(0,maxTime,by=0.1)
 
-params <- c(f=0.5)
+params <- c(f=0.5,
+            length=1,
+            gamma=1)
 
 xstart <- c(R=1)
 
 output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
 ```
 
-NEED TO ADD ADJUSTMENT FOR LENGTH
+We can now use this chunk of code to get the solution for our model given any set of starting conditions and parameter values. Using our data, we can determine what set of parameter values will allow the model to best fit our data. In our data, have information about each daphnia (i.e. length) and how much they foraged over a certain amount of time.
+
+
+We have the raw data so we will have to do a little bit of housekeeping before we can actually use these data.
+
+
+```{r, real data}
+data <- readRDS(here("processed_data","foraging.rds"))
+
+data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement into mm
+
+
+```
+
+
+
+
+
+

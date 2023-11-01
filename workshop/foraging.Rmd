@@ -30,8 +30,10 @@ data %<>% left_join(., control)
 ```
 
 ```{r}
-data %<>% filter(trt=="trt") %>% mutate(rate = log(control_read/read)*(vol/time),
-                                                    amt_time = (control_read - read)/time)
+data %<>% filter(trt=="trt") %>% mutate(consumed = log(control_read/read)*vol,
+                                        rate = log(control_read/read)*(vol/time),
+                                        amt_time = (control_read - read)/time)
+
 
 data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(rate),
                                                              rate_var = var(rate),
@@ -62,7 +64,7 @@ data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(ra
 data_summ %<>% mutate(species = "D",
                       ID = paste(temp,resource,species, sep = "_"))
 
-
+saveRDS(data, file = here("processed_data", "foraging_raw.rds"))
 #saveRDS(data_summ, file = here("processed_data", "foraging.rds"))
 
 ```
