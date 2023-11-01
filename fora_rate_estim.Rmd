@@ -39,7 +39,7 @@ f(R) = R + \frac{dR}{dt} \\
 \end{equation}
 $$
 
-Foraging rate is also expected to depend on the size of the individual. We incorporate length as a factor with a power coefficient. 
+Foraging rate is also expected to depend on the size of the individual. We incorporate length as a factor with a power coefficient. We can attempt to fit gamma or just assume a reasonable value. In other papers, a power coefficient of 2 is used. The idea here (I think) is that the surface area of the daphnia is what is relevant for foraging. Squaring the length gives us the surface area of a square which is close enough to the surface area of a daphnia?
 
 $$
 \frac{dR}{dt} = -fR L^{\gamma} \\
@@ -62,7 +62,7 @@ times <- seq(0,maxTime,by=0.1)
 
 params <- c(f=0.5,
             length=1,
-            gamma=1)
+            gamma=2)
 
 xstart <- c(R=1)
 
@@ -71,7 +71,7 @@ output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
 r_end <- slice_max(output, time)[,2]
 ```
 
-We can now use this chunk of code to get the solution for our model given any set of starting conditions and parameter values. Using our data, we can determine what set of parameter values will allow the model to best fit our data. In our data, have information about each daphnia (i.e. length) and how much they foraged over a certain amount of time.
+We can use this chunk of code to get the solution for our model given any set of starting conditions and parameter values. Using our data, we can determine what set of parameter values will allow the model to best fit our data. In our data, have information about each daphnia (i.e. length) and how much they foraged over a certain amount of time.
 
 
 We have the raw data so we will have to do a little bit of housekeeping before we can actually use these data.
@@ -83,6 +83,40 @@ data <- readRDS(here("processed_data","foraging_raw.rds"))
 data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement into mm
 
 data %<>% mutate(amt_rem = resource - amt_consumed)
+
+data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
+
+treatment_IDs <- unique(data$treatment_ID)
+```
+
+
+Using the data, we can go ahead and try out estimating f.
+
+pseudocode:
+write a loop that goes through each treatment. For each treatment, set the conditions of the solver (i.e. resource concentration; in future cases, this will also include temperature). Before we do this, we may need to write a function that will pop out the negative log-likelihood. To do this, we will need to use the solver to give us the endpoint resource concentration given a certain foraging rate. We use a function like dnorm() to calculate the likelihood of of observing data, given a certain probability. In this case, the probability is set from the result from the solver. Together, the result from the solver and the data are used to give us the likelihood and simple maths turns the likelihood into the negative log-likelihood (i.e. taking the log of the likelihood and making it negative). The optimizer (mle2() is what we sill use) takes this likelihood function and then moves through parameter space to find the parameter value that minimizes the sum of the negative log-likelihood of all the data. 
+
+One issue with this right now is that I need a single parameter for all treatments. As written, that will give me different parameter estimates for each treatment. I think I just need to write a loop within the optimizer instead of outside it.
+
+Okay I need to decide if I am going to do this line by line and both resolve the ode for each since each individual technically has different length and different time of foraging. Or I can average things.
+```{r, m1_ll}
+m1_ll <- function(f){
+  nll <- tibble(nll=0, treatment_IDs)
+  for (i in 1:length(unique(data$treatment_ID))) {
+  sub_data <- data[data$treatment_ID==nll$treatment_IDs[i], ]
+  maxTime <- sub_data$time/60
+  times <- seq(0, maxTime, by=0.1)
+  params <- c(f=f,
+              length=sub_data$mm,
+              gamma=2)
+  xstart <- c(R=resource)
+  output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+  r_end <- slice_max(output, time)[,2]
+  
+  r_resid <- r_end - sub_data$amt_rem
+  nll$nll[i] <- dnorm(r_resid, mean = 0, sd = sd(r_resid, na.rm = T), log = T)
+  }
+  sum(nll$nll)
+}
 ```
 
 
