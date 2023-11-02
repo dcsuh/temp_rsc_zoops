@@ -82,7 +82,7 @@ data <- readRDS(here("processed_data","foraging_raw.rds"))
 
 data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement into mm
 
-data %<>% mutate(amt_rem = resource - amt_consumed)
+data %<>% mutate(amt_consumed = resource - amt_rem)
 
 data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
 
@@ -100,28 +100,54 @@ One issue with this right now is that I need a single parameter for all treatmen
 Okay I need to decide if I am going to do this line by line and both resolve the ode for each since each individual technically has different length and different time of foraging. Or I can average things.
 ```{r, m1_ll}
 m1_ll <- function(f){
-  nll <- tibble(nll=0, treatment_IDs)
-  for (i in 1:length(unique(data$treatment_ID))) {
-  sub_data <- data[data$treatment_ID==nll$treatment_IDs[i], ]
-  maxTime <- sub_data$time/60
-  times <- seq(0, maxTime, by=0.1)
-  params <- c(f=f,
-              length=sub_data$mm,
-              gamma=2)
-  xstart <- c(R=resource)
-  output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+  resid_df <- tibble(resid=0, data$ID)
+    for (i in 1:length(data)) {
+    maxTime <- data$time[i]/60
+    times <- seq(0, maxTime, by=0.1)
+    params <- c(f=f,
+                length=data$mm[i],
+                gamma=2)
+    xstart <- c(R=data$resource[i])
+    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+    
+    r_end <- slice_max(output, time)[,2]
+      
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
+    }
   
-  
-  tmp <- output %>% filter(time<=(sub_data$time/60))
-  r_end <- slice_max(tmp, time)[,2]
-  
-  r_resid <- r_end - sub_data$amt_rem
-  nll$nll[i] <- dnorm(r_resid, mean = 0, sd = sd(r_resid, na.rm = T), log = T)
-  }
-  sum(nll$nll)
+    nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
+    -sum(nll)
 }
 ```
 
+```{r, m1_ll}
+m1_ll <- function(f){
+  nll <- tibble(nll=0, data$ID)
+  count <- 0
+    for (i in 1:length(unique(data$treatment_ID))) {
+    sub_data <- data[data$treatment_ID==treatment_IDs[i], ]
+    maxTime <- 12
+    times <- seq(0, maxTime, by=0.1)
+    params <- c(f=f,
+                length=sub_data$mm,
+                gamma=2)
+    xstart <- c(R=resource)
+    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+    
+      for (j in 1:length(sub_data$ID)){
+      tmp <- output %>% filter(time<=(sub_data$time/60))
+      r_end <- slice_max(tmp, time)[,2]
+      
+      r_resid <- r_end - sub_data$amt_rem
+      
+      count <- count+1  
+      nll$nll[count] <- dnorm(r_resid, mean = 0, sd = sd(r_resid, na.rm = T), log = T)
+      }
+    }
+  
+  sum(nll$nll)
+}
+```
 
 
 

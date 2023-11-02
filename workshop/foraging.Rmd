@@ -32,8 +32,8 @@ data %<>% left_join(., control)
 ```{r}
 #this calculation comes from Hite et al. 2020 and assumes a strong linear relationship between fluorescence and algae conc
 data %<>% filter(trt=="trt") %>% mutate(rate = log(control_read/read)*(vol/time),
-                                        amt_consumed = ((resource/control_read)*read), 
-                                        amt_time = amt_consumed/time) 
+                                        amt_rem = ((resource/control_read)*read), 
+                                        amt_time = amt_rem/time) 
 
 
 data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(rate),
