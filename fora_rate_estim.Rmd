@@ -110,7 +110,10 @@ m1_ll <- function(f){
               gamma=2)
   xstart <- c(R=resource)
   output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
-  r_end <- slice_max(output, time)[,2]
+  
+  
+  tmp <- output %>% filter(time<=(sub_data$time/60))
+  r_end <- slice_max(tmp, time)[,2]
   
   r_resid <- r_end - sub_data$amt_rem
   nll$nll[i] <- dnorm(r_resid, mean = 0, sd = sd(r_resid, na.rm = T), log = T)
