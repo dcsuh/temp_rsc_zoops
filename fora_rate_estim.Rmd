@@ -13,7 +13,7 @@ library(here)
 library(tidyverse)
 library(deSolve)
 library(magrittr)
-
+library(bbmle)
 ```
 
 
@@ -97,18 +97,20 @@ write a loop that goes through each treatment. For each treatment, set the condi
 
 One issue with this right now is that I need a single parameter for all treatments. As written, that will give me different parameter estimates for each treatment. I think I just need to write a loop within the optimizer instead of outside it.
 
-Okay I need to decide if I am going to do this line by line and both resolve the ode for each since each individual technically has different length and different time of foraging. Or I can average things.
+Okay I need to decide if I am going to do this line by line and both re-solve the ode for each since each individual technically has different length and different time of foraging. Or I can average things.
+
+We'll use the solver for each observation for now.
 ```{r, m1_ll}
 m1_ll <- function(f){
   resid_df <- tibble(resid=0, data$ID)
-    for (i in 1:length(data)) {
-    maxTime <- data$time[i]/60
+    for (i in 1:nrow(data)) {
+    maxTime <- data$time[i]
     times <- seq(0, maxTime, by=0.1)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2)
     xstart <- c(R=data$resource[i])
-    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
       
@@ -116,38 +118,55 @@ m1_ll <- function(f){
     }
   
     nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
-    -sum(nll)
+    -sum(nll, na.rm = T)
 }
 ```
 
-```{r, m1_ll}
-m1_ll <- function(f){
-  nll <- tibble(nll=0, data$ID)
-  count <- 0
-    for (i in 1:length(unique(data$treatment_ID))) {
-    sub_data <- data[data$treatment_ID==treatment_IDs[i], ]
-    maxTime <- 12
-    times <- seq(0, maxTime, by=0.1)
-    params <- c(f=f,
-                length=sub_data$mm,
-                gamma=2)
-    xstart <- c(R=resource)
-    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
-    
-      for (j in 1:length(sub_data$ID)){
-      tmp <- output %>% filter(time<=(sub_data$time/60))
-      r_end <- slice_max(tmp, time)[,2]
-      
-      r_resid <- r_end - sub_data$amt_rem
-      
-      count <- count+1  
-      nll$nll[count] <- dnorm(r_resid, mean = 0, sd = sd(r_resid, na.rm = T), log = T)
-      }
-    }
-  
-  sum(nll$nll)
-}
+<!-- ```{r, m1_ll} -->
+<!-- m1_ll <- function(f){ -->
+<!--   resid_df <- tibble(resid=0, treatment_IDs) -->
+<!--     for (i in 1:length(treatment_IDs)) { -->
+<!--     sub_data <- data %>% filter(treatment_ID %in% treatment_IDs[i]) -->
+<!--     maxTime <- round(mean(sub_data$time, na.rm=T),2) -->
+<!--     length <- mean(sub_data$mm, na.rm=T) -->
+<!--     times <- seq(0, maxTime, by=0.1) -->
+<!--     params <- c(f=f, -->
+<!--                 length=length, -->
+<!--                 gamma=2) -->
+<!--     xstart <- c(R=mean(sub_data$resource, na.rm=T)) -->
+<!--     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params)) -->
+
+<!--     r_end <- slice_max(output, time)[,2] -->
+
+<!--     resids <- r_end - sub_data$amt_rem -->
+
+<!--     resid_df$resid[i] <- -sum(dnorm(resids, mean = 0, sd = sd(resids, na.rm = T), log = T)) -->
+<!--     } -->
+
+<!--     sum(resid_df$resid) -->
+<!-- } -->
+<!-- ``` -->
+
+One issue here is that I haven't set a limit on the resource value to account for the negative feeding rate values (i.e. when fluorescence increased). I have to figure out how to do this. We'll come back to this later.
+
+Now it is time to use the optimizer
+```{r, m1_mle}
+# m1_f_fit <- mle(m1_ll,
+#                 start=list(f=30),
+#                 method = "Brent",
+#                 lower = 0,
+#                 upper = 100)
+
+m1_f_fit <- mle2(m1_ll,
+                start=list(f=30),
+                method = "Brent",
+                lower = 0,
+                upper = 100)
+
+#opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 ```
+
+I can get mle2() and optim() to work but not mle(). I'm not sure why right now, but I guess we can move forward.
 
 
 
