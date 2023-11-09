@@ -213,7 +213,7 @@ r_end <- slice_max(output, time)[,2]
 
 
 ```{r, m2_ll}
-m2_ll <- function(f){
+m2_ll <- function(f, arr_t){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
@@ -221,7 +221,7 @@ m2_ll <- function(f){
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
-                arr_t=1.5,
+                arr_t=arr_t,
                 ref_t=20,
                 temp=data$temp[i])
     xstart <- c(R=data$resource[i])
@@ -242,8 +242,9 @@ m2_ll <- function(f){
 ```{r, m2_mle}
 start_time <- Sys.time()
 m2_f_fit <- mle2(m2_ll,
-                start=list(f=30),
-                method = "Brent",
+                start=list(f=30,
+                           arr_t=1.5),
+                method = "Nelder-Mead",
                 lower = 0,
                 upper = 100)
 end_time <- Sys.time()
@@ -286,7 +287,7 @@ r_end <- slice_max(output, time)[,2]
 
 
 ```{r, m3_ll}
-m3_ll <- function(f){
+m3_ll <- function(f, h){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
@@ -294,7 +295,7 @@ m3_ll <- function(f){
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
-                h=1)
+                h=h)
     xstart <- c(R=data$resource[i])
     output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params, hmax = 0.1))
     
@@ -312,8 +313,8 @@ m3_ll <- function(f){
 ```{r, m3_mle}
 start_time <- Sys.time()
 m3_f_fit <- mle2(m3_ll,
-                start=list(f=30),
-                method = "Brent",
+                start=list(f=30, h=1),
+                method = "Nelder-Mead",
                 lower = 0,
                 upper = 100)
 end_time <- Sys.time()
@@ -360,7 +361,7 @@ r_end <- slice_max(output, time)[,2]
 
 
 ```{r, m4_ll}
-m4_ll <- function(f){
+m4_ll <- function(f, arr_t, h){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
@@ -368,10 +369,10 @@ m4_ll <- function(f){
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
-                arr_t=1.5,
+                arr_t=arr_t,
                 ref_t=20,
                 temp=data$temp[i],
-                h=1)
+                h=h)
     xstart <- c(R=data$resource[i])
     output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params, hmax = 0.1))
     
@@ -388,12 +389,26 @@ m4_ll <- function(f){
 ```{r, m4_mle}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=30),
-                method = "Brent",
+                start=list(f=30, arr_t=1.5, h=1),
+                method = "Nelder-Mead",
                 lower = 0,
                 upper = 100)
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 as.numeric(m4_runtime)
+```
+
+```{r}
+m1_f_fit
+m1_runtime
+
+m2_f_fit
+m2_runtime
+
+m3_f_fit
+m3_runtime
+
+m4_f_fit
+m4_runtime
 ```
 
