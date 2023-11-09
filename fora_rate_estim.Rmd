@@ -152,18 +152,21 @@ One issue here is that I haven't set a limit on the resource value to account fo
 
 Now it is time to use the optimizer
 ```{r, m1_mle}
+
 # m1_f_fit <- mle(m1_ll,
 #                 start=list(f=30),
 #                 method = "Brent",
 #                 lower = 0,
 #                 upper = 100)
-
+start_time <- Sys.time()
 m1_f_fit <- mle2(m1_ll,
                 start=list(f=30),
                 method = "Brent",
                 lower = 0,
                 upper = 100)
-
+end_time <- Sys.time()
+m1_runtime <- end_time - start_time
+as.numeric(m1_runtime)
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 ```
 
@@ -237,12 +240,15 @@ m2_ll <- function(f){
 
 
 ```{r, m2_mle}
+start_time <- Sys.time()
 m2_f_fit <- mle2(m2_ll,
                 start=list(f=30),
                 method = "Brent",
                 lower = 0,
                 upper = 100)
-
+end_time <- Sys.time()
+m2_runtime <- end_time - start_time
+as.numeric(m2_runtime)
 ```
 
 
@@ -273,7 +279,7 @@ params <- c(f=0.5,
 
 xstart <- c(R=1)
 
-output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
 
 r_end <- slice_max(output, time)[,2]
 ```
@@ -304,10 +310,90 @@ m3_ll <- function(f){
 
 
 ```{r, m3_mle}
+start_time <- Sys.time()
 m3_f_fit <- mle2(m3_ll,
                 start=list(f=30),
                 method = "Brent",
                 lower = 0,
                 upper = 100)
-
+end_time <- Sys.time()
+m3_runtime <- end_time-start_time
+as.numeric(m3_runtime)
 ```
+
+
+# Temperature and resource-dependent model
+
+
+$$
+\frac{dR}{dt} = -L^{\gamma}\frac{fe^{T_{A}(1/T_{R}-1/T)} R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR}  \\
+$$
+
+
+```{r, m4_num_sol}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -(length^gamma)*((f*exp(arr_t*(1/ref_t - 1/temp))*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*R))
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 8
+times <- seq(0,maxTime,by=0.1)
+
+params <- c(f=0.5,
+            length=1,
+            gamma=2,
+            arr_t=1.5,
+            ref_t=20,
+            h=1,
+            temp=25)
+
+xstart <- c(R=1)
+
+output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
+```
+
+
+```{r, m4_ll}
+m4_ll <- function(f){
+  resid_df <- tibble(resid=0, data$ID)
+    for (i in 1:nrow(data)) {
+    maxTime <- data$time[i]
+    times <- seq(0, maxTime, by=0.1)
+    params <- c(f=f,
+                length=data$mm[i],
+                gamma=2,
+                arr_t=1.5,
+                ref_t=20,
+                temp=data$temp[i],
+                h=1)
+    xstart <- c(R=data$resource[i])
+    output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params, hmax = 0.1))
+    
+    r_end <- slice_max(output, time)[,2]
+      
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
+    }
+  
+    nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
+    -sum(nll, na.rm = T)
+}
+```
+
+```{r, m4_mle}
+start_time <- Sys.time()
+m4_f_fit <- mle2(m4_ll,
+                start=list(f=30),
+                method = "Brent",
+                lower = 0,
+                upper = 100)
+end_time <- Sys.time()
+m4_runtime <- end_time-start_time
+as.numeric(m4_runtime)
+```
+
