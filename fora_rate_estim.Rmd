@@ -42,7 +42,7 @@ $$
 Foraging rate is also expected to depend on the size of the individual. We incorporate length as a factor with a power coefficient. We can attempt to fit gamma or just assume a reasonable value. In other papers, a power coefficient of 2 is used. The idea here (I think) is that the surface area of the daphnia is what is relevant for foraging. Squaring the length gives us the surface area of a square which is close enough to the surface area of a daphnia?
 
 $$
-\frac{dR}{dt} = -fR L^{\gamma} \\
+\frac{dR}{dt} = -L^{\gamma} fR \\
 $$
 
 Now that we have our full equation, we can use this to estimate the amount of algae after a given amount of time. We can do this by numerically solving our differential equation and seeing how much algae remains after a given amount of time. We can also solve the differential equation by writing a function that represents the change of algae over time. We'll do both of these here.
@@ -51,7 +51,7 @@ Now that we have our full equation, we can use this to estimate the amount of al
 m1_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -f*R*length^gamma
+    dR <- -length^gamma*f*R
     res <- c(dR)
     list(res)}
     )
@@ -100,6 +100,7 @@ One issue with this right now is that I need a single parameter for all treatmen
 Okay I need to decide if I am going to do this line by line and both re-solve the ode for each since each individual technically has different length and different time of foraging. Or I can average things.
 
 We'll use the solver for each observation for now.
+
 ```{r, m1_ll}
 m1_ll <- function(f){
   resid_df <- tibble(resid=0, data$ID)
@@ -170,5 +171,143 @@ I can get mle2() and optim() to work but not mle(). I'm not sure why right now, 
 
 
 
+# Model 2 - Temperature-dependent model
 
 
+Next, let's try to incorporate temperature.
+
+$$
+\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} R  \\
+$$
+
+
+```{r, m2_num_sol}
+m2_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*R
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 8
+times <- seq(0,maxTime,by=0.1)
+
+params <- c(f=0.5,
+            length=1,
+            gamma=2,
+            arr_t=1.5,
+            ref_t=20,
+            temp=25)
+
+xstart <- c(R=1)
+
+output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
+```
+
+
+```{r, m2_ll}
+m2_ll <- function(f){
+  resid_df <- tibble(resid=0, data$ID)
+    for (i in 1:nrow(data)) {
+    maxTime <- data$time[i]
+    times <- seq(0, maxTime, by=0.1)
+    params <- c(f=f,
+                length=data$mm[i],
+                gamma=2,
+                arr_t=1.5,
+                ref_t=20,
+                temp=data$temp[i])
+    xstart <- c(R=data$resource[i])
+    output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params, hmax = 0.1))
+    
+    r_end <- slice_max(output, time)[,2]
+      
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
+    }
+  
+    nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
+    -sum(nll, na.rm = T)
+}
+```
+
+
+
+```{r, m2_mle}
+m2_f_fit <- mle2(m2_ll,
+                start=list(f=30),
+                method = "Brent",
+                lower = 0,
+                upper = 100)
+
+```
+
+
+# Resource-dependent model
+
+
+$$
+\frac{dR}{dt} = -L^{\gamma} \frac{fR}{1 + fhR} \\
+$$
+
+```{r, m3_num_sol}
+m3_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -length^gamma*((f*R)/(1+f*h*R))
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 8
+times <- seq(0,maxTime,by=0.1)
+
+params <- c(f=0.5,
+            length=1,
+            gamma=2,
+            h=1)
+
+xstart <- c(R=1)
+
+output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
+```
+
+
+```{r, m3_ll}
+m3_ll <- function(f){
+  resid_df <- tibble(resid=0, data$ID)
+    for (i in 1:nrow(data)) {
+    maxTime <- data$time[i]
+    times <- seq(0, maxTime, by=0.1)
+    params <- c(f=f,
+                length=data$mm[i],
+                gamma=2,
+                h=1)
+    xstart <- c(R=data$resource[i])
+    output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params, hmax = 0.1))
+    
+    r_end <- slice_max(output, time)[,2]
+      
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
+    }
+  
+    nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
+    -sum(nll, na.rm = T)
+}
+```
+
+
+```{r, m3_mle}
+m3_f_fit <- mle2(m3_ll,
+                start=list(f=30),
+                method = "Brent",
+                lower = 0,
+                upper = 100)
+
+```
