@@ -84,6 +84,8 @@ data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement
 
 data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
 
+data %<>% mutate(resource_tot = resource*vol)
+
 treatment_IDs <- unique(data$treatment_ID)
 
 ```
@@ -109,12 +111,12 @@ m1_ll <- function(f){
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2)
-    xstart <- c(R=data$resource[i]*data$vol[i])
+    xstart <- c(R=data$resource_tot[i]) 
     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
       
-    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
+    resid_df$resid[i] <- r_end - data$amt_rem_tot[i] #amt_rem_tot should be total R remaining instead of conc.
     }
   
     nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
@@ -162,7 +164,7 @@ m1_f_fit <- mle2(m1_ll,
                 start=list(f=0.001),
                 method = "Brent",
                 lower = 0,
-                upper = 0.1)
+                upper = 1000)
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
 as.numeric(m1_runtime)
