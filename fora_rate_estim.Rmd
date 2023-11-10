@@ -159,10 +159,10 @@ Now it is time to use the optimizer
 #                 upper = 100)
 start_time <- Sys.time()
 m1_f_fit <- mle2(m1_ll,
-                start=list(f=30),
+                start=list(f=0.001),
                 method = "Brent",
                 lower = 0,
-                upper = 100)
+                upper = 0.1)
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
 as.numeric(m1_runtime)
@@ -221,14 +221,19 @@ m2_ll <- function(f, arr_t){
                 length=data$mm[i],
                 gamma=2,
                 arr_t=arr_t,
+#                arr_t=8000,
                 ref_t=20,
                 temp=data$temp[i])
-    xstart <- c(R=data$resource[i]*data$vol)
-    output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params, hmax = 0.1))
+#    xstart <- c(R=data$resource[i])
+    xstart <- c(R=data$resource[i]*data$vol[i])
+
+    output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
     
     r_end <- slice_max(output, time)[,2]
       
-    resid_df$resid[i] <- r_end - data$amt_rem[i]
+#    resid_df$resid[i] <- r_end - data$amt_rem[i]
+    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
+
     }
   
     nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
@@ -236,6 +241,19 @@ m2_ll <- function(f, arr_t){
 }
 ```
 
+
+```{r, m2_mle}
+start_time <- Sys.time()
+arr_t <- 8000
+m2_f_fit <- mle2(m2_ll,
+                start=list(f=0.001),
+                lower=0,
+                upper=0.1,
+                method = "Brent")
+end_time <- Sys.time()
+m2_runtime <- end_time - start_time
+as.numeric(m2_runtime)
+```
 
 
 ```{r, m2_mle}
