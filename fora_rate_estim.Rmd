@@ -64,7 +64,7 @@ params <- c(f=0.5,
             length=1,
             gamma=2)
 
-xstart <- c(R=1)
+xstart <- c(R=15)
 
 output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
 
@@ -82,11 +82,10 @@ data <- readRDS(here("processed_data","foraging_raw.rds"))
 
 data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement into mm
 
-data %<>% mutate(amt_consumed = resource - amt_rem)
-
 data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
 
 treatment_IDs <- unique(data$treatment_ID)
+
 ```
 
 
@@ -110,12 +109,12 @@ m1_ll <- function(f){
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2)
-    xstart <- c(R=data$resource[i])
+    xstart <- c(R=data$resource[i]*data$vol[i])
     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
       
-    resid_df$resid[i] <- r_end - data$amt_rem[i]
+    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
     }
   
     nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
@@ -204,7 +203,7 @@ params <- c(f=0.5,
             ref_t=20,
             temp=25)
 
-xstart <- c(R=1)
+xstart <- c(R=15)
 
 output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
 
@@ -224,7 +223,7 @@ m2_ll <- function(f, arr_t){
                 arr_t=arr_t,
                 ref_t=20,
                 temp=data$temp[i])
-    xstart <- c(R=data$resource[i])
+    xstart <- c(R=data$resource[i]*data$vol)
     output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
@@ -243,10 +242,8 @@ m2_ll <- function(f, arr_t){
 start_time <- Sys.time()
 m2_f_fit <- mle2(m2_ll,
                 start=list(f=30,
-                           arr_t=1.5),
-                method = "Nelder-Mead",
-                lower = 0,
-                upper = 100)
+                           arr_t=1500),
+                method = "Nelder-Mead")
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
 as.numeric(m2_runtime)
@@ -278,7 +275,7 @@ params <- c(f=0.5,
             gamma=2,
             h=1)
 
-xstart <- c(R=1)
+xstart <- c(R=40)
 
 output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
 
@@ -296,7 +293,7 @@ m3_ll <- function(f, h){
                 length=data$mm[i],
                 gamma=2,
                 h=h)
-    xstart <- c(R=data$resource[i])
+    xstart <- c(R=data$resource[i]*data$vol[i])
     output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
@@ -352,7 +349,7 @@ params <- c(f=0.5,
             h=1,
             temp=25)
 
-xstart <- c(R=1)
+xstart <- c(R=15)
 
 output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
 
@@ -373,7 +370,7 @@ m4_ll <- function(f, arr_t, h){
                 ref_t=20,
                 temp=data$temp[i],
                 h=h)
-    xstart <- c(R=data$resource[i])
+    xstart <- c(R=data$resource[i]*data$vol[i])
     output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
