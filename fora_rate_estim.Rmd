@@ -119,7 +119,10 @@ m1_ll <- function(f){
     resid_df$resid[i] <- r_end - data$amt_rem_tot[i] #amt_rem_tot should be total R remaining instead of conc.
     }
   
-    nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
+    nll <- dnorm(resid_df$resid, 
+                 mean = mean(resid_df$resid, na.rm=T), 
+                 sd = sd(resid_df$resid, na.rm = T), 
+                 log = T)
     -sum(nll, na.rm = T)
 }
 ```
@@ -148,6 +151,13 @@ m1_ll <- function(f){
 <!--     sum(resid_df$resid) -->
 <!-- } -->
 <!-- ``` -->
+
+One issue is that the distribution is a bit right-skewed
+```{r}
+#resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.25)
+```
+
+
 
 One issue here is that I haven't set a limit on the resource value to account for the negative feeding rate values (i.e. when fluorescence increased). I have to figure out how to do this. We'll come back to this later.
 
@@ -238,7 +248,10 @@ m2_ll <- function(f, arr_t){
 
     }
   
-    nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
+    nll <- dnorm(resid_df$resid, 
+                 mean = mean(resid_df$resid, na.rm=T), 
+                 sd = sd(resid_df$resid, na.rm = T), 
+                 log = T)
     -sum(nll, na.rm = T)
 }
 ```
@@ -321,7 +334,10 @@ m3_ll <- function(f, h){
     resid_df$resid[i] <- r_end - data$amt_rem[i]
     }
   
-    nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
+    nll <- dnorm(resid_df$resid, 
+                 mean = mean(resid_df$resid, na.rm=T), 
+                 sd = sd(resid_df$resid, na.rm = T), 
+                 log = T)
     -sum(nll, na.rm = T)
 }
 ```
@@ -398,7 +414,10 @@ m4_ll <- function(f, arr_t, h){
     resid_df$resid[i] <- r_end - data$amt_rem[i]
     }
   
-    nll <- dnorm(resid_df$resid, mean = 0, sd = sd(resid_df$resid, na.rm = T), log = T)
+    nll <- dnorm(resid_df$resid, 
+                 mean = mean(resid_df$resid, na.rm=T), 
+                 sd = sd(resid_df$resid, na.rm = T), 
+                 log = T)
     -sum(nll, na.rm = T)
 }
 ```
