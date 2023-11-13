@@ -258,16 +258,16 @@ m2_ll <- function(f, arr_t){
 
 
 ```{r, m2_mle}
-start_time <- Sys.time()
-arr_t <- 8000
-m2_f_fit <- mle2(m2_ll,
-                start=list(f=0.001),
-                lower=0,
-                upper=0.1,
-                method = "Brent")
-end_time <- Sys.time()
-m2_runtime <- end_time - start_time
-as.numeric(m2_runtime)
+# start_time <- Sys.time()
+# arr_t <- 8000
+# m2_f_fit <- mle2(m2_ll,
+#                 start=list(f=0.001),
+#                 lower=0,
+#                 upper=0.1,
+#                 method = "Brent")
+# end_time <- Sys.time()
+# m2_runtime <- end_time - start_time
+# as.numeric(m2_runtime)
 ```
 
 
@@ -347,9 +347,7 @@ m3_ll <- function(f, h){
 start_time <- Sys.time()
 m3_f_fit <- mle2(m3_ll,
                 start=list(f=30, h=1),
-                method = "Nelder-Mead",
-                lower = 0,
-                upper = 100)
+                method = "Nelder-Mead")
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
 as.numeric(m3_runtime)
@@ -426,9 +424,7 @@ m4_ll <- function(f, arr_t, h){
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
                 start=list(f=30, arr_t=1.5, h=1),
-                method = "Nelder-Mead",
-                lower = 0,
-                upper = 100)
+                method = "Nelder-Mead")
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 as.numeric(m4_runtime)
