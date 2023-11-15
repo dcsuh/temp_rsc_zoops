@@ -152,7 +152,7 @@ m1_ll <- function(f){
 <!-- } -->
 <!-- ``` -->
 
-```{r, m1_ll}
+```{r, m1_ll_alt}
 # m1_ll <- function(f, gamma){
 #   resid_df <- tibble(resid=0, data$ID)
 #     for (i in 1:nrow(data)) {
@@ -161,17 +161,17 @@ m1_ll <- function(f){
 #     params <- c(f=f,
 #                 length=data$mm[i],
 #                 gamma=gamma)
-#     xstart <- c(R=data$resource_tot[i]) 
+#     xstart <- c(R=data$resource_tot[i])
 #     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
-#     
+# 
 #     r_end <- slice_max(output, time)[,2]
-#       
+# 
 #     resid_df$resid[i] <- r_end - data$amt_rem_tot[i] #amt_rem_tot should be total R remaining instead of conc.
 #     }
-#   
-#     nll <- dnorm(resid_df$resid, 
-#                  mean = mean(resid_df$resid, na.rm=T), 
-#                  sd = sd(resid_df$resid, na.rm = T), 
+# 
+#     nll <- dnorm(resid_df$resid,
+#                  mean = mean(resid_df$resid, na.rm=T),
+#                  sd = sd(resid_df$resid, na.rm = T),
 #                  log = T)
 #     -sum(nll, na.rm = T)
 # }
@@ -294,7 +294,7 @@ m2_ll <- function(f, arr_t){
 ```
 
 
-```{r, m2_mle}
+```{r}
 # start_time <- Sys.time()
 # arr_t <- 8000
 # m2_f_fit <- mle2(m2_ll,
