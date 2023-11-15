@@ -152,6 +152,31 @@ m1_ll <- function(f){
 <!-- } -->
 <!-- ``` -->
 
+```{r, m1_ll}
+# m1_ll <- function(f, gamma){
+#   resid_df <- tibble(resid=0, data$ID)
+#     for (i in 1:nrow(data)) {
+#     maxTime <- data$time[i]
+#     times <- seq(0, maxTime, by=0.1)
+#     params <- c(f=f,
+#                 length=data$mm[i],
+#                 gamma=gamma)
+#     xstart <- c(R=data$resource_tot[i]) 
+#     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
+#     
+#     r_end <- slice_max(output, time)[,2]
+#       
+#     resid_df$resid[i] <- r_end - data$amt_rem_tot[i] #amt_rem_tot should be total R remaining instead of conc.
+#     }
+#   
+#     nll <- dnorm(resid_df$resid, 
+#                  mean = mean(resid_df$resid, na.rm=T), 
+#                  sd = sd(resid_df$resid, na.rm = T), 
+#                  log = T)
+#     -sum(nll, na.rm = T)
+# }
+```
+
 One issue is that the distribution is a bit right-skewed
 ```{r}
 #resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.25)
@@ -171,7 +196,7 @@ Now it is time to use the optimizer
 #                 upper = 100)
 start_time <- Sys.time()
 m1_f_fit <- mle2(m1_ll,
-                start=list(f=0.001),
+                start=list(f=15),
                 method = "Brent",
                 lower = 0,
                 upper = 1000)
@@ -180,6 +205,18 @@ m1_runtime <- end_time - start_time
 as.numeric(m1_runtime)
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 ```
+
+```{r}
+# start_time <- Sys.time()
+# m1_f_fit <- mle2(m1_ll,
+#                 start=list(f=30,
+#                            gamma=2),
+#                 method = "Nelder-Mead")
+# end_time <- Sys.time()
+# m1_runtime <- end_time - start_time
+# as.numeric(m1_runtime)
+```
+
 
 I can get mle2() and optim() to work but not mle(). I'm not sure why right now, but I guess we can move forward.
 
