@@ -34,7 +34,7 @@ data %<>% left_join(., control)
 data %<>% filter(trt=="trt") %>% mutate(rate = log(control_read/read)*(vol/time),
                                         amt_rem = ((resource/control_read)*read), 
                                         amt_rem_tot = ((resource*vol/control_read)*read), 
-                                        amt_time = amt_rem/time) 
+                                        amt_time = amt_rem/time)
 
 
 data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(rate),

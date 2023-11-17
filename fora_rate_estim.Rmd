@@ -91,7 +91,7 @@ data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement
 
 data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
 
-data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube
+data %<>% mutate(resource_tot = resource*vol/1000) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube divided by 1000 because resource concentration is in liters
 
 treatment_IDs <- unique(data$treatment_ID)
 
