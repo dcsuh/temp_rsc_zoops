@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-11-15" />
+<meta name="date" content="2023-11-17" />
 
 <title>estimate foraging rate</title>
 
@@ -350,7 +350,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">estimate foraging rate</h1>
-<h4 class="date">2023-11-15</h4>
+<h4 class="date">2023-11-17</h4>
 
 </div>
 
@@ -361,12 +361,12 @@ library(deSolve)
 library(magrittr)
 library(bbmle)</code></pre>
 <p>The purpose of this document is to estimate foraging rate using
-maximum likelihood estimation and multiple models for foraging rate. At
-its simplest, foraging rate is a constant unaffected by any external
+maximum likelihood estimation under different model formulations. In its
+simplest form, foraging rate is a constant unaffected by any external
 conditions. However, we hypothesize that temperature and resource
 concentration will influence foraging rate. Under different resource
 conditions, we expect foraging rate to change with changes in resource
-concentration as a type II functional response. Under a type II
+concentration following a type II functional response. Under a type II
 functional response, foraging rate increases non-linearly with resource
 concentration and will asymptote at a sufficiently high resource
 concentration. Mechanistically, this is due to the inclusion of handling
@@ -433,7 +433,7 @@ time. We’ll do both of these here.</p>
 <pre class="r"><code>m1_num_sol &lt;- function(t, x, params){
   R &lt;- x[1]
   with(as.list(params),{
-    dR &lt;- -length^gamma*f*R
+    dR &lt;- -(length^gamma)*f*R
     res &lt;- c(dR)
     list(res)}
     )
@@ -454,10 +454,10 @@ r_end &lt;- slice_max(output, time)[,2]</code></pre>
 <p>We can use this chunk of code to get the solution for our model given
 any set of starting conditions and parameter values. Using our data, we
 can determine what set of parameter values will allow the model to best
-fit our data. In our data, have information about each daphnia
+fit our data. In our data, we have information about each daphnia
 (i.e. length) and how much they foraged over a certain amount of
 time.</p>
-<p>We have the raw data so we will have to do a little bit of
+<p>We use the raw data so we will have to do a little bit of
 housekeeping before we can actually use these data.</p>
 <pre class="r"><code>data &lt;- readRDS(here(&quot;processed_data&quot;,&quot;foraging_raw.rds&quot;))
 
@@ -465,14 +465,14 @@ data %&lt;&gt;% mutate(mm = as.numeric(length)*17.86/1000) #convert length measu
 
 data %&lt;&gt;% mutate(treatment_ID = paste(temp, resource, sep = &quot;_&quot;))
 
-data %&lt;&gt;% mutate(resource_tot = resource*vol)
+data %&lt;&gt;% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube
 
 treatment_IDs &lt;- unique(data$treatment_ID)</code></pre>
 <p>Using the data, we can go ahead and try out estimating f.</p>
 <p>pseudocode: write a loop that goes through each treatment. For each
 treatment, set the conditions of the solver (i.e. resource
 concentration; in future cases, this will also include temperature).
-Before we do this, we may need to write a function that will pop out the
+Before we do this, we need to write a function that will pop out the
 negative log-likelihood. To do this, we will need to use the solver to
 give us the endpoint resource concentration given a certain foraging
 rate. We use a function like dnorm() to calculate the likelihood of of
@@ -481,60 +481,65 @@ probability is set from the result from the solver. Together, the result
 from the solver and the data are used to give us the likelihood and
 simple maths turns the likelihood into the negative log-likelihood
 (i.e. taking the log of the likelihood and making it negative). The
-optimizer (mle2() is what we sill use) takes this likelihood function
-and then moves through parameter space to find the parameter value that
+optimizer (mle2() is what we use) takes this likelihood function and
+then moves through parameter space to find the parameter value that
 minimizes the sum of the negative log-likelihood of all the data.</p>
-<p>One issue with this right now is that I need a single parameter for
-all treatments. As written, that will give me different parameter
-estimates for each treatment. I think I just need to write a loop within
-the optimizer instead of outside it.</p>
-<p>Okay I need to decide if I am going to do this line by line and both
-re-solve the ode for each since each individual technically has
-different length and different time of foraging. Or I can average
-things.</p>
-<p>We’ll use the solver for each observation for now.</p>
+<p>I saw two methods for using the solver. One was to average across
+each treatment, run the solver for these conditions, and then use those
+values to calculate residuals which are fed into dnorm(). The other way
+was to run the solver for each observation and use the unique conditions
+for each individual to set the conditions for the solver (length and
+time of assay is different for individuals within a treatment). I then
+get the residual for each observation and feed that to dnorm(). I went
+with the second option to start because it seems the most accurate to
+me. The downside is that it will likely take significantly longer than
+the first option since the solver is being much more often.</p>
 <pre class="r"><code>m1_ll &lt;- function(f){
   resid_df &lt;- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
-    maxTime &lt;- data$time[i]
+    maxTime &lt;- data$time[i] #sets endpoint time
     times &lt;- seq(0, maxTime, by=0.1)
     params &lt;- c(f=f,
-                length=data$mm[i],
+                length=data$mm[i], #length measurement for each individual
                 gamma=2)
-    xstart &lt;- c(R=data$resource_tot[i]) 
+    xstart &lt;- c(R=data$resource_tot[i]) #absolute resource amount in tube
     output &lt;- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
     
     r_end &lt;- slice_max(output, time)[,2]
       
-    resid_df$resid[i] &lt;- r_end - data$amt_rem_tot[i] #amt_rem_tot should be total R remaining instead of conc.
+    resid_df$resid[i] &lt;- r_end - data$amt_rem_tot[i] #amt_rem_tot is total R remaining instead of conc.
     }
   
     nll &lt;- dnorm(resid_df$resid, 
-                 mean = mean(resid_df$resid, na.rm=T), 
+                 mean = mean(resid_df$resid, na.rm=T), #I use the actual mean instead of 0 because I was finding that the distribution did not peak at 0
                  sd = sd(resid_df$resid, na.rm = T), 
                  log = T)
     -sum(nll, na.rm = T)
 }</code></pre>
-<!-- ```{r, m1_ll} -->
-<!-- m1_ll <- function(f){ -->
-<!--   resid_df <- tibble(resid=0, treatment_IDs) -->
-<!--     for (i in 1:length(treatment_IDs)) { -->
-<!--     sub_data <- data %>% filter(treatment_ID %in% treatment_IDs[i]) -->
-<!--     maxTime <- round(mean(sub_data$time, na.rm=T),2) -->
-<!--     length <- mean(sub_data$mm, na.rm=T) -->
-<!--     times <- seq(0, maxTime, by=0.1) -->
-<!--     params <- c(f=f, -->
-<!--                 length=length, -->
-<!--                 gamma=2) -->
-<!--     xstart <- c(R=mean(sub_data$resource, na.rm=T)) -->
-<!--     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params)) -->
-<!--     r_end <- slice_max(output, time)[,2] -->
-<!--     resids <- r_end - sub_data$amt_rem -->
-<!--     resid_df$resid[i] <- -sum(dnorm(resids, mean = 0, sd = sd(resids, na.rm = T), log = T)) -->
-<!--     } -->
-<!--     sum(resid_df$resid) -->
-<!-- } -->
-<!-- ``` -->
+<p>This iteration was averaging across treatments</p>
+<pre class="r"><code># m1_ll &lt;- function(f){
+#   resid_df &lt;- tibble(resid=0, treatment_IDs)
+#     for (i in 1:length(treatment_IDs)) {
+#     sub_data &lt;- data %&gt;% filter(treatment_ID %in% treatment_IDs[i])
+#     maxTime &lt;- round(mean(sub_data$time, na.rm=T),2)
+#     length &lt;- mean(sub_data$mm, na.rm=T)
+#     times &lt;- seq(0, maxTime, by=0.1)
+#     params &lt;- c(f=f,
+#                 length=length,
+#                 gamma=2)
+#     xstart &lt;- c(R=mean(sub_data$resource, na.rm=T))
+#     output &lt;- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+# 
+#     r_end &lt;- slice_max(output, time)[,2]
+# 
+#     resids &lt;- r_end - sub_data$amt_rem
+# 
+#     resid_df$resid[i] &lt;- -sum(dnorm(resids, mean = 0, sd = sd(resids, na.rm = T), log = T))
+#     }
+# 
+#     sum(resid_df$resid)
+# }</code></pre>
+<p>This iteration is the same as m1_ll but also estimates gamma</p>
 <pre class="r"><code># m1_ll &lt;- function(f, gamma){
 #   resid_df &lt;- tibble(resid=0, data$ID)
 #     for (i in 1:nrow(data)) {
@@ -557,29 +562,22 @@ things.</p>
 #                  log = T)
 #     -sum(nll, na.rm = T)
 # }</code></pre>
-<p>One issue is that the distribution is a bit right-skewed</p>
+<p>One issue is that the distribution is a bit right-skewed I think this
+may be due to the negative foraging rates</p>
 <pre class="r"><code>#resid_df %&gt;% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.25)</code></pre>
-<p>One issue here is that I haven’t set a limit on the resource value to
-account for the negative feeding rate values (i.e. when fluorescence
-increased). I have to figure out how to do this. We’ll come back to this
-later.</p>
-<p>Now it is time to use the optimizer</p>
-<pre class="r"><code># m1_f_fit &lt;- mle(m1_ll,
-#                 start=list(f=30),
-#                 method = &quot;Brent&quot;,
-#                 lower = 0,
-#                 upper = 100)
-start_time &lt;- Sys.time()
+<p>Now we use the optimizer</p>
+<pre class="r"><code>start_time &lt;- Sys.time()
 m1_f_fit &lt;- mle2(m1_ll,
                 start=list(f=15),
-                method = &quot;Brent&quot;,
+                method = &quot;Brent&quot;, # I use Brent because we only have on parameter
                 lower = 0,
                 upper = 1000)
 end_time &lt;- Sys.time()
 m1_runtime &lt;- end_time - start_time
 as.numeric(m1_runtime)</code></pre>
-<pre><code>## [1] 8.694072</code></pre>
+<pre><code>## [1] 8.713586</code></pre>
 <pre class="r"><code>#opt1 &lt;- optim(fn=m1_ll, par=c(30), method = &quot;Brent&quot;, lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()</code></pre>
+<p>This version is for estimating f and gamma</p>
 <pre class="r"><code># start_time &lt;- Sys.time()
 # m1_f_fit &lt;- mle2(m1_ll,
 #                 start=list(f=30,
@@ -588,12 +586,14 @@ as.numeric(m1_runtime)</code></pre>
 # end_time &lt;- Sys.time()
 # m1_runtime &lt;- end_time - start_time
 # as.numeric(m1_runtime)</code></pre>
-<p>I can get mle2() and optim() to work but not mle(). I’m not sure why
-right now, but I guess we can move forward.</p>
+<p>Note: I was having issues with the solver getting stuck when using
+mle(). I could get mle2() and optim() to work though so not sure what
+the issue is.</p>
 </div>
 <div id="model-2---temperature-dependent-model" class="section level1">
 <h1>Model 2 - Temperature-dependent model</h1>
-<p>Next, let’s try to incorporate temperature.</p>
+<p>I try to incorporate temperature here using the Arrhenius equation as
+a rate coefficient of foraging rate.</p>
 <p><span class="math display">\[
 \frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} R  \\
 \]</span></p>
@@ -612,9 +612,9 @@ times &lt;- seq(0,maxTime,by=0.1)
 params &lt;- c(f=0.5,
             length=1,
             gamma=2,
-            arr_t=1.5,
-            ref_t=20,
-            temp=25)
+            arr_t=1.5, #arrhenius coefficient
+            ref_t=20, #reference temperature
+            temp=25) #treatment temperature
 
 xstart &lt;- c(R=15)
 
@@ -630,17 +630,14 @@ r_end &lt;- slice_max(output, time)[,2]</code></pre>
                 length=data$mm[i],
                 gamma=2,
                 arr_t=arr_t,
-#                arr_t=8000,
                 ref_t=20,
                 temp=data$temp[i])
-#    xstart &lt;- c(R=data$resource[i])
-    xstart &lt;- c(R=data$resource[i]*data$vol[i])
+    xstart &lt;- c(R=data$resource_tot[i])
 
     output &lt;- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
     
     r_end &lt;- slice_max(output, time)[,2]
       
-#    resid_df$resid[i] &lt;- r_end - data$amt_rem[i]
     resid_df$resid[i] &lt;- r_end - data$amt_rem_tot[i]
 
     }
@@ -651,28 +648,20 @@ r_end &lt;- slice_max(output, time)[,2]</code></pre>
                  log = T)
     -sum(nll, na.rm = T)
 }</code></pre>
-<pre class="r"><code># start_time &lt;- Sys.time()
-# arr_t &lt;- 8000
-# m2_f_fit &lt;- mle2(m2_ll,
-#                 start=list(f=0.001),
-#                 lower=0,
-#                 upper=0.1,
-#                 method = &quot;Brent&quot;)
-# end_time &lt;- Sys.time()
-# m2_runtime &lt;- end_time - start_time
-# as.numeric(m2_runtime)</code></pre>
 <pre class="r"><code>start_time &lt;- Sys.time()
 m2_f_fit &lt;- mle2(m2_ll,
                 start=list(f=30,
-                           arr_t=1.5),
+                           arr_t=10),
                 method = &quot;Nelder-Mead&quot;)
 end_time &lt;- Sys.time()
 m2_runtime &lt;- end_time - start_time
 as.numeric(m2_runtime)</code></pre>
-<pre><code>## [1] 9.535009</code></pre>
+<pre><code>## [1] 11.36735</code></pre>
 </div>
 <div id="resource-dependent-model" class="section level1">
 <h1>Resource-dependent model</h1>
+<p>I try to incorporate resource-dependence by using an equation for the
+type II functional response.</p>
 <p><span class="math display">\[
 \frac{dR}{dt} = -L^{\gamma} \frac{fR}{1 + fhR} \\
 \]</span></p>
@@ -706,13 +695,13 @@ r_end &lt;- slice_max(output, time)[,2]</code></pre>
     params &lt;- c(f=f,
                 length=data$mm[i],
                 gamma=2,
-                h=h)
-    xstart &lt;- c(R=data$resource[i]*data$vol[i])
+                h=h) #handling time
+    xstart &lt;- c(R=data$resource_tot[i])
     output &lt;- as.data.frame(lsoda(xstart, times, m3_num_sol, params, hmax = 0.1))
     
     r_end &lt;- slice_max(output, time)[,2]
       
-    resid_df$resid[i] &lt;- r_end - data$amt_rem[i]
+    resid_df$resid[i] &lt;- r_end - data$amt_rem_tot[i]
     }
   
     nll &lt;- dnorm(resid_df$resid, 
@@ -728,10 +717,12 @@ m3_f_fit &lt;- mle2(m3_ll,
 end_time &lt;- Sys.time()
 m3_runtime &lt;- end_time-start_time
 as.numeric(m3_runtime)</code></pre>
-<pre><code>## [1] 10.23849</code></pre>
+<pre><code>## [1] 11.33104</code></pre>
 </div>
 <div id="temperature-and-resource-dependent-model" class="section level1">
 <h1>Temperature and resource-dependent model</h1>
+<p>I try to incorporate both here by just smashing everything
+together.</p>
 <p><span class="math display">\[
 \frac{dR}{dt} = -L^{\gamma}\frac{fe^{T_{A}(1/T_{R}-1/T)} R}{1 +
 fe^{T_{A}(1/T_{R}-1/T)}hR}  \\
@@ -753,7 +744,7 @@ params &lt;- c(f=0.5,
             gamma=2,
             arr_t=1.5,
             ref_t=20,
-            h=1,
+            h=1, #handling time
             temp=25)
 
 xstart &lt;- c(R=15)
@@ -773,12 +764,12 @@ r_end &lt;- slice_max(output, time)[,2]</code></pre>
                 ref_t=20,
                 temp=data$temp[i],
                 h=h)
-    xstart &lt;- c(R=data$resource[i]*data$vol[i])
+    xstart &lt;- c(R=data$resource_tot[i])
     output &lt;- as.data.frame(lsoda(xstart, times, m4_num_sol, params, hmax = 0.1))
     
     r_end &lt;- slice_max(output, time)[,2]
       
-    resid_df$resid[i] &lt;- r_end - data$amt_rem[i]
+    resid_df$resid[i] &lt;- r_end - data$amt_rem_tot[i]
     }
   
     nll &lt;- dnorm(resid_df$resid, 
@@ -789,12 +780,13 @@ r_end &lt;- slice_max(output, time)[,2]</code></pre>
 }</code></pre>
 <pre class="r"><code>start_time &lt;- Sys.time()
 m4_f_fit &lt;- mle2(m4_ll,
-                start=list(f=30, arr_t=1.5, h=1),
+                start=list(f=30, arr_t=10, h=1),
                 method = &quot;Nelder-Mead&quot;)
 end_time &lt;- Sys.time()
 m4_runtime &lt;- end_time-start_time
 as.numeric(m4_runtime)</code></pre>
-<pre><code>## [1] 32.65065</code></pre>
+<pre><code>## [1] 18.70384</code></pre>
+<p>Model results and runtimes</p>
 <pre class="r"><code>m1_f_fit</code></pre>
 <pre><code>## 
 ## Call:
@@ -807,44 +799,44 @@ as.numeric(m4_runtime)</code></pre>
 ## 
 ## Log-likelihood: -595.05</code></pre>
 <pre class="r"><code>m1_runtime</code></pre>
-<pre><code>## Time difference of 8.694072 mins</code></pre>
+<pre><code>## Time difference of 8.713586 mins</code></pre>
 <pre class="r"><code>m2_f_fit</code></pre>
 <pre><code>## 
 ## Call:
-## mle2(minuslogl = m2_ll, start = list(f = 30, arr_t = 1.5), method = &quot;Nelder-Mead&quot;)
+## mle2(minuslogl = m2_ll, start = list(f = 30, arr_t = 10), method = &quot;Nelder-Mead&quot;)
 ## 
 ## Coefficients:
-##     f arr_t 
-## 31.50  5.25 
+##      f  arr_t 
+## 31.125 12.625 
 ## 
-## Log-likelihood: -640.27</code></pre>
+## Log-likelihood: -622.16</code></pre>
 <pre class="r"><code>m2_runtime</code></pre>
-<pre><code>## Time difference of 9.535009 mins</code></pre>
+<pre><code>## Time difference of 11.36735 mins</code></pre>
 <pre class="r"><code>m3_f_fit</code></pre>
 <pre><code>## 
 ## Call:
 ## mle2(minuslogl = m3_ll, start = list(f = 30, h = 1), method = &quot;Nelder-Mead&quot;)
 ## 
 ## Coefficients:
-##      f      h 
-## 32.250  2.125 
+##         f         h 
+## 34.224609  1.498047 
 ## 
-## Log-likelihood: -80.18</code></pre>
+## Log-likelihood: -630.55</code></pre>
 <pre class="r"><code>m3_runtime</code></pre>
-<pre><code>## Time difference of 10.23849 mins</code></pre>
+<pre><code>## Time difference of 11.33104 mins</code></pre>
 <pre class="r"><code>m4_f_fit</code></pre>
 <pre><code>## 
 ## Call:
-## mle2(minuslogl = m4_ll, start = list(f = 30, arr_t = 1.5, h = 1), 
+## mle2(minuslogl = m4_ll, start = list(f = 30, arr_t = 10, h = 1), 
 ##     method = &quot;Nelder-Mead&quot;)
 ## 
 ## Coefficients:
-##         f     arr_t         h 
-## 30.551140  3.934899  1.048373 
+##     f arr_t     h 
+##  32.5  11.0   2.0 
 ## 
-## Log-likelihood: -77.1</code></pre>
+## Log-likelihood: -594.41</code></pre>
 <pre class="r"><code>m4_runtime</code></pre>
-<pre><code>## Time difference of 32.65065 mins</code></pre>
+<pre><code>## Time difference of 18.70384 mins</code></pre>
 </div>
 
 
