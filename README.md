@@ -31,5 +31,4 @@ Some work in progress:
 [sensitivity](/workshop/sensitivity.html)
 
 [foraging rate estimate](/fora_rate_estim.html)
-
-[fora_rate_estim.Rmd](/fora_rate_estim.Rmd)
+([fora_rate_estim.Rmd](/fora_rate_estim.Rmd))
