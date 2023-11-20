@@ -344,7 +344,7 @@ r_end <- slice_max(output, time)[,2]
 ```
 
 
-```{r, m3_num_sol}
+```{r, m3_num_sol_alt}
 m3_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
@@ -455,7 +455,7 @@ $$
 $$
 
 
-```{r, m4_num_sol}
+```{r, m4_num_sol_alt}
 m4_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
