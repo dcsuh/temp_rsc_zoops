@@ -313,6 +313,11 @@ $$
 \frac{dR}{dt} = -L^{\gamma} \frac{fR}{1 + fhR} \\
 $$
 
+$$
+\frac{dR}{dt} = -L^{\gamma} \frac{R}{(1+ fhR)^2} \\
+$$
+
+
 ```{r, m3_num_sol}
 m3_num_sol <- function(t, x, params){
   R <- x[1]
@@ -326,7 +331,33 @@ m3_num_sol <- function(t, x, params){
 maxTime <- 8
 times <- seq(0,maxTime,by=0.1)
 
-params <- c(f=1000,
+params <- c(f=10,
+            length=1,
+            gamma=2,
+            h=1)
+
+xstart <- c(R=15)
+
+output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
+```
+
+
+```{r, m3_num_sol}
+m3_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -(length^gamma)*((R)/((1+f*h*R)^2))
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 500
+times <- seq(0,maxTime,by=0.1)
+
+params <- c(f=0.9,
             length=1,
             gamma=2,
             h=2)
@@ -337,7 +368,6 @@ output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
 
 r_end <- slice_max(output, time)[,2]
 ```
-
 
 ```{r}
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
@@ -374,7 +404,7 @@ m3_ll <- function(f, h){
 ```{r, m3_mle}
 start_time <- Sys.time()
 m3_f_fit <- mle2(m3_ll,
-                start=list(f=30, h=1),
+                start=list(f=1, h=2),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
@@ -420,6 +450,39 @@ r_end <- slice_max(output, time)[,2]
 ```
 
 
+$$
+\frac{dR}{dt} = -L^{\gamma}\frac{R}{(1 + fe^{T_{A}(1/T_{R}-1/T)}hR)^2}  \\
+$$
+
+
+```{r, m4_num_sol}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -(length^gamma)*(R)/((1+f*exp(arr_t*(1/ref_t - 1/temp))*h*R)^2)
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 8
+times <- seq(0,maxTime,by=0.1)
+
+params <- c(f=0.01,
+            length=1,
+            gamma=2,
+            arr_t=11.5,
+            ref_t=20,
+            h=2, #handling time
+            temp=25)
+
+xstart <- c(R=15)
+
+output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
+```
+
 ```{r}
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
@@ -457,7 +520,7 @@ m4_ll <- function(f, arr_t, h){
 ```{r, m4_mle}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=30, arr_t=10, h=1),
+                start=list(f=1, arr_t=10, h=1),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
