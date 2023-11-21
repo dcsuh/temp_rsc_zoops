@@ -62,7 +62,7 @@ m1_num_sol <- function(t, x, params){
 }
 
 maxTime <- 8
-times <- seq(0,maxTime,by=0.1)
+times <- seq(0,maxTime,by=0.5)
 
 params <- c(f=1,
             length=1,
@@ -110,7 +110,7 @@ m1_ll <- function(f){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i] #sets endpoint time
-    times <- seq(0, maxTime, by=0.1)
+    times <- seq(0, maxTime, by=0.5)
     params <- c(f=f,
                 length=data$mm[i], #length measurement for each individual
                 gamma=2)
@@ -139,7 +139,7 @@ This iteration was averaging across treatments
 #     sub_data <- data %>% filter(treatment_ID %in% treatment_IDs[i])
 #     maxTime <- round(mean(sub_data$time, na.rm=T),2)
 #     length <- mean(sub_data$mm, na.rm=T)
-#     times <- seq(0, maxTime, by=0.1)
+#     times <- seq(0, maxTime, by=0.5)
 #     params <- c(f=f,
 #                 length=length,
 #                 gamma=2)
@@ -163,7 +163,7 @@ This iteration is the same as m1_ll but also estimates gamma
 #   resid_df <- tibble(resid=0, data$ID)
 #     for (i in 1:nrow(data)) {
 #     maxTime <- data$time[i]
-#     times <- seq(0, maxTime, by=0.1)
+#     times <- seq(0, maxTime, by=0.5)
 #     params <- c(f=f,
 #                 length=data$mm[i],
 #                 gamma=gamma)
@@ -241,7 +241,7 @@ m2_num_sol <- function(t, x, params){
 }
 
 maxTime <- 8
-times <- seq(0,maxTime,by=0.1)
+times <- seq(0,maxTime,by=0.5)
 
 params <- c(f=0.5,
             length=1,
@@ -267,7 +267,7 @@ m2_ll <- function(f, arr_t){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
-    times <- seq(0, maxTime, by=0.1)
+    times <- seq(0, maxTime, by=0.5)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
@@ -314,8 +314,14 @@ $$
 $$
 
 $$
+\frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR} \\
+$$
+
+
+$$
 \frac{dR}{dt} = -L^{\gamma} \frac{R}{(1+ fhR)^2} \\
 $$
+
 
 
 ```{r, m3_num_sol}
@@ -329,7 +335,7 @@ m3_num_sol <- function(t, x, params){
 }
 
 maxTime <- 8
-times <- seq(0,maxTime,by=0.1)
+times <- seq(0,maxTime,by=0.5)
 
 params <- c(f=10,
             length=1,
@@ -348,6 +354,32 @@ r_end <- slice_max(output, time)[,2]
 m3_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
+    dR <- -((f*length^gamma*R)/(1+f*length^gamma*h*R))
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 500
+times <- seq(0,maxTime,by=0.5)
+
+params <- c(f=0.01,
+            length=1,
+            gamma=2,
+            h=1)
+
+xstart <- c(R=15)
+
+output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
+```
+
+
+```{r, m3_num_sol_alt_1}
+m3_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
     dR <- -(length^gamma)*((R)/((1+f*h*R)^2))
     res <- c(dR)
     list(res)}
@@ -355,7 +387,7 @@ m3_num_sol <- function(t, x, params){
 }
 
 maxTime <- 500
-times <- seq(0,maxTime,by=0.1)
+times <- seq(0,maxTime,by=0.5)
 
 params <- c(f=0.9,
             length=1,
@@ -379,7 +411,7 @@ m3_ll <- function(f, h){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
-    times <- seq(0, maxTime, by=0.1)
+    times <- seq(0, maxTime, by=0.5)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
@@ -404,12 +436,49 @@ m3_ll <- function(f, h){
 ```{r, m3_mle}
 start_time <- Sys.time()
 m3_f_fit <- mle2(m3_ll,
-                start=list(f=1, h=2),
+                start=list(f=0.001, h=1),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
 as.numeric(m3_runtime)
 ```
+
+Analytical solution?
+
+$$
+R = \exp(-\ln(1 + fhR(t)) + C)
+$$
+
+
+```{r}
+# Define function for R(t)
+Rt <- function(t, R0, a, h) {
+  K <- exp(-ln(1 + a * h * R0))
+  R <- K * exp(-ln(1 + a * h * R0) + a * h * t)
+  return(R)
+}
+
+t <- 500
+
+R0 <- 15
+
+a <- 10
+
+h <- 1
+```
+
+
+```{r}
+# Define function for R(t) with allometric scaling
+RtWithAllometricScaling <- function(t, R0, a, h, consumerBodyMass) {
+  aPrime <- a * (consumerBodyMass)^(0.67)
+  K <- exp(-ln(1 + aPrime * h * R0))
+  R <- K * exp(-ln(1 + aPrime * h * R0) + aPrime * h * t)
+  return(R)
+}
+```
+
+
 
 
 # Temperature and resource-dependent model
@@ -417,7 +486,7 @@ as.numeric(m3_runtime)
 I try to incorporate both here by just smashing everything together.
 
 $$
-\frac{dR}{dt} = -L^{\gamma}\frac{fe^{T_{A}(1/T_{R}-1/T)} R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR}  \\
+\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R}  \\
 $$
 
 
@@ -425,19 +494,19 @@ $$
 m4_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -(length^gamma)*((f*exp(arr_t*(1/ref_t - 1/temp))*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*R))
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*(length^gamma)*R))
     res <- c(dR)
     list(res)}
     )
 }
 
-maxTime <- 8
-times <- seq(0,maxTime,by=0.1)
+maxTime <- 500
+times <- seq(0,maxTime,by=0.5)
 
-params <- c(f=32.5,
+params <- c(f=0.01,
             length=1,
             gamma=2,
-            arr_t=11.5,
+            arr_t=10,
             ref_t=20,
             h=2, #handling time
             temp=25)
@@ -466,9 +535,9 @@ m4_num_sol <- function(t, x, params){
 }
 
 maxTime <- 8
-times <- seq(0,maxTime,by=0.1)
+times <- seq(0,maxTime,by=0.5)
 
-params <- c(f=0.01,
+params <- c(f=0.001,
             length=1,
             gamma=2,
             arr_t=11.5,
@@ -493,7 +562,7 @@ m4_ll <- function(f, arr_t, h){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
-    times <- seq(0, maxTime, by=0.1)
+    times <- seq(0, maxTime, by=0.5)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
@@ -517,15 +586,17 @@ m4_ll <- function(f, arr_t, h){
 }
 ```
 
+
 ```{r, m4_mle}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=1, arr_t=10, h=1),
+                start=list(f=0.01, arr_t=10, h=1),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 as.numeric(m4_runtime)
 ```
+
 
 Model results and runtimes
 ```{r, results}
