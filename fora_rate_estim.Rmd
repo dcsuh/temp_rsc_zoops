@@ -436,11 +436,11 @@ m3_ll <- function(f, h){
 ```{r, m3_mle}
 start_time <- Sys.time()
 m3_f_fit <- mle2(m3_ll,
-                start=list(f=0.001, h=1),
+                start=list(f=0.05, h=1.5),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
-as.numeric(m3_runtime)
+m3_runtime
 ```
 
 Analytical solution?
@@ -453,8 +453,8 @@ $$
 ```{r}
 # Define function for R(t)
 Rt <- function(t, R0, a, h) {
-  K <- exp(-ln(1 + a * h * R0))
-  R <- K * exp(-ln(1 + a * h * R0) + a * h * t)
+  K <- exp(-log(1 + a * h * R0))
+  R <- K * exp(-log(1 + a * h * R0) + a * h * t)
   return(R)
 }
 
@@ -466,6 +466,45 @@ a <- 10
 
 h <- 1
 ```
+
+```{r}
+# Define function for R(t)
+Rt <- function(t, R0, a, h) {
+  R <- exp(-log(1 + a * h * R0) + a * h * t)
+  return(R)
+}
+
+t <- 500
+
+R0 <- 15
+
+a <- 10
+
+h <- 1
+```
+
+
+
+```{r}
+m3_ll <- function(f, h){
+  resid_df <- tibble(resid=0, data$ID)
+    for (i in 1:nrow(data)) {
+    maxTime <- data$time[i]
+      
+    r_end <- Rt(maxTime, data$resource_tot[i], f, h)
+    
+    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
+    }
+  
+    nll <- dnorm(resid_df$resid, 
+                 mean = mean(resid_df$resid, na.rm=T), 
+                 sd = sd(resid_df$resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+}
+```
+
+
 
 
 ```{r}
