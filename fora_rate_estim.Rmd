@@ -377,28 +377,28 @@ r_end <- slice_max(output, time)[,2]
 
 
 ```{r, m3_num_sol_alt_1}
-m3_num_sol <- function(t, x, params){
-  R <- x[1]
-  with(as.list(params),{
-    dR <- -(length^gamma)*((R)/((1+f*h*R)^2))
-    res <- c(dR)
-    list(res)}
-    )
-}
-
-maxTime <- 500
-times <- seq(0,maxTime,by=0.5)
-
-params <- c(f=0.9,
-            length=1,
-            gamma=2,
-            h=2)
-
-xstart <- c(R=15)
-
-output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
-
-r_end <- slice_max(output, time)[,2]
+# m3_num_sol <- function(t, x, params){
+#   R <- x[1]
+#   with(as.list(params),{
+#     dR <- -(length^gamma)*((R)/((1+f*h*R)^2))
+#     res <- c(dR)
+#     list(res)}
+#     )
+# }
+# 
+# maxTime <- 500
+# times <- seq(0,maxTime,by=0.5)
+# 
+# params <- c(f=0.9,
+#             length=1,
+#             gamma=2,
+#             h=2)
+# 
+# xstart <- c(R=15)
+# 
+# output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
+# 
+# r_end <- slice_max(output, time)[,2]
 ```
 
 ```{r}
