@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
 
 ```{r packages, message=FALSE}
@@ -523,7 +523,7 @@ m4_ll <- function(f, arr_t, h){
 ```{r, m4_mle}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=0.01, arr_t=10, h=1),
+                start=list(f=0.0001, arr_t=10, h=1),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
