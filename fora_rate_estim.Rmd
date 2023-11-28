@@ -325,28 +325,28 @@ $$
 
 
 ```{r, m3_num_sol}
-m3_num_sol <- function(t, x, params){
-  R <- x[1]
-  with(as.list(params),{
-    dR <- -(length^gamma)*((f*R)/(1+f*h*R))
-    res <- c(dR)
-    list(res)}
-    )
-}
-
-maxTime <- 8
-times <- seq(0,maxTime,by=0.5)
-
-params <- c(f=10,
-            length=1,
-            gamma=2,
-            h=1)
-
-xstart <- c(R=15)
-
-output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
-
-r_end <- slice_max(output, time)[,2]
+# m3_num_sol <- function(t, x, params){
+#   R <- x[1]
+#   with(as.list(params),{
+#     dR <- -(length^gamma)*((f*R)/(1+f*h*R))
+#     res <- c(dR)
+#     list(res)}
+#     )
+# }
+# 
+# maxTime <- 8
+# times <- seq(0,maxTime,by=0.5)
+# 
+# params <- c(f=10,
+#             length=1,
+#             gamma=2,
+#             h=1)
+# 
+# xstart <- c(R=15)
+# 
+# output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
+# 
+# r_end <- slice_max(output, time)[,2]
 ```
 
 
@@ -443,80 +443,6 @@ m3_runtime <- end_time-start_time
 m3_runtime
 ```
 
-Analytical solution?
-
-$$
-R = \exp(-\ln(1 + fhR(t)) + C)
-$$
-
-
-```{r}
-# Define function for R(t)
-Rt <- function(t, R0, a, h) {
-  K <- exp(-log(1 + a * h * R0))
-  R <- K * exp(-log(1 + a * h * R0) + a * h * t)
-  return(R)
-}
-
-t <- 500
-
-R0 <- 15
-
-a <- 10
-
-h <- 1
-```
-
-```{r}
-# Define function for R(t)
-Rt <- function(t, R0, a, h) {
-  R <- exp(-log(1 + a * h * R0) + a * h * t)
-  return(R)
-}
-
-t <- 500
-
-R0 <- 15
-
-a <- 10
-
-h <- 1
-```
-
-
-
-```{r}
-m3_ll <- function(f, h){
-  resid_df <- tibble(resid=0, data$ID)
-    for (i in 1:nrow(data)) {
-    maxTime <- data$time[i]
-      
-    r_end <- Rt(maxTime, data$resource_tot[i], f, h)
-    
-    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
-    }
-  
-    nll <- dnorm(resid_df$resid, 
-                 mean = mean(resid_df$resid, na.rm=T), 
-                 sd = sd(resid_df$resid, na.rm = T), 
-                 log = T)
-    -sum(nll, na.rm = T)
-}
-```
-
-
-
-
-```{r}
-# Define function for R(t) with allometric scaling
-RtWithAllometricScaling <- function(t, R0, a, h, consumerBodyMass) {
-  aPrime <- a * (consumerBodyMass)^(0.67)
-  K <- exp(-ln(1 + aPrime * h * R0))
-  R <- K * exp(-ln(1 + aPrime * h * R0) + aPrime * h * t)
-  return(R)
-}
-```
-
 
 
 
@@ -558,38 +484,6 @@ r_end <- slice_max(output, time)[,2]
 ```
 
 
-$$
-\frac{dR}{dt} = -L^{\gamma}\frac{R}{(1 + fe^{T_{A}(1/T_{R}-1/T)}hR)^2}  \\
-$$
-
-
-```{r, m4_num_sol_alt}
-m4_num_sol <- function(t, x, params){
-  R <- x[1]
-  with(as.list(params),{
-    dR <- -(length^gamma)*(R)/((1+f*exp(arr_t*(1/ref_t - 1/temp))*h*R)^2)
-    res <- c(dR)
-    list(res)}
-    )
-}
-
-maxTime <- 8
-times <- seq(0,maxTime,by=0.5)
-
-params <- c(f=0.001,
-            length=1,
-            gamma=2,
-            arr_t=11.5,
-            ref_t=20,
-            h=2, #handling time
-            temp=25)
-
-xstart <- c(R=15)
-
-output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
-
-r_end <- slice_max(output, time)[,2]
-```
 
 ```{r}
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
