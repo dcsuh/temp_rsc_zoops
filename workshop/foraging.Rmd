@@ -31,24 +31,24 @@ data %<>% left_join(., control)
 
 ```{r}
 #this calculation comes from Hite et al. 2020 and assumes a strong linear relationship between fluorescence and algae conc
-data %<>% filter(trt=="trt") %>% mutate(rate = log(control_read/read)*(vol/time),
-                                        amt_rem = ((resource/control_read)*read), 
-                                        amt_rem_tot = ((resource*vol/control_read)*read), 
-                                        amt_time = amt_rem/time)
+data %<>% filter(trt=="trt") %>% mutate(rate = log(control_read/read)*(vol/time), #vol is mL and time is min for a rate of mL/min
+                                        amt_rem = ((resource/control_read)*read), #final resource concentration
+                                        amt_rem_tot = ((resource*vol/control_read)*read)) #final resource amount
 
 
 data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(rate),
                                                              rate_var = var(rate),
                                                              rate_sd = sd(rate),
                                                              rate_se = sd(rate)/sqrt(n()),
-                                                             amt_mean = mean(amt_time),
-                                                             amt_var = var(amt_time),
-                                                             amt_sd = sd(amt_time),
-                                                             amt_se = sd(amt_time)/sqrt(n()),
+                                                             amt_mean = mean(amt_rem_tot),
+                                                             amt_var = var(amt_rem_tot),
+                                                             amt_sd = sd(amt_rem_tot),
+                                                             amt_se = sd(amt_rem_tot)/sqrt(n()),
                                                              length_mean = mean(length, na.rm = T),
                                                              length_var = var(length, na.rm = T),
                                                              length_sd = sd(length, na.rm = T),
-                                                             length_se = sd(length, na.rm = T)/sqrt(n()))
+                                                             length_se = sd(length, na.rm = T)/sqrt(n()),
+                                                             time_mean = mean(time, na.rm = T))
 
 # data_summ <- data %>% group_by(temp, resource, block) %>% summarize(mean_rate = mean(rate),
 #                                                              var = var(rate),
@@ -64,7 +64,7 @@ data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(ra
 
 
 data_summ %<>% mutate(species = "D",
-                      ID = paste(temp,resource,species, sep = "_"))
+                      ID = paste(temp,resource, sep = "_"))
 
 saveRDS(data, file = here("processed_data", "foraging_raw.rds"))
 saveRDS(data_summ, file = here("processed_data", "foraging.rds"))
@@ -104,7 +104,7 @@ data_summ %>% ggplot(aes(x=ID, y=amt_mean)) +
   geom_point() + 
   geom_linerange(aes(ymin=amt_mean-amt_se, ymax=amt_mean+amt_se)) + 
   theme(axis.text.x = element_text(angle = 75, vjust = 1, hjust = 1)) + 
-  labs(y = "amount consumed",
+  labs(y = "amount remaining",
        x = "treatment")
 ```
 

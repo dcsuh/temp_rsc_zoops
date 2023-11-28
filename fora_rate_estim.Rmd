@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r packages, message=FALSE}
@@ -14,6 +14,7 @@ library(tidyverse)
 library(deSolve)
 library(magrittr)
 library(bbmle)
+library(latex2exp)
 ```
 
 ```{r}
@@ -26,6 +27,148 @@ The purpose of this document is to estimate foraging rate using maximum likeliho
 Overall, we will develop four models that can be used to describe foraging rate. Our independent model assumes no affects of temperature or resource conditions. Our resource-dependent model assumes a type II functional response. Our temperature-dependent model incorporates an affect of temperature using an Arrhenius equation. Our full model incoporates effects of both resource and temperature.
 
 We will use each of these models to develop parameter estimates for foraging rate. Each model is an equation and can be used to generate data. We generate data for a range of parameter estimates and measure the likelihood of these simulated data given our actual observed data. We choose the parameter estimate under each model that maximizes the likelihood. We choose the model with the highest likelihood. 
+
+
+We use the raw data so we will have to do a little bit of housekeeping before we can actually use these data.
+```{r, real data}
+data <- readRDS(here("processed_data","foraging_raw.rds"))
+data_summ <- readRDS(here("processed_data", "foraging.rds"))
+
+data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement into mm
+
+data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
+
+data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube 
+
+treatment_IDs <- unique(data$treatment_ID)
+
+
+
+```
+
+
+
+# Model 0 - Basic model
+
+
+Let's try this with the same units as the foraging rate data. ml/min. So R should be mgC/mL and S should be hosts/mL
+$$
+\frac{dR}{dt} = -fRS \\
+$$
+
+```{r, m0_num_sol}
+m0_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -f*R*S
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 500
+times <- seq(0,maxTime,by=0.5)
+
+params <- c(f=0.015,
+            S=1/15)
+
+xstart <- c(R=0.1)
+
+output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
+```
+
+```{r}
+output %>% ggplot(., aes(x=time, y=R)) + geom_line()
+```
+
+Let's see what kind of values we get for our entire range of treatment conditions
+
+```{r}
+m0_params <- data_summ %>% select(temp, resource, rate_mean, amt_mean, time_mean, length_mean, ID)
+
+for (i in 1:nrow(m0_params)){
+  maxTime <- m0_params$time_mean[i]
+  times <- seq(0,maxTime,by=0.5)
+  
+  params <- c(f=m0_params$rate_mean[i],
+              S=1/15)
+  
+  xstart <- c(R=m0_params$resource[i])
+  
+  output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  m0_params$final_conc[i] <- r_end
+}
+
+m0_params %<>% mutate(final_amt = final_conc*15)
+```
+
+```{r}
+ggplot(m0_params, aes(x=ID, y=(final_amt/amt_mean))) + geom_point() + labs(x="treatment", y=TeX("$\\frac{theoretical}{actual}"))
+```
+
+The basic model can recreate the data fairly well but is insufficient for certain treatments. Let's try to see if the optimizer can provide us with the same foraging rate estimates that we know should be fairly accurate under certain treatments.
+
+```{r, m0_ll}
+m0_ll <- function(f){
+  data <- tmp
+  resid_df <- tibble(resid=0, data$ID)
+    for (i in 1:nrow(data)) {
+    maxTime <- data$time[i] #sets endpoint time
+    times <- seq(0, maxTime, by=0.5)
+    params <- c(f=f,
+                S=1/15)
+    xstart <- c(R=data$resource[i]) #absolute resource amount in tube
+    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
+    
+    r_end <- slice_max(output, time)[,2]
+      
+    resid_df$resid[i] <- r_end - data$amt_rem[i] #amt_rem_tot is total R remaining instead of conc.
+    }
+  
+    nll <- dnorm(resid_df$resid, 
+                 mean = mean(resid_df$resid, na.rm=T), #I use the actual mean instead of 0 because I was finding that the distribution did not peak at 0
+                 sd = sd(resid_df$resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+}
+```
+
+
+```{r}
+resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.01)
+```
+
+Let's run the optimizer through a loop for each treatment
+
+
+```{r, m0_mle, eval = F}
+start_time <- Sys.time()
+m0_f_fits <- list()
+for(j in 1:nrow(m0_params)){
+  tmp <- data %>% filter(treatment_ID==m0_params$ID[j])
+  m0_f_fits[[j]]<-mle2(m0_ll,
+                    start=list(f=m0_params$rate_mean[j]),
+                    method = "Brent", # I use Brent because we only have on parameter
+                    lower = -1,
+                    upper = 100)
+}
+# m0_f_fit <- mle2(m0_ll,
+#                 start=list(f=0.003),
+#                 method = "Brent", # I use Brent because we only have on parameter
+#                 lower = 0,
+#                 upper = 1000)
+end_time <- Sys.time()
+m0_runtime <- end_time - start_time
+m0_runtime
+#opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
+```
+
+
 
 
 # Model 1 - Independent model
@@ -83,22 +226,7 @@ output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 We can use this chunk of code to get the solution for our model given any set of starting conditions and parameter values. Using our data, we can determine what set of parameter values will allow the model to best fit our data. In our data, we have information about each daphnia (i.e. length) and how much they foraged over a certain amount of time.
 
 
-We use the raw data so we will have to do a little bit of housekeeping before we can actually use these data.
-```{r, real data}
-data <- readRDS(here("processed_data","foraging_raw.rds"))
-
-data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement into mm
-
-data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
-
-data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube 
-
-treatment_IDs <- unique(data$treatment_ID)
-
-```
-
-
-Using the data, we can go ahead and try out estimating f.
+Using the actual data, we can go ahead and try out estimating f.
 
 pseudocode:
 write a loop that goes through each treatment. For each treatment, set the conditions of the solver (i.e. resource concentration; in future cases, this will also include temperature). Before we do this, we need to write a function that will pop out the negative log-likelihood. To do this, we will need to use the solver to give us the endpoint resource concentration given a certain foraging rate. We use a function like dnorm() to calculate the likelihood of of observing data, given a certain probability. In this case, the probability is set from the result from the solver. Together, the result from the solver and the data are used to give us the likelihood and simple maths turns the likelihood into the negative log-likelihood (i.e. taking the log of the likelihood and making it negative). The optimizer (mle2() is what we use) takes this likelihood function and then moves through parameter space to find the parameter value that minimizes the sum of the negative log-likelihood of all the data. 
@@ -190,7 +318,7 @@ I think this may be due to the negative foraging rates
 ```
 
 Now we use the optimizer
-```{r, m1_mle}
+```{r, m1_mle, eval = F}
 start_time <- Sys.time()
 m1_f_fit <- mle2(m1_ll,
                 start=list(f=15),
@@ -293,7 +421,7 @@ m2_ll <- function(f, arr_t){
 ```
 
 
-```{r, m2_mle}
+```{r, m2_mle, eval = F}
 start_time <- Sys.time()
 m2_f_fit <- mle2(m2_ll,
                 start=list(f=30,
@@ -305,7 +433,7 @@ as.numeric(m2_runtime)
 ```
 
 
-# Resource-dependent model
+# Model 3 - Resource-dependent model
 
 I try to incorporate resource-dependence by using an equation for the type II functional response.
 
@@ -433,7 +561,7 @@ m3_ll <- function(f, h){
 ```
 
 
-```{r, m3_mle}
+```{r, m3_mle, eval = F}
 start_time <- Sys.time()
 m3_f_fit <- mle2(m3_ll,
                 start=list(f=0.05, h=1.5),
@@ -446,7 +574,7 @@ m3_runtime
 
 
 
-# Temperature and resource-dependent model
+# Model 4 - Temperature and resource-dependent model
 
 I try to incorporate both here by just smashing everything together.
 
@@ -520,7 +648,7 @@ m4_ll <- function(f, arr_t, h){
 ```
 
 
-```{r, m4_mle}
+```{r, m4_mle, eval = F}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
                 start=list(f=0.0001, arr_t=10, h=1),
@@ -532,7 +660,7 @@ as.numeric(m4_runtime)
 
 
 Model results and runtimes
-```{r, results}
+```{r, results, eval = F}
 m1_f_fit
 m1_runtime
 
@@ -544,5 +672,80 @@ m3_runtime
 
 m4_f_fit
 m4_runtime
+```
+
+
+
+Analytical solution?
+
+$$
+R = \exp(-\ln(1 + fhR(t)) + C)
+$$
+  
+  
+```{r, eval = F}
+# Define function for R(t)
+Rt <- function(t, R0, a, h) {
+  K <- exp(-log(1 + a * h * R0))
+  R <- K * exp(-log(1 + a * h * R0) + a * h * t)
+  return(R)
+}
+
+t <- 500
+
+R0 <- 15
+
+a <- 10
+
+h <- 1
+```
+
+```{r, eval = F}
+# Define function for R(t)
+Rt <- function(t, R0, a, h) {
+  R <- exp(-log(1 + a * h * R0) + a * h * t)
+  return(R)
+}
+
+t <- 500
+
+R0 <- 15
+
+a <- 10
+
+h <- 1
+```
+
+
+```{r, eval = F}
+m3_ll_alt <- function(f, h){
+  resid_df <- tibble(resid=0, data$ID)
+  for (i in 1:nrow(data)) {
+    maxTime <- data$time[i]
+    
+    r_end <- Rt(maxTime, data$resource_tot[i], f, h)
+    
+    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
+  }
+  
+  nll <- dnorm(resid_df$resid, 
+               mean = mean(resid_df$resid, na.rm=T), 
+               sd = sd(resid_df$resid, na.rm = T), 
+               log = T)
+  -sum(nll, na.rm = T)
+}
+```
+
+
+
+
+```{r, eval = F}
+# Define function for R(t) with allometric scaling
+RtWithAllometricScaling <- function(t, R0, a, h, consumerBodyMass) {
+  aPrime <- a * (consumerBodyMass)^(0.67)
+  K <- exp(-ln(1 + aPrime * h * R0))
+  R <- K * exp(-ln(1 + aPrime * h * R0) + aPrime * h * t)
+  return(R)
+}
 ```
 
