@@ -69,7 +69,7 @@ m0_num_sol <- function(t, x, params){
 maxTime <- 500
 times <- seq(0,maxTime,by=0.5)
 
-params <- c(f=0.015,
+params <- c(f=1,
             S=1/15)
 
 xstart <- c(R=0.1)
@@ -86,7 +86,7 @@ output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 Let's see what kind of values we get for our entire range of treatment conditions
 
 ```{r}
-m0_params <- data_summ %>% select(temp, resource, rate_mean, amt_mean, time_mean, length_mean, ID)
+m0_params <- data_summ %>% select(temp, resource, rate_mean, conc_mean, amt_mean, time_mean, length_mean, ID)
 
 for (i in 1:nrow(m0_params)){
   maxTime <- m0_params$time_mean[i]
@@ -108,6 +108,7 @@ m0_params %<>% mutate(final_amt = final_conc*15)
 ```
 
 ```{r}
+ggplot(m0_params, aes(x=ID, y=(final_conc/conc_mean))) + geom_point() + labs(x="treatment", y=TeX("$\\frac{theoretical}{actual}"))
 ggplot(m0_params, aes(x=ID, y=(final_amt/amt_mean))) + geom_point() + labs(x="treatment", y=TeX("$\\frac{theoretical}{actual}"))
 ```
 
@@ -126,6 +127,8 @@ m0_ll <- function(f){
     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
+    
+    r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
       
     resid_df$resid[i] <- r_end - data$amt_rem[i] #amt_rem_tot is total R remaining instead of conc.
     }
@@ -155,7 +158,7 @@ for(j in 1:nrow(m0_params)){
                     start=list(f=m0_params$rate_mean[j]),
                     method = "Brent", # I use Brent because we only have on parameter
                     lower = -1,
-                    upper = 100)
+                    upper = 1)
 }
 # m0_f_fit <- mle2(m0_ll,
 #                 start=list(f=0.003),
