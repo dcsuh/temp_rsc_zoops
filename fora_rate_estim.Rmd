@@ -158,7 +158,7 @@ for(j in 1:nrow(m0_params)){
                     start=list(f=m0_params$rate_mean[j]),
                     method = "Brent", # I use Brent because we only have on parameter
                     lower = -1,
-                    upper = 1)
+                    upper = 100)
 }
 # m0_f_fit <- mle2(m0_ll,
 #                 start=list(f=0.003),
@@ -170,7 +170,11 @@ m0_runtime <- end_time - start_time
 m0_runtime
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 ```
+```{r}
+m0_f_fits
+```
 
+m0_f_fits
 
 
 
