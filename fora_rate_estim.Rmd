@@ -124,7 +124,7 @@ m0_ll <- function(f){
     params <- c(f=f,
                 S=1/15)
     xstart <- c(R=data$resource[i]) #absolute resource amount in tube
-    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
+    output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
     
@@ -143,13 +143,13 @@ m0_ll <- function(f){
 
 
 ```{r}
-resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.01)
+#resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.01)
 ```
 
 Let's run the optimizer through a loop for each treatment
 
 
-```{r, m0_mle, eval = F}
+```{r, m0_mle}
 start_time <- Sys.time()
 m0_f_fits <- list()
 for(j in 1:nrow(m0_params)){
@@ -158,7 +158,7 @@ for(j in 1:nrow(m0_params)){
                     start=list(f=m0_params$rate_mean[j]),
                     method = "Brent", # I use Brent because we only have on parameter
                     lower = -1,
-                    upper = 100)
+                    upper = 1)
 }
 # m0_f_fit <- mle2(m0_ll,
 #                 start=list(f=0.003),
@@ -168,13 +168,11 @@ for(j in 1:nrow(m0_params)){
 end_time <- Sys.time()
 m0_runtime <- end_time - start_time
 m0_runtime
-#opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
-```
-```{r}
-m0_f_fits
-```
 
 m0_f_fits
+#opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
+```
+
 
 
 
