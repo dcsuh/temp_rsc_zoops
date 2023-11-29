@@ -34,8 +34,6 @@ We use the raw data so we will have to do a little bit of housekeeping before we
 data <- readRDS(here("processed_data","foraging_raw.rds"))
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
 
-data %<>% mutate(mm = as.numeric(length)*17.86/1000) #convert length measurement into mm
-
 data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
 
 data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube 
@@ -86,7 +84,7 @@ output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 Let's see what kind of values we get for our entire range of treatment conditions
 
 ```{r}
-m0_params <- data_summ %>% select(temp, resource, rate_mean, conc_mean, amt_mean, time_mean, length_mean, ID)
+m0_params <- data_summ %>% select(temp, resource, rate_mean, rate_len_mean, conc_mean, amt_mean, time_mean, length_mean, ID)
 
 for (i in 1:nrow(m0_params)){
   maxTime <- m0_params$time_mean[i]
@@ -134,22 +132,23 @@ m0_ll <- function(f){
     }
   
     nll <- dnorm(resid_df$resid, 
-                 mean = mean(resid_df$resid, na.rm=T), #I use the actual mean instead of 0 because I was finding that the distribution did not peak at 0
+                 mean = 0, 
                  sd = sd(resid_df$resid, na.rm = T), 
                  log = T)
     -sum(nll, na.rm = T)
 }
 ```
 
+Note: I was trying to set the mean for dnorm() to the mean of the residuals but this would cause the optimizer to get stuck on nonsense values. E.g. very high values of f would result in the residuals all being negative. The likelihood of this distribution using the mean of the negative residuals would sometimes be lower even though having all negative residuals means that the parameter estimate is very off. The mean should be set to zero because the residuals should center around zero if the estimate is close to the actual. 
 
 ```{r}
-#resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.01)
+#resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.005)
 ```
 
 Let's run the optimizer through a loop for each treatment
 
 
-```{r, m0_mle}
+```{r, m0_mle fits by treatment}
 start_time <- Sys.time()
 m0_f_fits <- list()
 for(j in 1:nrow(m0_params)){
@@ -157,8 +156,8 @@ for(j in 1:nrow(m0_params)){
   m0_f_fits[[j]]<-mle2(m0_ll,
                     start=list(f=m0_params$rate_mean[j]),
                     method = "Brent", # I use Brent because we only have on parameter
-                    lower = -1,
-                    upper = .05)
+                    lower = 0,
+                    upper = 0.005)
 }
 # m0_f_fit <- mle2(m0_ll,
 #                 start=list(f=0.003),
@@ -173,12 +172,39 @@ m0_runtime
 ```
 
 
-```{r}
+```{r, m1_f_fit by treatment results}
 for(i in 1:9){
   print(paste("", i))
   print(as.numeric(m0_params$rate_mean[i]))
   print(as.numeric(m0_f_fits[[i]]@coef))
 }
+```
+
+```{r}
+#m0_f_fits
+```
+
+
+These values seem like they could make sense. 4, 7, 8, and 9 are the treatments that had the most discrepancy between the foraging rate estimated from the data and from the simulation.
+
+Can I rerun the model results using these new estimates and see if it better predicts the data?
+
+
+```{r, m0_mle}
+start_time <- Sys.time()
+tmp <- data
+m0_f_fit <- mle2(m0_ll,
+                start=list(f=0.003),
+                method = "Brent", # I use Brent because we only have on parameter
+                lower = 0,
+                upper = 0.005)
+end_time <- Sys.time()
+m0_runtime <- end_time - start_time
+m0_runtime
+
+m0_f_fit
+
+#opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 ```
 
 
@@ -202,7 +228,7 @@ $$
 Foraging rate is also expected to depend on the size of the individual. We incorporate length as a factor with a power coefficient. We can attempt to fit gamma or just assume a reasonable value. In other papers, a power coefficient of 2 is used. The idea here (I think) is that the surface area of the daphnia is what is relevant for foraging. Squaring the length gives us the surface area of a square which is close enough to the surface area of a daphnia?
 
 $$
-\frac{dR}{dt} = -L^{\gamma} fR \\
+\frac{dR}{dt} = -L^{\gamma} fRS \\
 $$
 
 Now that we have our full equation, we can use this to estimate the amount of algae after a given amount of time. We can do this by numerically solving our differential equation and seeing how much algae remains after a given amount of time. We can also solve the differential equation by writing a function that represents the change of algae over time. We'll do both of these here.
@@ -211,20 +237,21 @@ Now that we have our full equation, we can use this to estimate the amount of al
 m1_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -(length^gamma)*f*R
+    dR <- -(length^gamma)*f*R*S
     res <- c(dR)
     list(res)}
     )
 }
 
-maxTime <- 8
+maxTime <- 641
 times <- seq(0,maxTime,by=0.5)
 
-params <- c(f=1,
+params <- c(f=0.0122,
             length=1,
-            gamma=2)
+            gamma=2,
+            S=1/15)
 
-xstart <- c(R=15)
+xstart <- c(R=0.1)
 
 output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
 
@@ -248,23 +275,25 @@ write a loop that goes through each treatment. For each treatment, set the condi
 I saw two methods for using the solver. One was to average across each treatment, run the solver for these conditions, and then use those values to calculate residuals which are fed into dnorm(). The other way was to run the solver for each observation and use the unique conditions for each individual to set the conditions for the solver (length and time of assay is different for individuals within a treatment). I then get the residual for each observation and feed that to dnorm(). I went with the second option to start because it seems the most accurate to me. The downside is that it will likely take significantly longer than the first option since the solver is being much more often.
 ```{r, m1_ll}
 m1_ll <- function(f){
+  data <- tmp
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i] #sets endpoint time
     times <- seq(0, maxTime, by=0.5)
     params <- c(f=f,
                 length=data$mm[i], #length measurement for each individual
-                gamma=2)
-    xstart <- c(R=data$resource_tot[i]) #absolute resource amount in tube
+                gamma=2,
+                S=1/15)
+    xstart <- c(R=data$resource[i]) #starting resource concentration
     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
       
-    resid_df$resid[i] <- r_end - data$amt_rem_tot[i] #amt_rem_tot is total R remaining instead of conc.
+    resid_df$resid[i] <- r_end - data$amt_rem[i] #amt_rem is final resource conc.
     }
   
     nll <- dnorm(resid_df$resid, 
-                 mean = mean(resid_df$resid, na.rm=T), #I use the actual mean instead of 0 because I was finding that the distribution did not peak at 0
+                 mean = 0, 
                  sd = sd(resid_df$resid, na.rm = T), 
                  log = T)
     -sum(nll, na.rm = T)
@@ -300,44 +329,70 @@ This iteration was averaging across treatments
 
 This iteration is the same as m1_ll but also estimates gamma
 ```{r, m1_ll_alt2}
-# m1_ll <- function(f, gamma){
-#   resid_df <- tibble(resid=0, data$ID)
-#     for (i in 1:nrow(data)) {
-#     maxTime <- data$time[i]
-#     times <- seq(0, maxTime, by=0.5)
-#     params <- c(f=f,
-#                 length=data$mm[i],
-#                 gamma=gamma)
-#     xstart <- c(R=data$resource_tot[i])
-#     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
-# 
-#     r_end <- slice_max(output, time)[,2]
-# 
-#     resid_df$resid[i] <- r_end - data$amt_rem_tot[i] #amt_rem_tot should be total R remaining instead of conc.
-#     }
-# 
-#     nll <- dnorm(resid_df$resid,
-#                  mean = mean(resid_df$resid, na.rm=T),
-#                  sd = sd(resid_df$resid, na.rm = T),
-#                  log = T)
-#     -sum(nll, na.rm = T)
-# }
+m1_ll_alt <- function(f, gamma){
+  resid_df <- tibble(resid=0, data$ID)
+    for (i in 1:nrow(data)) {
+    maxTime <- data$time[i]
+    times <- seq(0, maxTime, by=0.5)
+    params <- c(f=f,
+                length=data$mm[i],
+                gamma=gamma,
+                S=1/15)
+    xstart <- c(R=data$resource[i])
+    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
+
+    r_end <- slice_max(output, time)[,2]
+
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
+    }
+
+    nll <- dnorm(resid_df$resid,
+                 mean = 0,
+                 sd = sd(resid_df$resid, na.rm = T),
+                 log = T)
+    -sum(nll, na.rm = T)
+}
 ```
 
 One issue is that the distribution is a bit right-skewed
 I think this may be due to the negative foraging rates
-```{r}
+```{r, eval=F}
 #resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.25)
 ```
 
+Let's try this treatment by treatment
+
+```{r, m1_f_fit by treatment}
+m1_f_fits <- list()
+for(j in 1:nrow(m0_params)){
+  tmp <- data %>% filter(treatment_ID==m0_params$ID[j])
+  m1_f_fits[[j]]<-mle2(m1_ll,
+                    start=list(f=m0_params$rate_len_mean[j]),
+                    method = "Brent", # I use Brent because we only have on parameter
+                    lower = 0,
+                    upper = 0.03)
+}
+```
+
+
+```{r}
+for(i in 1:9){
+  print(paste("", i))
+  print(as.numeric(m0_params$rate_len_mean[i]))
+  print(as.numeric(m1_f_fits[[i]]@coef))
+}
+```
+
+
 Now we use the optimizer
-```{r, m1_mle, eval = F}
+```{r, m1_mle}
 start_time <- Sys.time()
+tmp <- data
 m1_f_fit <- mle2(m1_ll,
-                start=list(f=15),
-                method = "Brent", # I use Brent because we only have on parameter
+                start=list(f=0.003),
+                method = "Brent", # I use Brent because we only have one parameter
                 lower = 0,
-                upper = 1000)
+                upper = 0.07)
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
 as.numeric(m1_runtime)
@@ -346,14 +401,14 @@ as.numeric(m1_runtime)
 
 This version is for estimating f and gamma
 ```{r, m1_mle_alt}
-# start_time <- Sys.time()
-# m1_f_fit <- mle2(m1_ll,
-#                 start=list(f=30,
-#                            gamma=2),
-#                 method = "Nelder-Mead")
-# end_time <- Sys.time()
-# m1_runtime <- end_time - start_time
-# as.numeric(m1_runtime)
+start_time <- Sys.time()
+m1_f_fit_alt <- mle2(m1_ll_alt,
+                start=list(f=0.003,
+                           gamma=2),
+                method = "Nelder-Mead")
+end_time <- Sys.time()
+m1_alt_runtime <- end_time - start_time
+m1_alt_runtime
 ```
 
 
@@ -367,31 +422,74 @@ I try to incorporate temperature here using the Arrhenius equation as a rate coe
 
 
 $$
-\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} R  \\
+\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} R S \\
 $$
+
+Let's estimate a reasonable value for the Arrhenius coefficient given the actual data we have. Using the arrhenius equation there should, in theory, be a reasonable value for the Arr coefficient that will allow us to have one value of f that will depend on temperature. So if the reference temperature is 15 degrees, then we will have one value of f that we observed. The value of f that we observed at 20 degrees is different than our observed value of f at 15 degrees, but we should be able to make these terms equivalent using the Arrhenius equation.
+
+$$
+-L^{\gamma}f R S \; at\; reference\; temperature = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} R S  \\
+(observed\; f) = (reference\; f)*e^{T_{A}(1/T_{R}-1/T)}  \\
+\frac{observed\; f}{reference\; f} = e^{T_{A}(1/T_{R}-1/T)} \\
+ln(\frac{observed\; f}{reference\; f}) = T_{A}(1/T_{R}-1/T) \\
+\frac{ln(\frac{observed\; f}{reference\; f})}{(1/T_{R}-1/T)} = T_{A} \\
+
+$$
+
+
+Let's look at what the Arrhenius coefficient might be at different resource conditions
+```{r}
+data_0.1 <- data_summ %>% filter(resource==0.1)
+data_0.5 <- data_summ %>% filter(resource==0.5)
+data_1 <- data_summ %>% filter(resource==1)
+```
+
+```{r}
+get_arr <- function(data){
+  if(data$rate_mean[1]<0){
+    f_ref <- 0.000000001
+  } else{
+    f_ref <- data$rate_mean[1]
+  }
+  dat <- c()
+  for (i in 2:3){
+      dat[i-1] <- ((log(data$rate_mean[i]/f_ref))/((1/15)-(1/data$temp[i])))
+  }
+  return(mean(dat))
+}
+```
+
+
+```{r}
+arr_0.1 <- get_arr(data_0.1)
+arr_0.5 <- get_arr(data_0.5)
+arr_1 <- get_arr(data_1)
+```
+
 
 
 ```{r, m2_num_sol}
 m2_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*R
+    dR <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*R*S
     res <- c(dR)
     list(res)}
     )
 }
 
-maxTime <- 8
+maxTime <- 641
 times <- seq(0,maxTime,by=0.5)
 
-params <- c(f=0.5,
+params <- c(f=0.003,
             length=1,
             gamma=2,
-            arr_t=1.5, #arrhenius coefficient
-            ref_t=20, #reference temperature
-            temp=25) #treatment temperature
+            arr_t=100, #arrhenius coefficient
+            ref_t=15, #reference temperature
+            temp=25,
+            S=1/15) #treatment temperature
 
-xstart <- c(R=15)
+xstart <- c(R=0.1)
 
 output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
 
@@ -405,6 +503,7 @@ output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 
 ```{r, m2_ll}
 m2_ll <- function(f, arr_t){
+  data <- tmp
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
@@ -413,32 +512,58 @@ m2_ll <- function(f, arr_t){
                 length=data$mm[i],
                 gamma=2,
                 arr_t=arr_t,
-                ref_t=20,
-                temp=data$temp[i])
-    xstart <- c(R=data$resource_tot[i])
+                ref_t=15,
+                temp=data$temp[i],
+                S=1/15)
+    xstart <- c(R=data$resource[i])
 
-    output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
+    output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params, hmax=0.1))
     
     r_end <- slice_max(output, time)[,2]
       
-    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
 
     }
   
     nll <- dnorm(resid_df$resid, 
-                 mean = mean(resid_df$resid, na.rm=T), 
+                 mean = 0, 
                  sd = sd(resid_df$resid, na.rm = T), 
                  log = T)
     -sum(nll, na.rm = T)
 }
 ```
 
+```{r}
+arr_data <- c(arr_0.1,arr_0.5,arr_1)
+```
+
+
+
+```{r}
+start_time <- Sys.time()
+m2_f_fits <- list()
+for(j in 1:length(unique(data$resource))){
+  tmp <- data %>% filter(resource==unique(data$resource[j]))
+  m2_f_fits[j] <- mle2(m2_ll,
+                       start=list(f=0.003,
+                                  arr_t=10),
+                       method = "Nelder-Mead")
+}
+end_time <- Sys.time()
+m2_runtime <- end_time - start_time
+as.numeric(m2_runtime)
+```
+
+
+
+
 
 ```{r, m2_mle, eval = F}
 start_time <- Sys.time()
+tmp <- data
 m2_f_fit <- mle2(m2_ll,
-                start=list(f=30,
-                           arr_t=10),
+                start=list(f=0.003,
+                           arr_t=100),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time

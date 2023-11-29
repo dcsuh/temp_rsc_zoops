@@ -31,7 +31,10 @@ data %<>% left_join(., control)
 
 ```{r}
 #this calculation comes from Hite et al. 2020 and assumes a strong linear relationship between fluorescence and algae conc
-data %<>% filter(trt=="trt") %>% mutate(rate = log(control_read/read)*(vol/time), #vol is mL and time is min for a rate of mL/min
+data %<>% filter(trt=="trt") %>% mutate(mm = as.numeric(length)*17.86/1000,
+                                        rate = log(control_read/read)*(vol/time), 
+                                        #vol is mL and time is min for a rate of mL/min
+                                        rate_len = rate/mm^2,
                                         amt_rem = ((resource/control_read)*read), #final resource concentration
                                         amt_rem_tot = ((resource*vol/control_read)*read)) #final resource amount
 
@@ -40,6 +43,7 @@ data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(ra
                                                              rate_var = var(rate),
                                                              rate_sd = sd(rate),
                                                              rate_se = sd(rate)/sqrt(n()),
+                                                             rate_len_mean = mean(rate_len, na.rm=T),
                                                              conc_mean = mean(amt_rem),
                                                              amt_mean = mean(amt_rem_tot),
                                                              amt_var = var(amt_rem_tot),
@@ -79,6 +83,17 @@ data_summ %>%
   ggplot(aes(x=ID, y=rate_mean)) + 
   geom_point() + 
   geom_linerange(aes(ymin=rate_mean-rate_se, ymax=rate_mean+rate_se)) + 
+  theme(axis.text.x = element_text(angle = 75, vjust = 1, hjust = 1)) + 
+  labs(y = "mL/minute",
+       x = "treatment")
+```
+
+This is the length-corrected version 
+```{r}
+data_summ %>% 
+#  filter(is.na(block)) %>% 
+  ggplot(aes(x=ID, y=rate_len_mean)) + 
+  geom_point() + 
   theme(axis.text.x = element_text(angle = 75, vjust = 1, hjust = 1)) + 
   labs(y = "mL/minute",
        x = "treatment")
@@ -138,6 +153,10 @@ Start with plotting raw data for feeding rate given resource concentration at ea
 ```{r}
 data %>% ggplot(., aes(x = resource, y = rate)) + geom_point() + facet_wrap(vars(temp))
 ```
+
+
+
+
 
 Foraging rate increases with temperature
 Foraging rate decreases with increasing resource concentration. The greater the resource concentration, the less foraging is required to meet a minimum amount of resource foraged.
