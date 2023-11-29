@@ -539,7 +539,7 @@ arr_data <- c(arr_0.1,arr_0.5,arr_1)
 
 
 
-```{r}
+```{r, m2_f_fit for each resource level}
 start_time <- Sys.time()
 m2_f_fits <- list()
 for(j in 1:length(unique(data$resource))){
@@ -558,12 +558,12 @@ as.numeric(m2_runtime)
 
 
 
-```{r, m2_mle, eval = F}
+```{r, m2_mle}
 start_time <- Sys.time()
 tmp <- data
 m2_f_fit <- mle2(m2_ll,
                 start=list(f=0.003,
-                           arr_t=100),
+                           arr_t=10),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
