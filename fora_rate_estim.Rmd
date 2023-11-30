@@ -417,6 +417,8 @@ m1_f_fit_alt <- mle2(m1_ll_alt,
 end_time <- Sys.time()
 m1_alt_runtime <- end_time - start_time
 m1_alt_runtime
+
+saveRDS(m1_f_fit_alt, file = here("mle","m1_f_fit_alt.rds"))
 ```
 
 
@@ -508,6 +510,59 @@ r_end <- slice_max(output, time)[,2]
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
+Let's loop through some example parameters to make sure that the temperature-dependent model is behaving the way we expect it to.
+
+```{r}
+param_set <- tibble(f = seq(0, 0.01, by = 0.001),
+                    arr_t = seq(0, 1000, by = 100),
+                    temp = seq(15,25, by = 1),
+                    R = seq(0, 1, by = 0.1))
+
+dat <- tibble(f= NA,
+              arr_t = NA,
+              temp = NA,
+              R = NA,
+              end = NA)
+
+for (i in 1:11){
+  f <- param_set$f[i]
+  for (j in 1:11){
+    arr_t <- param_set$arr_t[j]
+    for (k in 1:11){
+      temp <- param_set$temp[k]
+      for (m in 1:11){
+        R <- param_set$R[m]
+        maxTime <- 600
+        times <- seq(0,maxTime,by=0.5)
+        params <- c(f=f,
+                    length=0.9,
+                    gamma=2,
+                    arr_t=arr_t, #arrhenius coefficient
+                    ref_t=15, #reference temperature
+                    temp=temp,
+                    S=1/15) #treatment temperature
+        xstart <- c(R=R)
+        output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
+        r_end <- slice_max(output, time)[,2]
+        dat %<>% add_row(f = f,
+                         arr_t = arr_t,
+                         temp = temp,
+                         R = R,
+                         end = r_end)
+      }
+    }
+  }
+}
+
+```
+
+
+```{r}
+dat %>% filter(R==1 & f>0) %>% ggplot(., aes(x = arr_t, y = temp, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
+```
+
+
+
 
 ```{r, m2_ll}
 m2_ll <- function(f, arr_t){
@@ -589,18 +644,18 @@ saveRDS(m2_f_fit, file = here("mle","m2_f_fit.rds"))
 
 I try to incorporate resource-dependence by using an equation for the type II functional response.
 
-$$
-\frac{dR}{dt} = -L^{\gamma} \frac{fR}{1 + fhR} \\
-$$
+<!-- $$ -->
+<!-- \frac{dR}{dt} = -L^{\gamma} \frac{fR}{1 + fhR} \\ -->
+<!-- $$ -->
 
 $$
 \frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR} \\
 $$
 
 
-$$
-\frac{dR}{dt} = -L^{\gamma} \frac{R}{(1+ fhR)^2} \\
-$$
+<!-- $$ -->
+<!-- \frac{dR}{dt} = -L^{\gamma} \frac{R}{(1+ fhR)^2} \\ -->
+<!-- $$ -->
 
 
 
