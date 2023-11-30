@@ -938,7 +938,7 @@ output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
 ```{r}
-n <- 9
+n <- 10
 
 param_set <- tibble(f = seq(0, 0.01, length.out = n),
                     h = seq(0, 10, length.out = n),
@@ -959,8 +959,8 @@ for (i in 1:n){
     h <- param_set$h[j]
       for (k in 1:n){
         arr_t <- param_set$arr_t[k]
-        for (h in 1:n){
-          temp <- param_set$temp[h]
+        for (p in 1:n){
+          temp <- param_set$temp[p]
           for (m in 1:n){
           R <- param_set$R[m]
           maxTime <- 600
@@ -991,9 +991,10 @@ for (i in 1:n){
 ```
 
 ```{r}
-x<-8
+x<-9
+y<-2
 
-dat %>% filter(h == 9 & arr_t == param_set$arr_t[x]) %>% 
+dat %>% filter(h == param_set$h[x] & arr_t == param_set$arr_t[y] & f > 0 & R > 0) %>% 
   ggplot(., aes(x=R, y=temp, fill=1-end/R)) + 
   geom_tile() + 
   facet_wrap(~f) + 
