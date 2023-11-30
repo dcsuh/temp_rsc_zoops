@@ -169,6 +169,9 @@ m0_runtime <- end_time - start_time
 m0_runtime
 
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
+
+saveRDS(m0_f_fits, file = here("mle","m0_f_fits.rds"))
+
 ```
 
 
@@ -205,6 +208,9 @@ m0_runtime
 m0_f_fit
 
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
+
+saveRDS(m0_f_fit, file = here("mle","m0_f_fit.rds"))
+
 ```
 
 
@@ -372,6 +378,7 @@ for(j in 1:nrow(m0_params)){
                     lower = 0,
                     upper = 0.03)
 }
+saveRDS(m1_f_fits, file = here("mle","m1_f_fits.rds"))
 ```
 
 
@@ -397,6 +404,7 @@ end_time <- Sys.time()
 m1_runtime <- end_time - start_time
 as.numeric(m1_runtime)
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
+saveRDS(m1_f_fit, file = here("mle","m1_f_fit.rds"))
 ```
 
 This version is for estimating f and gamma
@@ -543,7 +551,7 @@ arr_data <- c(arr_0.1,arr_0.5,arr_1)
 start_time <- Sys.time()
 m2_f_fits <- list()
 for(j in 1:length(unique(data$resource))){
-  tmp <- data %>% filter(resource==unique(data$resource[j]))
+  tmp <- data %>% filter(resource==unique(data$resource)[j])
   m2_f_fits[j] <- mle2(m2_ll,
                        start=list(f=0.003,
                                   arr_t=10),
@@ -552,6 +560,9 @@ for(j in 1:length(unique(data$resource))){
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
 as.numeric(m2_runtime)
+
+saveRDS(m2_f_fits, file = here("mle","m2_f_fits.rds"))
+
 ```
 
 
@@ -568,6 +579,9 @@ m2_f_fit <- mle2(m2_ll,
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
 as.numeric(m2_runtime)
+
+saveRDS(m2_f_fit, file = here("mle","m2_f_fit.rds"))
+
 ```
 
 
