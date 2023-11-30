@@ -1037,7 +1037,7 @@ m4_ll <- function(f, arr_t, h){
 ```{r, m4_mle, eval = F}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=0.001, arr_t=100, h=1),
+                start=list(f=0.001, arr_t=100, h=10),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
