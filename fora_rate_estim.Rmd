@@ -513,10 +513,12 @@ output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 Let's loop through some example parameters to make sure that the temperature-dependent model is behaving the way we expect it to.
 
 ```{r}
-param_set <- tibble(f = seq(0, 0.01, by = 0.001),
-                    arr_t = seq(0, 1000, by = 100),
-                    temp = seq(15,25, by = 1),
-                    R = seq(0, 1, by = 0.1))
+n <- 11
+
+param_set <- tibble(f = seq(0, 0.01, length.out = n),
+                    arr_t = seq(0, 1000, length.out = n),
+                    temp = seq(15,25, length.out = n),
+                    R = seq(0, 1, length.out = n))
 
 dat <- tibble(f= NA,
               arr_t = NA,
@@ -524,13 +526,13 @@ dat <- tibble(f= NA,
               R = NA,
               end = NA)
 
-for (i in 1:11){
+for (i in 1:n){
   f <- param_set$f[i]
-  for (j in 1:11){
+  for (j in 1:n){
     arr_t <- param_set$arr_t[j]
-    for (k in 1:11){
+    for (k in 1:n){
       temp <- param_set$temp[k]
-      for (m in 1:11){
+      for (m in 1:n){
         R <- param_set$R[m]
         maxTime <- 600
         times <- seq(0,maxTime,by=0.5)
@@ -649,7 +651,7 @@ I try to incorporate resource-dependence by using an equation for the type II fu
 <!-- $$ -->
 
 $$
-\frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR} \\
+\frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR}S \\
 $$
 
 
@@ -689,21 +691,22 @@ $$
 m3_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -((f*length^gamma*R)/(1+f*length^gamma*h*R))
+    dR <- -((f*length^gamma*R)/(1+f*length^gamma*h*R))*S
     res <- c(dR)
     list(res)}
     )
 }
 
-maxTime <- 500
+maxTime <- 1000
 times <- seq(0,maxTime,by=0.5)
 
 params <- c(f=0.01,
             length=1,
             gamma=2,
-            h=1)
+            h=2,
+            S=1/15)
 
-xstart <- c(R=15)
+xstart <- c(R=0.1)
 
 output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
 
@@ -740,9 +743,95 @@ r_end <- slice_max(output, time)[,2]
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
+Let's see what we get for different values of h and R
+
+```{r}
+n <- 9
+
+param_set <- tibble(f = seq(0.001, 0.1, length.out = n),
+                    h = seq(0, 10, length.out = n),
+                    R = seq(0.1, 1, length.out = n))
+
+dat <- tibble(f= NA,
+              h = NA,
+              R = NA,
+              end = NA)
+
+for (i in 1:n){
+  f <- param_set$f[i]
+  for (j in 1:n){
+    h <- param_set$h[j]
+      for (m in 1:n){
+        R <- param_set$R[m]
+        maxTime <- 600
+        times <- seq(0,maxTime,by=0.5)
+        params <- c(f=f,
+                    length=1,
+                    gamma=2,
+                    h=h, #arrhenius coefficient
+                    S=1/15) #treatment temperature
+        xstart <- c(R=R)
+        output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
+        r_end <- slice_max(output, time)[,2]
+        dat %<>% add_row(f = f,
+                         h = h,
+                         R = R,
+                         end = r_end)
+      }
+  }
+}
+
+```
+
+
+```{r}
+dat %>% na.omit() %>% ggplot(., aes(x = h, y = R, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
+```
+
+
+
+$$
+observed\; f = - \frac{fL^{\gamma}RS}{1 + fL^{\gamma}hR} \\
+1 + fL^{\gamma}hR\;observed\; f = - fL^{\gamma}RS \\
+fL^{\gamma}hR\;observed\; f = - fL^{\gamma}RS -1 \\
+h = - \frac{fL^{\gamma}RS - 1}{fL^{\gamma}R\;observed\; f}\\
+$$
+
+
+What are some reasonable estimates for h?
+
+```{r}
+data_15 <- data_summ %>% filter(temp==15)
+data_20 <- data_summ %>% filter(temp==20)
+data_25 <- data_summ %>% filter(temp==25)
+```
+
+```{r}
+get_h <- function(data){
+  if(data$rate_mean[3]<0){
+    f_ref <- 0.000000001
+  } else{
+    f_ref <- data$rate_mean[3]
+  }
+  dat <- c()
+  for (i in 1:2){
+      dat[i] <- -((f_ref*data$resource[i]*(1/15)-1)/f_ref*data$resource[i]*data$rate_mean[i])
+  }
+  return(mean(dat))
+}
+```
+
+```{r}
+get_h(data_15)
+get_h(data_20)
+get_h(data_25)
+```
+
+
 
 ```{r, m3_ll}
 m3_ll <- function(f, h){
+  data <- tmp
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
@@ -750,17 +839,18 @@ m3_ll <- function(f, h){
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
-                h=h) #handling time
-    xstart <- c(R=data$resource_tot[i])
+                h=h,
+                S=1/15) #handling time
+    xstart <- c(R=data$resource[i])
     output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
       
-    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
     }
   
     nll <- dnorm(resid_df$resid, 
-                 mean = mean(resid_df$resid, na.rm=T), 
+                 mean = 0, 
                  sd = sd(resid_df$resid, na.rm = T), 
                  log = T)
     -sum(nll, na.rm = T)
@@ -768,14 +858,36 @@ m3_ll <- function(f, h){
 ```
 
 
+```{r, message=F, warning=FALSE}
+start_time <- Sys.time()
+m3_f_fits <- list()
+for(j in 1:length(unique(data$temp))){
+  tmp <- data %>% filter(temp==unique(data$temp)[j])
+  m3_f_fits[j] <- mle2(m3_ll,
+                       start=list(f=0.05,
+                                  h=0.6),
+                       method = "Nelder-Mead")
+}
+end_time <- Sys.time()
+m3_runtime <- end_time - start_time
+m3_runtime
+
+saveRDS(m3_f_fits, file = here("mle","m3_f_fits.rds"))
+
+```
+
+
+
 ```{r, m3_mle, eval = F}
 start_time <- Sys.time()
 m3_f_fit <- mle2(m3_ll,
-                start=list(f=0.05, h=1.5),
+                start=list(f=0.03, h=1),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
 m3_runtime
+
+saveRDS(m3_f_fit, file = here("mle","m3_f_fit.rds"))
 ```
 
 
@@ -786,7 +898,7 @@ m3_runtime
 I try to incorporate both here by just smashing everything together.
 
 $$
-\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R}  \\
+\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} S \\
 $$
 
 
@@ -794,7 +906,7 @@ $$
 m4_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*(length^gamma)*R))
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*(length^gamma)*R))*S
     res <- c(dR)
     list(res)}
     )
@@ -806,12 +918,13 @@ times <- seq(0,maxTime,by=0.5)
 params <- c(f=0.01,
             length=1,
             gamma=2,
-            arr_t=10,
-            ref_t=20,
-            h=2, #handling time
-            temp=25)
+            arr_t=100,
+            ref_t=15,
+            h=10, #handling time
+            temp=25,
+            S=1/15)
 
-xstart <- c(R=15)
+xstart <- c(R=1)
 
 output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
 
@@ -824,6 +937,70 @@ r_end <- slice_max(output, time)[,2]
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
+```{r}
+n <- 9
+
+param_set <- tibble(f = seq(0, 0.01, length.out = n),
+                    h = seq(0, 10, length.out = n),
+                    arr_t = seq(0, 1000, length.out = n),
+                    temp = seq(15,25, length.out = n),
+                    R = seq(0, 1, length.out = n))
+
+dat <- tibble(f= NA,
+              h = NA,
+              arr_t = NA,
+              temp = NA,
+              R = NA,
+              end = NA)
+
+for (i in 1:n){
+  f <- param_set$f[i]
+  for (j in 1:n){
+    h <- param_set$h[j]
+      for (k in 1:n){
+        arr_t <- param_set$arr_t[k]
+        for (h in 1:n){
+          temp <- param_set$temp[h]
+          for (m in 1:n){
+          R <- param_set$R[m]
+          maxTime <- 600
+          times <- seq(0,maxTime,by=0.5)
+          params <- c(f=f,
+                      length=1,
+                      gamma=2,
+                      arr_t = arr_t,
+                      temp = temp,
+                      h=h,
+                      ref_t = 15,
+                      S=1/15) #treatment temperature
+          xstart <- c(R=R)
+          output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
+          r_end <- slice_max(output, time)[,2]
+          dat %<>% add_row(f = f,
+                           h = h,
+                           arr_t = arr_t,
+                           temp = temp,
+                           R = R,
+                           end = r_end)
+          }
+        }
+      }
+  }
+}
+
+```
+
+```{r}
+x<-8
+
+dat %>% filter(h == 9 & arr_t == param_set$arr_t[x]) %>% 
+  ggplot(., aes(x=R, y=temp, fill=1-end/R)) + 
+  geom_tile() + 
+  facet_wrap(~f) + 
+  scale_fill_viridis_c()
+```
+
+
 
 ```{r, m4_ll}
 m4_ll <- function(f, arr_t, h){
@@ -835,19 +1012,20 @@ m4_ll <- function(f, arr_t, h){
                 length=data$mm[i],
                 gamma=2,
                 arr_t=arr_t,
-                ref_t=20,
+                ref_t=15,
                 temp=data$temp[i],
-                h=h)
-    xstart <- c(R=data$resource_tot[i])
+                h=h,
+                S=1/15)
+    xstart <- c(R=data$resource[i])
     output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params, hmax = 0.1))
     
     r_end <- slice_max(output, time)[,2]
       
-    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
     }
   
     nll <- dnorm(resid_df$resid, 
-                 mean = mean(resid_df$resid, na.rm=T), 
+                 mean = 0, 
                  sd = sd(resid_df$resid, na.rm = T), 
                  log = T)
     -sum(nll, na.rm = T)
@@ -858,11 +1036,13 @@ m4_ll <- function(f, arr_t, h){
 ```{r, m4_mle, eval = F}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=0.0001, arr_t=10, h=1),
+                start=list(f=0.001, arr_t=100, h=1),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 as.numeric(m4_runtime)
+
+saveRDS(m4_f_fit, file = here("mle","m4_f_fit.rds"))
 ```
 
 
