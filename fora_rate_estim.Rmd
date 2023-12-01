@@ -890,7 +890,7 @@ r_end <- slice_max(output, time)[,2]
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
-```{r, m4 check, eval = F}
+```{r, m4 check set params}
 n <- 10
 
 param_set <- tibble(f = seq(0, 0.01, length.out = n),
@@ -898,7 +898,10 @@ param_set <- tibble(f = seq(0, 0.01, length.out = n),
                     arr_t = seq(0, 1000, length.out = n),
                     temp = seq(15,25, length.out = n),
                     R = seq(0, 1, length.out = n))
+```
 
+
+```{r, m4 check, eval = F}
 dat <- tibble(f= NA,
               h = NA,
               arr_t = NA,
@@ -1011,7 +1014,9 @@ summary(readRDS(here("mle","m4_f_fit.rds")))
 
 How well do these parameter estimates and this model predict for the data from the experiment?
 
-```{r}
+```{r, check estimates}
+m4_f_fit <- readRDS(here("mle","m4_f_fit.rds"))
+
 resid_df <- tibble(resid=0, data$ID, data$treatment_ID, data$resource, data$temp)
 f <- m4_f_fit@coef[1]
 arr_t <- m4_f_fit@coef[2]
@@ -1037,7 +1042,7 @@ for (i in 1:nrow(data)) {
 ```
 
 
-```{r}
+```{r, plot final check}
 resid_df %>% ggplot(., aes(x=resid, fill = data$treatment_ID)) + geom_histogram()
 ```
 
@@ -1046,11 +1051,11 @@ resid_df %>% ggplot(., aes(x=resid, fill = data$treatment_ID)) + geom_histogram(
 
 Model results and runtimes
 ```{r, results}
-summary(readRDS(here("mle","m0_f_fit.rds")))
-summary(readRDS(here("mle","m1_f_fit.rds")))
-summary(readRDS(here("mle","m2_f_fit.rds")))
-summary(readRDS(here("mle","m3_f_fit.rds")))
-summary(readRDS(here("mle","m4_f_fit.rds")))
+summary(readRDS(here("mle","m0_f_fit.rds"))) #no size correction
+summary(readRDS(here("mle","m1_f_fit.rds"))) #with size correction
+summary(readRDS(here("mle","m2_f_fit.rds"))) #temperature-dependent
+summary(readRDS(here("mle","m3_f_fit.rds"))) #resource-dependent
+summary(readRDS(here("mle","m4_f_fit.rds"))) #temperature and resource-dependent
 ```
 
 
