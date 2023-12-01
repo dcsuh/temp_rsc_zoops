@@ -230,43 +230,34 @@ dat3 %>% ggplot(.,aes(x=y, y=mu)) + geom_point() + labs(title = "feeding respons
 ```
 
 ```{r}
-tmp = data$amt_time
-```
-
-
-dnorm calculates the normal likelihood for a data set. log is set to "T" to get the log-likelihood. the wrapper -sum() measures the sum of the negative log-likelihood for all of the observed data. The defined negative log-likelihood function that we wrote 
-
-
-functional response II function for negative log-likelihood
-```{r}
-LL2 <- function(y, data = tmp) {
-  mu <- (0.5*y)/(1 + 0.5*y*1)
-  return(-sum(dnorm(data, mu, log=T)))
-}
-```
-
-functional response III function for negative log-likelihood
-```{r}
-LL3 <- function(x, y, z, k, data) {
-  mu <- (x*y^k)/(1 + x*z*y^k)
-  return(-sum(dnorm(mu, data, log=T)))
-}
+m0_f_fit <- readRDS(here("mle", "m0_f_fit.rds"))
+m1_f_fit <- readRDS(here("mle", "m1_f_fit.rds"))
+m2_f_fit <- readRDS(here("mle", "m2_f_fit.rds"))
+m3_f_fit <- readRDS(here("mle", "m3_f_fit.rds"))
+m4_f_fit <- readRDS(here("mle", "m4_f_fit.rds"))
 ```
 
 ```{r}
-library(bbmle)
+summary(m0_f_fit)
 ```
 
-MLE for II
 ```{r}
-m2 <- mle2(minuslogl = LL2, 
-           start = list(y=1),
-           control = list(maxit = 5000))
+summary(m1_f_fit)
+```
+
+```{r}
+summary(m2_f_fit)
+```
+
+```{r}
+summary(m3_f_fit)
+```
+
+```{r}
+summary(m4_f_fit)
 ```
 
 
 
-current issue:
 
-I am not really understanding the negative log likelihood function. If I am understanding it properly, then this function should be generating a set of individual likelihoods and then summing these to get the full negative log-likelihood. I am just not sure where the actual data are being used here. I don't understand how dnorm takes both the generated data and the actual data and provides the negative log-likelihood. Unless the log-likelihood is similar to summing the error between the generated and actual data but this seems wrong.
 
