@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-11-30" />
+<meta name="date" content="2023-12-01" />
 
 <title>estimate foraging rate</title>
 
@@ -350,7 +350,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">estimate foraging rate</h1>
-<h4 class="date">2023-11-30</h4>
+<h4 class="date">2023-12-01</h4>
 
 </div>
 
@@ -509,12 +509,14 @@ for(j in 1:nrow(m0_params)){
 #                 upper = 1000)
 end_time &lt;- Sys.time()
 m0_runtime &lt;- end_time - start_time
-m0_runtime</code></pre>
-<pre><code>## Time difference of 5.86922 mins</code></pre>
-<pre class="r"><code>#opt1 &lt;- optim(fn=m1_ll, par=c(30), method = &quot;Brent&quot;, lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
+m0_runtime
+
+#opt1 &lt;- optim(fn=m1_ll, par=c(30), method = &quot;Brent&quot;, lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 
 saveRDS(m0_f_fits, file = here(&quot;mle&quot;,&quot;m0_f_fits.rds&quot;))</code></pre>
-<pre class="r"><code>for(i in 1:9){
+<pre class="r"><code>m0_f_fits &lt;- readRDS(here(&quot;mle&quot;, &quot;m0_f_fits.rds&quot;))
+
+for(i in 1:9){
   print(paste(&quot;&quot;, i))
   print(as.numeric(m0_params$rate_mean[i]))
   print(as.numeric(m0_f_fits[[i]]@coef))
@@ -546,7 +548,6 @@ saveRDS(m0_f_fits, file = here(&quot;mle&quot;,&quot;m0_f_fits.rds&quot;))</code
 ## [1] &quot; 9&quot;
 ## [1] 0.008355428
 ## [1] 0.004999994</code></pre>
-<pre class="r"><code>#m0_f_fits</code></pre>
 <p>These values seem like they could make sense. 4, 7, 8, and 9 are the
 treatments that had the most discrepancy between the foraging rate
 estimated from the data and from the simulation.</p>
@@ -561,22 +562,25 @@ m0_f_fit &lt;- mle2(m0_ll,
                 upper = 0.005)
 end_time &lt;- Sys.time()
 m0_runtime &lt;- end_time - start_time
-m0_runtime</code></pre>
-<pre><code>## Time difference of 4.047795 mins</code></pre>
-<pre class="r"><code>m0_f_fit</code></pre>
-<pre><code>## 
+m0_runtime
+
+#opt1 &lt;- optim(fn=m1_ll, par=c(30), method = &quot;Brent&quot;, lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
+
+saveRDS(m0_f_fit, file = here(&quot;mle&quot;,&quot;m0_f_fit.rds&quot;))</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m0_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
 ## Call:
 ## mle2(minuslogl = m0_ll, start = list(f = 0.003), method = &quot;Brent&quot;, 
 ##     lower = 0, upper = 0.005)
 ## 
 ## Coefficients:
-##           f 
-## 0.003884702 
+##     Estimate Std. Error z value     Pr(z)    
+## f 0.00388470 0.00027482  14.135 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Log-likelihood: 237.22</code></pre>
-<pre class="r"><code>#opt1 &lt;- optim(fn=m1_ll, par=c(30), method = &quot;Brent&quot;, lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
-
-saveRDS(m0_f_fit, file = here(&quot;mle&quot;,&quot;m0_f_fit.rds&quot;))</code></pre>
+## -2 log L: -474.4476</code></pre>
 </div>
 <div id="model-1---independent-model" class="section level1">
 <h1>Model 1 - Independent model</h1>
@@ -699,29 +703,6 @@ the first option since the solver is being much more often.</p>
                  log = T)
     -sum(nll, na.rm = T)
 }</code></pre>
-<p>This iteration was averaging across treatments</p>
-<pre class="r"><code># m1_ll &lt;- function(f){
-#   resid_df &lt;- tibble(resid=0, treatment_IDs)
-#     for (i in 1:length(treatment_IDs)) {
-#     sub_data &lt;- data %&gt;% filter(treatment_ID %in% treatment_IDs[i])
-#     maxTime &lt;- round(mean(sub_data$time, na.rm=T),2)
-#     length &lt;- mean(sub_data$mm, na.rm=T)
-#     times &lt;- seq(0, maxTime, by=0.5)
-#     params &lt;- c(f=f,
-#                 length=length,
-#                 gamma=2)
-#     xstart &lt;- c(R=mean(sub_data$resource, na.rm=T))
-#     output &lt;- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
-# 
-#     r_end &lt;- slice_max(output, time)[,2]
-# 
-#     resids &lt;- r_end - sub_data$amt_rem
-# 
-#     resid_df$resid[i] &lt;- -sum(dnorm(resids, mean = 0, sd = sd(resids, na.rm = T), log = T))
-#     }
-# 
-#     sum(resid_df$resid)
-# }</code></pre>
 <p>This iteration is the same as m1_ll but also estimates gamma</p>
 <pre class="r"><code>m1_ll_alt &lt;- function(f, gamma){
   resid_df &lt;- tibble(resid=0, data$ID)
@@ -746,8 +727,6 @@ the first option since the solver is being much more often.</p>
                  log = T)
     -sum(nll, na.rm = T)
 }</code></pre>
-<p>One issue is that the distribution is a bit right-skewed I think this
-may be due to the negative foraging rates</p>
 <pre class="r"><code>#resid_df %&gt;% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.25)</code></pre>
 <p>Let’s try this treatment by treatment</p>
 <pre class="r"><code>m1_f_fits &lt;- list()
@@ -760,7 +739,9 @@ for(j in 1:nrow(m0_params)){
                     upper = 0.03)
 }
 saveRDS(m1_f_fits, file = here(&quot;mle&quot;,&quot;m1_f_fits.rds&quot;))</code></pre>
-<pre class="r"><code>for(i in 1:9){
+<pre class="r"><code>m1_f_fits &lt;- readRDS(here(&quot;mle&quot;, &quot;m1_f_fits.rds&quot;))
+
+for(i in 1:9){
   print(paste(&quot;&quot;, i))
   print(as.numeric(m0_params$rate_len_mean[i]))
   print(as.numeric(m1_f_fits[[i]]@coef))
@@ -802,10 +783,23 @@ m1_f_fit &lt;- mle2(m1_ll,
                 upper = 0.07)
 end_time &lt;- Sys.time()
 m1_runtime &lt;- end_time - start_time
-as.numeric(m1_runtime)</code></pre>
-<pre><code>## [1] 4.856943</code></pre>
-<pre class="r"><code>#opt1 &lt;- optim(fn=m1_ll, par=c(30), method = &quot;Brent&quot;, lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
+as.numeric(m1_runtime)
+#opt1 &lt;- optim(fn=m1_ll, par=c(30), method = &quot;Brent&quot;, lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 saveRDS(m1_f_fit, file = here(&quot;mle&quot;,&quot;m1_f_fit.rds&quot;))</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m1_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m1_ll, start = list(f = 0.003), method = &quot;Brent&quot;, 
+##     lower = 0, upper = 0.07)
+## 
+## Coefficients:
+##     Estimate Std. Error z value     Pr(z)    
+## f 0.00431095 0.00022059  19.543 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -512.983</code></pre>
 <p>This version is for estimating f and gamma</p>
 <pre class="r"><code>start_time &lt;- Sys.time()
 m1_f_fit_alt &lt;- mle2(m1_ll_alt,
@@ -814,9 +808,24 @@ m1_f_fit_alt &lt;- mle2(m1_ll_alt,
                 method = &quot;Nelder-Mead&quot;)
 end_time &lt;- Sys.time()
 m1_alt_runtime &lt;- end_time - start_time
-m1_alt_runtime</code></pre>
-<pre><code>## Time difference of 26.05966 mins</code></pre>
-<pre class="r"><code>saveRDS(m1_f_fit_alt, file = here(&quot;mle&quot;,&quot;m1_f_fit_alt.rds&quot;))</code></pre>
+m1_alt_runtime
+
+saveRDS(m1_f_fit_alt, file = here(&quot;mle&quot;,&quot;m1_f_fit_alt.rds&quot;))</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;, &quot;m1_f_fit_alt.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m1_ll_alt, start = list(f = 0.003, gamma = 2), 
+##     method = &quot;Nelder-Mead&quot;)
+## 
+## Coefficients:
+##         Estimate Std. Error z value     Pr(z)    
+## f     0.00304626 0.00020963  14.531 &lt; 2.2e-16 ***
+## gamma 5.15961775 0.32903988  15.681 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -615.6814</code></pre>
 <p>Note: I was having issues with the solver getting stuck when using
 mle(). I could get mle2() and optim() to work though so not sure what
 the issue is.</p>
@@ -972,20 +981,17 @@ for(j in 1:length(unique(data$resource))){
                        start=list(f=0.003,
                                   arr_t=10),
                        method = &quot;Nelder-Mead&quot;)
-}</code></pre>
-<pre><code>## Warning in `[&lt;-`(`*tmp*`, j, value = mle2(m2_ll, start = list(f = 0.003, :
-## implicit list embedding of S4 objects is deprecated
-
-## Warning in `[&lt;-`(`*tmp*`, j, value = mle2(m2_ll, start = list(f = 0.003, :
-## implicit list embedding of S4 objects is deprecated
-
-## Warning in `[&lt;-`(`*tmp*`, j, value = mle2(m2_ll, start = list(f = 0.003, :
-## implicit list embedding of S4 objects is deprecated</code></pre>
-<pre class="r"><code>end_time &lt;- Sys.time()
+}
+end_time &lt;- Sys.time()
 m2_runtime &lt;- end_time - start_time
-as.numeric(m2_runtime)</code></pre>
-<pre><code>## [1] 32.09057</code></pre>
-<pre class="r"><code>saveRDS(m2_f_fits, file = here(&quot;mle&quot;,&quot;m2_f_fits.rds&quot;))</code></pre>
+as.numeric(m2_runtime)
+
+saveRDS(m2_f_fits, file = here(&quot;mle&quot;,&quot;m2_f_fits.rds&quot;))</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;, &quot;m2_f_fits.rds&quot;)))</code></pre>
+<pre><code>##      Length Class Mode
+## [1,] 1      mle2  S4  
+## [2,] 1      mle2  S4  
+## [3,] 1      mle2  S4</code></pre>
 <pre class="r"><code>start_time &lt;- Sys.time()
 tmp &lt;- data
 m2_f_fit &lt;- mle2(m2_ll,
@@ -994,9 +1000,24 @@ m2_f_fit &lt;- mle2(m2_ll,
                 method = &quot;Nelder-Mead&quot;)
 end_time &lt;- Sys.time()
 m2_runtime &lt;- end_time - start_time
-as.numeric(m2_runtime)</code></pre>
-<pre><code>## [1] 41.04572</code></pre>
-<pre class="r"><code>saveRDS(m2_f_fit, file = here(&quot;mle&quot;,&quot;m2_f_fit.rds&quot;))</code></pre>
+as.numeric(m2_runtime)
+
+saveRDS(m2_f_fit, file = here(&quot;mle&quot;,&quot;m2_f_fit.rds&quot;))</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;, &quot;m2_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m2_ll, start = list(f = 0.003, arr_t = 10), 
+##     method = &quot;Nelder-Mead&quot;)
+## 
+## Coefficients:
+##         Estimate Std. Error    z value     Pr(z)    
+## f     7.4274e-04 2.5118e-05 2.9570e+01 &lt; 2.2e-16 ***
+## arr_t 8.0728e+01 4.7096e-10 1.7141e+11 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -681.7333</code></pre>
 </div>
 <div id="model-3---resource-dependent-model" class="section level1">
 <h1>Model 3 - Resource-dependent model</h1>
@@ -1178,2592 +1199,17 @@ for(j in 1:length(unique(data$temp))){
                        start=list(f=0.05,
                                   h=0.6),
                        method = &quot;Nelder-Mead&quot;)
-}</code></pre>
-<pre><code>## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 3.36021e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 3.36021e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 3.36021e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 2.89389e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 2.89389e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 2.89389e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 5.78779e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 5.78779e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 5.78779e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 1.58879e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 653.055
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 3.36021e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 3.36021e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 3.36021e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 2.89389e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 2.89389e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 2.89389e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 5.78779e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 5.78779e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 5.78779e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 653.055, R2 = 1.58879e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 653.055
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 8.76425e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 1.75285e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 1.75285e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 1.75285e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 1.75285e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 1.75285e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 9.32402e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 9.32402e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 9.32402e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 359.021, R2 = 9.32402e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 359.021
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 1.91912e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 1.91912e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 1.91912e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 5.09637e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 5.09637e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 5.09637e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 1.40783e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 1.40783e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 1.40783e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 560.912, R2 = 3.88183e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 560.912
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 588.521
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 588.521
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 4.26973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 5.53879e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 588.521, R2 = 1.58232e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 588.521
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 1.70575e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 6.20678e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 6.20678e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 6.20678e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 1.70934e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 1.70934e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 1.70934e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 2.61111e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 2.61111e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 2.61111e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 445.503
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 1.70575e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 6.20678e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 6.20678e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 6.20678e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 1.70934e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 1.70934e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 1.70934e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 2.61111e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 2.61111e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.503, R2 = 2.61111e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 445.503
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 4.8296e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 4.8296e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 4.8296e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 1.36214e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 1.36214e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 1.36214e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 2.72427e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 2.72427e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 2.72427e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 465.929, R2 = 1.6764e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 465.929
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 1.35786e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 1.79119e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 1.79119e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 1.79119e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.06921e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 345.964
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.5181e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 401.723
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.29711e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.29711e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.29711e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.83444e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.83444e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.83444e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 9.17339e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 9.17339e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 9.17339e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 2.50311e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 363.414
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 1.35786e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 1.79119e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 1.79119e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 1.79119e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.06921e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 345.964, R2 = 4.67959e-17
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 345.964
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 6.01872e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 6.01872e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 6.01872e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 8.22844e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 8.22844e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 8.22844e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 8.29771e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 8.29771e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 8.29771e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 381.97, R2 = 1.20963e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 381.97
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 4.73836e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 4.73836e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 469.172
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 1.2462e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 1.2462e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 1.2462e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 4.54683e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 329.542
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 4.73836e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 4.73836e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 469.172
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 8.71314e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 422.768
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 4.41092e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 494.777
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.5181e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 401.723
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 8.71314e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 422.768
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 445.212
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 4.41092e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 494.777
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 1.2462e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 1.2462e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 1.2462e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 2.22582e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 329.542, R2 = 4.54683e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 329.542
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 4.41092e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 494.777
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 8.71314e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 422.768
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 2.6726e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.78564e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 4.41092e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 494.777, R2 = 8.82184e-16
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 494.777
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.29711e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.29711e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.29711e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.83444e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.83444e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 1.83444e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 9.17339e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 9.17339e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 9.17339e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 363.414, R2 = 2.50311e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 363.414
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 445.212, R2 = 5.51143e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 445.212
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.61033e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 1.84508e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 4.73836e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 469.172, R2 = 4.73836e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 469.172
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.54148e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 1.85917e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 4.60923e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 422.768, R2 = 8.71314e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 422.768
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 9.64491e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.44224e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.24907e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 401.723, R2 = 1.5181e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 401.723
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 4.79869e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 4.79869e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 9.59737e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 9.59737e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 9.59737e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 1.29973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 1.29973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 1.29973e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 1.12172e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 501.457, R2 = 1.12172e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 501.457
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 9.77398e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 9.77398e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 9.77398e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 3.86824e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 3.86824e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 3.86824e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 1.15422e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 1.15422e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 1.15422e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 2.56853e-16
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 492.909
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 5.53654e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 5.53654e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 5.53654e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 3.7039e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 3.7039e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 3.7039e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 1.47082e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 1.47082e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 1.47082e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 1.47082e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 516.98
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 9.77398e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 9.77398e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 9.77398e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 3.86824e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 3.86824e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 3.86824e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 1.15422e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 1.15422e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 1.15422e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 492.909, R2 = 2.56853e-16
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 492.909
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 2.61853e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 2.61853e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 2.61853e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 2.14261e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.3551e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.3551e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.3551e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 6.55142e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.31028e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.31028e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 470.235
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 2.61853e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 2.61853e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 2.61853e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 2.14261e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.3551e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.3551e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.3551e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 6.55142e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.31028e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 470.235, R2 = 1.31028e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 470.235
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.08541e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.08541e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.08541e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 598.709
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 5.53654e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 5.53654e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 5.53654e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 3.7039e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 3.7039e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 3.7039e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 1.47082e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 1.47082e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 1.47082e-15
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 516.98, R2 = 1.47082e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 516.98
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.08541e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.08541e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.08541e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 598.709, R2 = 1.85201e-14
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 598.709
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 2.00695e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 2.00695e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 4.0139e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 4.0139e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 4.0139e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 3.64241e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 3.64241e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 3.64241e-14
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 8.93586e-16
-##  
-## DLSODA-  Warning..Internal T (=R1) and H (=R2) are
-##       such that in the machine, T + H = T on the next step  
-##      (H = step size). Solver will continue anyway.
-## In above message, R1 = 569.755, R2 = 1.78717e-15
-##  
-## DLSODA-  Above warning has been issued I1 times.  
-##      It will not be issued again for this problem.
-## In above message, I1 = 10
-##  
-## DLSODA-  At current T (=R1), MXSTEP (=I1) steps   
-##       taken on this call before reaching TOUT     
-## In above message, I1 = 5000
-##  
-## In above message, R1 = 569.755
-## </code></pre>
-<pre class="r"><code>end_time &lt;- Sys.time()
+}
+end_time &lt;- Sys.time()
 m3_runtime &lt;- end_time - start_time
-m3_runtime</code></pre>
-<pre><code>## Time difference of 2.107294 hours</code></pre>
-<pre class="r"><code>saveRDS(m3_f_fits, file = here(&quot;mle&quot;,&quot;m3_f_fits.rds&quot;))</code></pre>
+m3_runtime
+
+saveRDS(m3_f_fits, file = here(&quot;mle&quot;,&quot;m3_f_fits.rds&quot;))</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;, &quot;m3_f_fits.rds&quot;)))</code></pre>
+<pre><code>##      Length Class Mode
+## [1,] 1      mle2  S4  
+## [2,] 1      mle2  S4  
+## [3,] 1      mle2  S4</code></pre>
 <pre class="r"><code>start_time &lt;- Sys.time()
 m3_f_fit &lt;- mle2(m3_ll,
                 start=list(f=0.03, h=1),
@@ -3773,6 +1219,20 @@ m3_runtime &lt;- end_time-start_time
 m3_runtime
 
 saveRDS(m3_f_fit, file = here(&quot;mle&quot;,&quot;m3_f_fit.rds&quot;))</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;, &quot;m3_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m3_ll, start = list(f = 0.03, h = 1), method = &quot;Nelder-Mead&quot;)
+## 
+## Coefficients:
+##     Estimate Std. Error z value     Pr(z)    
+## f 2.1785e-02 4.2366e-03  5.1422 2.715e-07 ***
+## h 1.0398e+02 9.7607e+00 10.6534 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -238.3084</code></pre>
 </div>
 <div id="model-4---temperature-and-resource-dependent-model" class="section level1">
 <h1>Model 4 - Temperature and resource-dependent model</h1>
@@ -3906,72 +1366,98 @@ m4_runtime &lt;- end_time-start_time
 as.numeric(m4_runtime)
 
 saveRDS(m4_f_fit, file = here(&quot;mle&quot;,&quot;m4_f_fit.rds&quot;))</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m4_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m4_ll, start = list(f = 0.001, arr_t = 100, 
+##     h = 10), method = &quot;L-BFGS-B&quot;, lower = c(0, 0, 0), upper = c(1, 
+##     1000, 100))
+## 
+## Coefficients:
+##         Estimate Std. Error    z value     Pr(z)    
+## f     5.9248e-04 5.9825e-05 9.9036e+00 &lt; 2.2e-16 ***
+## arr_t 9.9251e+01 5.8553e-10 1.6951e+11 &lt; 2.2e-16 ***
+## h     1.0226e+01 1.0604e-10 9.6437e+10 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -75.84549</code></pre>
 <p>Model results and runtimes</p>
-<pre class="r"><code>m1_f_fit
-m1_runtime
-
-m2_f_fit
-m2_runtime
-
-m3_f_fit
-m3_runtime
-
-m4_f_fit
-m4_runtime</code></pre>
-<p>Analytical solution?</p>
-<p><span class="math display">\[
-R = \exp(-\ln(1 + fhR(t)) + C)
-\]</span></p>
-<pre class="r"><code># Define function for R(t)
-Rt &lt;- function(t, R0, a, h) {
-  K &lt;- exp(-log(1 + a * h * R0))
-  R &lt;- K * exp(-log(1 + a * h * R0) + a * h * t)
-  return(R)
-}
-
-t &lt;- 500
-
-R0 &lt;- 15
-
-a &lt;- 10
-
-h &lt;- 1</code></pre>
-<pre class="r"><code># Define function for R(t)
-Rt &lt;- function(t, R0, a, h) {
-  R &lt;- exp(-log(1 + a * h * R0) + a * h * t)
-  return(R)
-}
-
-t &lt;- 500
-
-R0 &lt;- 15
-
-a &lt;- 10
-
-h &lt;- 1</code></pre>
-<pre class="r"><code>m3_ll_alt &lt;- function(f, h){
-  resid_df &lt;- tibble(resid=0, data$ID)
-  for (i in 1:nrow(data)) {
-    maxTime &lt;- data$time[i]
-    
-    r_end &lt;- Rt(maxTime, data$resource_tot[i], f, h)
-    
-    resid_df$resid[i] &lt;- r_end - data$amt_rem_tot[i]
-  }
-  
-  nll &lt;- dnorm(resid_df$resid, 
-               mean = mean(resid_df$resid, na.rm=T), 
-               sd = sd(resid_df$resid, na.rm = T), 
-               log = T)
-  -sum(nll, na.rm = T)
-}</code></pre>
-<pre class="r"><code># Define function for R(t) with allometric scaling
-RtWithAllometricScaling &lt;- function(t, R0, a, h, consumerBodyMass) {
-  aPrime &lt;- a * (consumerBodyMass)^(0.67)
-  K &lt;- exp(-ln(1 + aPrime * h * R0))
-  R &lt;- K * exp(-ln(1 + aPrime * h * R0) + aPrime * h * t)
-  return(R)
-}</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m0_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m0_ll, start = list(f = 0.003), method = &quot;Brent&quot;, 
+##     lower = 0, upper = 0.005)
+## 
+## Coefficients:
+##     Estimate Std. Error z value     Pr(z)    
+## f 0.00388470 0.00027482  14.135 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -474.4476</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m1_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m1_ll, start = list(f = 0.003), method = &quot;Brent&quot;, 
+##     lower = 0, upper = 0.07)
+## 
+## Coefficients:
+##     Estimate Std. Error z value     Pr(z)    
+## f 0.00431095 0.00022059  19.543 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -512.983</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m2_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m2_ll, start = list(f = 0.003, arr_t = 10), 
+##     method = &quot;Nelder-Mead&quot;)
+## 
+## Coefficients:
+##         Estimate Std. Error    z value     Pr(z)    
+## f     7.4274e-04 2.5118e-05 2.9570e+01 &lt; 2.2e-16 ***
+## arr_t 8.0728e+01 4.7096e-10 1.7141e+11 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -681.7333</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m3_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m3_ll, start = list(f = 0.03, h = 1), method = &quot;Nelder-Mead&quot;)
+## 
+## Coefficients:
+##     Estimate Std. Error z value     Pr(z)    
+## f 2.1785e-02 4.2366e-03  5.1422 2.715e-07 ***
+## h 1.0398e+02 9.7607e+00 10.6534 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -238.3084</code></pre>
+<pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m4_f_fit.rds&quot;)))</code></pre>
+<pre><code>## Maximum likelihood estimation
+## 
+## Call:
+## mle2(minuslogl = m4_ll, start = list(f = 0.001, arr_t = 100, 
+##     h = 10), method = &quot;L-BFGS-B&quot;, lower = c(0, 0, 0), upper = c(1, 
+##     1000, 100))
+## 
+## Coefficients:
+##         Estimate Std. Error    z value     Pr(z)    
+## f     5.9248e-04 5.9825e-05 9.9036e+00 &lt; 2.2e-16 ***
+## arr_t 9.9251e+01 5.8553e-10 1.6951e+11 &lt; 2.2e-16 ***
+## h     1.0226e+01 1.0604e-10 9.6437e+10 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## -2 log L: -75.84549</code></pre>
 </div>
 
 

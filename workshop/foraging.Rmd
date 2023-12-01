@@ -232,27 +232,31 @@ dat3 %>% ggplot(.,aes(x=y, y=mu)) + geom_point() + labs(title = "feeding respons
 ```{r}
 m0_f_fit <- readRDS(here("mle", "m0_f_fit.rds"))
 m1_f_fit <- readRDS(here("mle", "m1_f_fit.rds"))
+m1_f_fit_alt <- readRDS(here("mle", "m1_f_fit_alt.rds"))
 m2_f_fit <- readRDS(here("mle", "m2_f_fit.rds"))
 m3_f_fit <- readRDS(here("mle", "m3_f_fit.rds"))
 m4_f_fit <- readRDS(here("mle", "m4_f_fit.rds"))
 ```
 
+
+treatment-independent model without size correction
 ```{r}
 summary(m0_f_fit)
 ```
-
+treatment-independent model WITH size correction
 ```{r}
 summary(m1_f_fit)
+summary(m1_f_fit_alt)
 ```
-
+temperature-dependent model
 ```{r}
 summary(m2_f_fit)
 ```
-
+resource-dependent model
 ```{r}
 summary(m3_f_fit)
 ```
-
+temperature and resource-dependent model
 ```{r}
 summary(m4_f_fit)
 ```

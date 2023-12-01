@@ -17,7 +17,7 @@ library(bbmle)
 library(latex2exp)
 ```
 
-```{r}
+```{r, set theme}
 theme_set(theme_minimal())
 ```
 
@@ -77,13 +77,13 @@ output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params))
 r_end <- slice_max(output, time)[,2]
 ```
 
-```{r}
+```{r, m0 output}
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
 Let's see what kind of values we get for our entire range of treatment conditions
 
-```{r}
+```{r, m0 params}
 m0_params <- data_summ %>% select(temp, resource, rate_mean, rate_len_mean, conc_mean, amt_mean, time_mean, length_mean, ID)
 
 for (i in 1:nrow(m0_params)){
@@ -105,7 +105,7 @@ for (i in 1:nrow(m0_params)){
 m0_params %<>% mutate(final_amt = final_conc*15)
 ```
 
-```{r}
+```{r, compare m0 output to data}
 ggplot(m0_params, aes(x=ID, y=(final_conc/conc_mean))) + geom_point() + labs(x="treatment", y=TeX("$\\frac{theoretical}{actual}"))
 ggplot(m0_params, aes(x=ID, y=(final_amt/amt_mean))) + geom_point() + labs(x="treatment", y=TeX("$\\frac{theoretical}{actual}"))
 ```
@@ -141,14 +141,14 @@ m0_ll <- function(f){
 
 Note: I was trying to set the mean for dnorm() to the mean of the residuals but this would cause the optimizer to get stuck on nonsense values. E.g. very high values of f would result in the residuals all being negative. The likelihood of this distribution using the mean of the negative residuals would sometimes be lower even though having all negative residuals means that the parameter estimate is very off. The mean should be set to zero because the residuals should center around zero if the estimate is close to the actual. 
 
-```{r}
+```{r, check m0 resid}
 #resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.005)
 ```
 
 Let's run the optimizer through a loop for each treatment
 
 
-```{r, m0_mle fits by treatment}
+```{r, m0_mle fits by treatment, eval = FALSE}
 start_time <- Sys.time()
 m0_f_fits <- list()
 for(j in 1:nrow(m0_params)){
@@ -171,20 +171,19 @@ m0_runtime
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 
 saveRDS(m0_f_fits, file = here("mle","m0_f_fits.rds"))
-
 ```
 
 
+
+
 ```{r, m1_f_fit by treatment results}
+m0_f_fits <- readRDS(here("mle", "m0_f_fits.rds"))
+
 for(i in 1:9){
   print(paste("", i))
   print(as.numeric(m0_params$rate_mean[i]))
   print(as.numeric(m0_f_fits[[i]]@coef))
 }
-```
-
-```{r}
-#m0_f_fits
 ```
 
 
@@ -193,7 +192,7 @@ These values seem like they could make sense. 4, 7, 8, and 9 are the treatments 
 Can I rerun the model results using these new estimates and see if it better predicts the data?
 
 
-```{r, m0_mle}
+```{r, m0_mle, eval = FALSE}
 start_time <- Sys.time()
 tmp <- data
 m0_f_fit <- mle2(m0_ll,
@@ -205,12 +204,14 @@ end_time <- Sys.time()
 m0_runtime <- end_time - start_time
 m0_runtime
 
-m0_f_fit
-
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 
 saveRDS(m0_f_fit, file = here("mle","m0_f_fit.rds"))
 
+```
+
+```{r, m0_f_fit output}
+summary(readRDS(here("mle","m0_f_fit.rds")))
 ```
 
 
@@ -264,7 +265,7 @@ output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
 r_end <- slice_max(output, time)[,2]
 ```
 
-```{r}
+```{r, m1 output}
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
@@ -279,6 +280,8 @@ write a loop that goes through each treatment. For each treatment, set the condi
 
 
 I saw two methods for using the solver. One was to average across each treatment, run the solver for these conditions, and then use those values to calculate residuals which are fed into dnorm(). The other way was to run the solver for each observation and use the unique conditions for each individual to set the conditions for the solver (length and time of assay is different for individuals within a treatment). I then get the residual for each observation and feed that to dnorm(). I went with the second option to start because it seems the most accurate to me. The downside is that it will likely take significantly longer than the first option since the solver is being much more often.
+
+
 ```{r, m1_ll}
 m1_ll <- function(f){
   data <- tmp
@@ -307,31 +310,6 @@ m1_ll <- function(f){
 ```
 
 
-This iteration was averaging across treatments
-```{r, m1_ll_alt1}
-# m1_ll <- function(f){
-#   resid_df <- tibble(resid=0, treatment_IDs)
-#     for (i in 1:length(treatment_IDs)) {
-#     sub_data <- data %>% filter(treatment_ID %in% treatment_IDs[i])
-#     maxTime <- round(mean(sub_data$time, na.rm=T),2)
-#     length <- mean(sub_data$mm, na.rm=T)
-#     times <- seq(0, maxTime, by=0.5)
-#     params <- c(f=f,
-#                 length=length,
-#                 gamma=2)
-#     xstart <- c(R=mean(sub_data$resource, na.rm=T))
-#     output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
-# 
-#     r_end <- slice_max(output, time)[,2]
-# 
-#     resids <- r_end - sub_data$amt_rem
-# 
-#     resid_df$resid[i] <- -sum(dnorm(resids, mean = 0, sd = sd(resids, na.rm = T), log = T))
-#     }
-# 
-#     sum(resid_df$resid)
-# }
-```
 
 This iteration is the same as m1_ll but also estimates gamma
 ```{r, m1_ll_alt2}
@@ -360,15 +338,14 @@ m1_ll_alt <- function(f, gamma){
 }
 ```
 
-One issue is that the distribution is a bit right-skewed
-I think this may be due to the negative foraging rates
-```{r, eval=F}
+
+```{r, check m1 resid,eval=F}
 #resid_df %>% ggplot(.,aes(x=resid)) + geom_histogram(binwidth=0.25)
 ```
 
 Let's try this treatment by treatment
 
-```{r, m1_f_fit by treatment}
+```{r, m1_f_fit by treatment, eval = F}
 m1_f_fits <- list()
 for(j in 1:nrow(m0_params)){
   tmp <- data %>% filter(treatment_ID==m0_params$ID[j])
@@ -382,7 +359,9 @@ saveRDS(m1_f_fits, file = here("mle","m1_f_fits.rds"))
 ```
 
 
-```{r}
+```{r, m1_f_fits by treatment}
+m1_f_fits <- readRDS(here("mle", "m1_f_fits.rds"))
+
 for(i in 1:9){
   print(paste("", i))
   print(as.numeric(m0_params$rate_len_mean[i]))
@@ -392,7 +371,7 @@ for(i in 1:9){
 
 
 Now we use the optimizer
-```{r, m1_mle}
+```{r, m1_mle, eval = FALSE}
 start_time <- Sys.time()
 tmp <- data
 m1_f_fit <- mle2(m1_ll,
@@ -407,8 +386,13 @@ as.numeric(m1_runtime)
 saveRDS(m1_f_fit, file = here("mle","m1_f_fit.rds"))
 ```
 
+```{r, m1_f_fit}
+summary(readRDS(here("mle","m1_f_fit.rds")))
+```
+
+
 This version is for estimating f and gamma
-```{r, m1_mle_alt}
+```{r, m1_mle_alt, eval = FALSE}
 start_time <- Sys.time()
 m1_f_fit_alt <- mle2(m1_ll_alt,
                 start=list(f=0.003,
@@ -419,6 +403,10 @@ m1_alt_runtime <- end_time - start_time
 m1_alt_runtime
 
 saveRDS(m1_f_fit_alt, file = here("mle","m1_f_fit_alt.rds"))
+```
+
+```{r, m1_f_fit_alt}
+summary(readRDS(here("mle", "m1_f_fit_alt.rds")))
 ```
 
 
@@ -448,13 +436,13 @@ $$
 
 
 Let's look at what the Arrhenius coefficient might be at different resource conditions
-```{r}
+```{r, break up data by resource}
 data_0.1 <- data_summ %>% filter(resource==0.1)
 data_0.5 <- data_summ %>% filter(resource==0.5)
 data_1 <- data_summ %>% filter(resource==1)
 ```
 
-```{r}
+```{r, make get_arr}
 get_arr <- function(data){
   if(data$rate_mean[1]<0){
     f_ref <- 0.000000001
@@ -470,7 +458,7 @@ get_arr <- function(data){
 ```
 
 
-```{r}
+```{r, get arr by resource}
 arr_0.1 <- get_arr(data_0.1)
 arr_0.5 <- get_arr(data_0.5)
 arr_1 <- get_arr(data_1)
@@ -506,13 +494,13 @@ output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
 r_end <- slice_max(output, time)[,2]
 ```
 
-```{r}
+```{r, m2 output}
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
 Let's loop through some example parameters to make sure that the temperature-dependent model is behaving the way we expect it to.
 
-```{r}
+```{r, m2 check, eval = F}
 n <- 11
 
 param_set <- tibble(f = seq(0, 0.01, length.out = n),
@@ -556,11 +544,14 @@ for (i in 1:n){
   }
 }
 
+saveRDS(dat, here("mle", "m2_check.rds"))
 ```
 
 
-```{r}
-dat %>% filter(R==1 & f>0) %>% ggplot(., aes(x = arr_t, y = temp, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
+```{r, m2 check plot}
+m2_check <- readRDS(here("mle", "m2_check.rds"))
+
+m2_check %>% filter(R==1 & f>0) %>% ggplot(., aes(x = arr_t, y = temp, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
 ```
 
 
@@ -598,13 +589,12 @@ m2_ll <- function(f, arr_t){
 }
 ```
 
-```{r}
+```{r, combine data}
 arr_data <- c(arr_0.1,arr_0.5,arr_1)
 ```
 
 
-
-```{r, m2_f_fit for each resource level}
+```{r, m2_f_fit for each resource level, eval = F}
 start_time <- Sys.time()
 m2_f_fits <- list()
 for(j in 1:length(unique(data$resource))){
@@ -622,11 +612,13 @@ saveRDS(m2_f_fits, file = here("mle","m2_f_fits.rds"))
 
 ```
 
+```{r, m2_f_fits by resource}
+summary(readRDS(here("mle", "m2_f_fits.rds")))
+```
 
 
 
-
-```{r, m2_mle}
+```{r, m2_mle, eval = FALSE}
 start_time <- Sys.time()
 tmp <- data
 m2_f_fit <- mle2(m2_ll,
@@ -641,53 +633,26 @@ saveRDS(m2_f_fit, file = here("mle","m2_f_fit.rds"))
 
 ```
 
+```{r, m2_f_fit}
+summary(readRDS(here("mle", "m2_f_fit.rds")))
+```
+
+
 
 # Model 3 - Resource-dependent model
 
 I try to incorporate resource-dependence by using an equation for the type II functional response.
 
-<!-- $$ -->
-<!-- \frac{dR}{dt} = -L^{\gamma} \frac{fR}{1 + fhR} \\ -->
-<!-- $$ -->
+
 
 $$
 \frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR}S \\
 $$
 
 
-<!-- $$ -->
-<!-- \frac{dR}{dt} = -L^{\gamma} \frac{R}{(1+ fhR)^2} \\ -->
-<!-- $$ -->
-
 
 
 ```{r, m3_num_sol}
-# m3_num_sol <- function(t, x, params){
-#   R <- x[1]
-#   with(as.list(params),{
-#     dR <- -(length^gamma)*((f*R)/(1+f*h*R))
-#     res <- c(dR)
-#     list(res)}
-#     )
-# }
-# 
-# maxTime <- 8
-# times <- seq(0,maxTime,by=0.5)
-# 
-# params <- c(f=10,
-#             length=1,
-#             gamma=2,
-#             h=1)
-# 
-# xstart <- c(R=15)
-# 
-# output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
-# 
-# r_end <- slice_max(output, time)[,2]
-```
-
-
-```{r, m3_num_sol_alt}
 m3_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
@@ -714,38 +679,43 @@ r_end <- slice_max(output, time)[,2]
 ```
 
 
-```{r, m3_num_sol_alt_1}
-# m3_num_sol <- function(t, x, params){
-#   R <- x[1]
-#   with(as.list(params),{
-#     dR <- -(length^gamma)*((R)/((1+f*h*R)^2))
-#     res <- c(dR)
-#     list(res)}
-#     )
-# }
-# 
-# maxTime <- 500
-# times <- seq(0,maxTime,by=0.5)
-# 
-# params <- c(f=0.9,
-#             length=1,
-#             gamma=2,
-#             h=2)
-# 
-# xstart <- c(R=15)
-# 
-# output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
-# 
-# r_end <- slice_max(output, time)[,2]
-```
-
-```{r}
+```{r, m3 output}
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
+What are some reasonable estimates for h?
+
+```{r, break up data by temp}
+data_15 <- data_summ %>% filter(temp==15)
+data_20 <- data_summ %>% filter(temp==20)
+data_25 <- data_summ %>% filter(temp==25)
+```
+
+```{r, make get_h}
+get_h <- function(data){
+  if(data$rate_mean[3]<0){
+    f_ref <- 0.000000001
+  } else{
+    f_ref <- data$rate_mean[3]
+  }
+  dat <- c()
+  for (i in 1:2){
+      dat[i] <- -((f_ref*data$resource[i]*(1/15)-1)/f_ref*data$resource[i]*data$rate_mean[i])
+  }
+  return(mean(dat))
+}
+```
+
+```{r, get h by temp}
+get_h(data_15)
+get_h(data_20)
+get_h(data_25)
+```
+
+
 Let's see what we get for different values of h and R
 
-```{r}
+```{r, m3 check, eval = FALSE}
 n <- 9
 
 param_set <- tibble(f = seq(0.001, 0.1, length.out = n),
@@ -781,11 +751,15 @@ for (i in 1:n){
   }
 }
 
+
+saveRDS(dat, here("mle","m3_check.rds"))
 ```
 
 
-```{r}
-dat %>% na.omit() %>% ggplot(., aes(x = h, y = R, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
+```{r, m3 check plot}
+m3_check <- readRDS(here("mle", "m3_check.rds"))
+
+m3_check %>% na.omit() %>% ggplot(., aes(x = h, y = R, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
 ```
 
 
@@ -798,34 +772,6 @@ h = - \frac{fL^{\gamma}RS - 1}{fL^{\gamma}R\;observed\; f}\\
 $$
 
 
-What are some reasonable estimates for h?
-
-```{r}
-data_15 <- data_summ %>% filter(temp==15)
-data_20 <- data_summ %>% filter(temp==20)
-data_25 <- data_summ %>% filter(temp==25)
-```
-
-```{r}
-get_h <- function(data){
-  if(data$rate_mean[3]<0){
-    f_ref <- 0.000000001
-  } else{
-    f_ref <- data$rate_mean[3]
-  }
-  dat <- c()
-  for (i in 1:2){
-      dat[i] <- -((f_ref*data$resource[i]*(1/15)-1)/f_ref*data$resource[i]*data$rate_mean[i])
-  }
-  return(mean(dat))
-}
-```
-
-```{r}
-get_h(data_15)
-get_h(data_20)
-get_h(data_25)
-```
 
 
 
@@ -858,7 +804,7 @@ m3_ll <- function(f, h){
 ```
 
 
-```{r, message=F, warning=FALSE}
+```{r, message=F, warning=FALSE, eval = FALSE}
 start_time <- Sys.time()
 m3_f_fits <- list()
 for(j in 1:length(unique(data$temp))){
@@ -876,6 +822,10 @@ saveRDS(m3_f_fits, file = here("mle","m3_f_fits.rds"))
 
 ```
 
+```{r, get m3_f_fit by temp}
+summary(readRDS(here("mle", "m3_f_fits.rds")))
+```
+
 
 
 ```{r, m3_mle, eval = F}
@@ -890,6 +840,9 @@ m3_runtime
 saveRDS(m3_f_fit, file = here("mle","m3_f_fit.rds"))
 ```
 
+```{r, m3_f_fit}
+summary(readRDS(here("mle", "m3_f_fit.rds")))
+```
 
 
 
@@ -933,11 +886,11 @@ r_end <- slice_max(output, time)[,2]
 
 
 
-```{r}
+```{r, m4 output}
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
-```{r}
+```{r, m4 check, eval = F}
 n <- 10
 
 param_set <- tibble(f = seq(0, 0.01, length.out = n),
@@ -988,13 +941,16 @@ for (i in 1:n){
   }
 }
 
+saveRDS(dat, here("mle","m4_check.rds"))
 ```
 
-```{r}
+```{r, m4 check plot}
+m4_check <- readRDS(here("mle", "m4_check.rds"))
+
 x<-9
 y<-2
 
-dat %>% filter(h == param_set$h[x] & arr_t == param_set$arr_t[y] & f > 0 & R > 0) %>% 
+m4_check %>% filter(h == param_set$h[x] & arr_t == param_set$arr_t[y] & f > 0 & R > 0) %>% 
   ggplot(., aes(x=R, y=temp, fill=1-end/R)) + 
   geom_tile() + 
   facet_wrap(~f) + 
@@ -1049,94 +1005,52 @@ as.numeric(m4_runtime)
 saveRDS(m4_f_fit, file = here("mle","m4_f_fit.rds"))
 ```
 
+```{r, m4_f_fit}
+summary(readRDS(here("mle","m4_f_fit.rds")))
+```
+
+How well do these parameter estimates and this model predict for the data from the experiment?
+
+```{r}
+resid_df <- tibble(resid=0, data$ID, data$treatment_ID, data$resource, data$temp)
+f <- m4_f_fit@coef[1]
+arr_t <- m4_f_fit@coef[2]
+h <- m4_f_fit@coef[3]
+for (i in 1:nrow(data)) {
+    maxTime <- data$time[i]
+    times <- seq(0, maxTime, by=1)
+    params <- c(f=as.numeric(f),
+                length=data$mm[i],
+                gamma=2,
+                arr_t=as.numeric(arr_t),
+                ref_t=15,
+                temp=data$temp[i],
+                h=as.numeric(h),
+                S=1/15)
+    xstart <- c(R=data$resource[i])
+    output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params, hmax = 0.1))
+    
+    r_end <- slice_max(output, time)[,2]
+      
+    resid_df$resid[i] <- r_end - data$amt_rem[i]
+    }
+```
+
+
+```{r}
+resid_df %>% ggplot(., aes(x=resid, fill = data$treatment_ID)) + geom_histogram()
+```
+
+
+
 
 Model results and runtimes
-```{r, results, eval = F}
-m1_f_fit
-m1_runtime
-
-m2_f_fit
-m2_runtime
-
-m3_f_fit
-m3_runtime
-
-m4_f_fit
-m4_runtime
+```{r, results}
+summary(readRDS(here("mle","m0_f_fit.rds")))
+summary(readRDS(here("mle","m1_f_fit.rds")))
+summary(readRDS(here("mle","m2_f_fit.rds")))
+summary(readRDS(here("mle","m3_f_fit.rds")))
+summary(readRDS(here("mle","m4_f_fit.rds")))
 ```
 
-
-
-Analytical solution?
-
-$$
-R = \exp(-\ln(1 + fhR(t)) + C)
-$$
-  
-  
-```{r, eval = F}
-# Define function for R(t)
-Rt <- function(t, R0, a, h) {
-  K <- exp(-log(1 + a * h * R0))
-  R <- K * exp(-log(1 + a * h * R0) + a * h * t)
-  return(R)
-}
-
-t <- 500
-
-R0 <- 15
-
-a <- 10
-
-h <- 1
-```
-
-```{r, eval = F}
-# Define function for R(t)
-Rt <- function(t, R0, a, h) {
-  R <- exp(-log(1 + a * h * R0) + a * h * t)
-  return(R)
-}
-
-t <- 500
-
-R0 <- 15
-
-a <- 10
-
-h <- 1
-```
-
-
-```{r, eval = F}
-m3_ll_alt <- function(f, h){
-  resid_df <- tibble(resid=0, data$ID)
-  for (i in 1:nrow(data)) {
-    maxTime <- data$time[i]
-    
-    r_end <- Rt(maxTime, data$resource_tot[i], f, h)
-    
-    resid_df$resid[i] <- r_end - data$amt_rem_tot[i]
-  }
-  
-  nll <- dnorm(resid_df$resid, 
-               mean = mean(resid_df$resid, na.rm=T), 
-               sd = sd(resid_df$resid, na.rm = T), 
-               log = T)
-  -sum(nll, na.rm = T)
-}
-```
-
-
-
-
-```{r, eval = F}
-# Define function for R(t) with allometric scaling
-RtWithAllometricScaling <- function(t, R0, a, h, consumerBodyMass) {
-  aPrime <- a * (consumerBodyMass)^(0.67)
-  K <- exp(-ln(1 + aPrime * h * R0))
-  R <- K * exp(-ln(1 + aPrime * h * R0) + aPrime * h * t)
-  return(R)
-}
-```
 
