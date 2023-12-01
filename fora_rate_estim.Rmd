@@ -1008,7 +1008,7 @@ m4_ll <- function(f, arr_t, h){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
-    times <- seq(0, maxTime, by=0.5)
+    times <- seq(0, maxTime, by=1)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
@@ -1034,11 +1034,14 @@ m4_ll <- function(f, arr_t, h){
 ```
 
 
+
 ```{r, m4_mle, eval = F}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
                 start=list(f=0.001, arr_t=100, h=10),
-                method = "Nelder-Mead")
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0),
+                upper = c(1, Inf, Inf))
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 as.numeric(m4_runtime)
