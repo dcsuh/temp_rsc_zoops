@@ -431,7 +431,6 @@ $$
 \frac{observed\; f}{reference\; f} = e^{T_{A}(1/T_{R}-1/T)} \\
 ln(\frac{observed\; f}{reference\; f}) = T_{A}(1/T_{R}-1/T) \\
 \frac{ln(\frac{observed\; f}{reference\; f})}{(1/T_{R}-1/T)} = T_{A} \\
-
 $$
 
 
