@@ -829,8 +829,9 @@ summary(readRDS(here("mle", "m3_f_fits.rds")))
 
 ```{r, m3_mle, eval = F}
 start_time <- Sys.time()
+tmp <- data
 m3_f_fit <- mle2(m3_ll,
-                start=list(f=0.03, h=1),
+                start=list(f=0.003, h=1),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time

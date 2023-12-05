@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-12-01" />
+<meta name="date" content="2023-12-05" />
 
 <title>estimate foraging rate</title>
 
@@ -350,7 +350,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">estimate foraging rate</h1>
-<h4 class="date">2023-12-01</h4>
+<h4 class="date">2023-12-05</h4>
 
 </div>
 
@@ -845,11 +845,14 @@ reference temperature is 15 degrees, then we will have one value of f
 that we observed. The value of f that we observed at 20 degrees is
 different than our observed value of f at 15 degrees, but we should be
 able to make these terms equivalent using the Arrhenius equation.</p>
-<p>$$ -L^{}f R S ; at; reference; temperature =
--L<sup>{}fe</sup>{T_{A}(1/T_{R}-1/T)} R S \ (observed; f) = (reference;
-f)*e^{T_{A}(1/T_{R}-1/T)} \ = e^{T_{A}(1/T_{R}-1/T)} \ ln() =
-T_{A}(1/T_{R}-1/T) \ = T_{A} \</p>
-<p>$$</p>
+<p><span class="math display">\[
+-L^{\gamma}f R S \; at\; reference\; temperature =
+-L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} R S  \\
+(observed\; f) = (reference\; f)*e^{T_{A}(1/T_{R}-1/T)}  \\
+\frac{observed\; f}{reference\; f} = e^{T_{A}(1/T_{R}-1/T)} \\
+ln(\frac{observed\; f}{reference\; f}) = T_{A}(1/T_{R}-1/T) \\
+\frac{ln(\frac{observed\; f}{reference\; f})}{(1/T_{R}-1/T)} = T_{A} \\
+\]</span></p>
 <p>Let’s look at what the Arrhenius coefficient might be at different
 resource conditions</p>
 <pre class="r"><code>data_0.1 &lt;- data_summ %&gt;% filter(resource==0.1)
@@ -1170,8 +1173,9 @@ saveRDS(m3_f_fits, file = here(&quot;mle&quot;,&quot;m3_f_fits.rds&quot;))</code
 ## [2,] 1      mle2  S4  
 ## [3,] 1      mle2  S4</code></pre>
 <pre class="r"><code>start_time &lt;- Sys.time()
+tmp &lt;- data
 m3_f_fit &lt;- mle2(m3_ll,
-                start=list(f=0.03, h=1),
+                start=list(f=0.003, h=1),
                 method = &quot;Nelder-Mead&quot;)
 end_time &lt;- Sys.time()
 m3_runtime &lt;- end_time-start_time
@@ -1182,16 +1186,16 @@ saveRDS(m3_f_fit, file = here(&quot;mle&quot;,&quot;m3_f_fit.rds&quot;))</code><
 <pre><code>## Maximum likelihood estimation
 ## 
 ## Call:
-## mle2(minuslogl = m3_ll, start = list(f = 0.03, h = 1), method = &quot;Nelder-Mead&quot;)
+## mle2(minuslogl = m3_ll, start = list(f = 0.003, h = 1), method = &quot;Nelder-Mead&quot;)
 ## 
 ## Coefficients:
-##     Estimate Std. Error z value     Pr(z)    
-## f 2.1785e-02 4.2366e-03  5.1422 2.715e-07 ***
-## h 1.0398e+02 9.7607e+00 10.6534 &lt; 2.2e-16 ***
+##      Estimate  Std. Error     z value     Pr(z)    
+## f  2.4994e-03  7.5711e-05  3.3012e+01 &lt; 2.2e-16 ***
+## h -1.5840e+02  5.4797e-10 -2.8906e+11 &lt; 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## -2 log L: -238.3084</code></pre>
+## -2 log L: -528.4982</code></pre>
 </div>
 <div id="model-4---temperature-and-resource-dependent-model" class="section level1">
 <h1>Model 4 - Temperature and resource-dependent model</h1>
@@ -1423,16 +1427,16 @@ for (i in 1:nrow(data)) {
 <pre><code>## Maximum likelihood estimation
 ## 
 ## Call:
-## mle2(minuslogl = m3_ll, start = list(f = 0.03, h = 1), method = &quot;Nelder-Mead&quot;)
+## mle2(minuslogl = m3_ll, start = list(f = 0.003, h = 1), method = &quot;Nelder-Mead&quot;)
 ## 
 ## Coefficients:
-##     Estimate Std. Error z value     Pr(z)    
-## f 2.1785e-02 4.2366e-03  5.1422 2.715e-07 ***
-## h 1.0398e+02 9.7607e+00 10.6534 &lt; 2.2e-16 ***
+##      Estimate  Std. Error     z value     Pr(z)    
+## f  2.4994e-03  7.5711e-05  3.3012e+01 &lt; 2.2e-16 ***
+## h -1.5840e+02  5.4797e-10 -2.8906e+11 &lt; 2.2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## -2 log L: -238.3084</code></pre>
+## -2 log L: -528.4982</code></pre>
 <pre class="r"><code>summary(readRDS(here(&quot;mle&quot;,&quot;m4_f_fit.rds&quot;))) #temperature and resource-dependent</code></pre>
 <pre><code>## Maximum likelihood estimation
 ## 
