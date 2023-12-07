@@ -35,7 +35,7 @@ Some work in progress:
 ([foraging data](/processed_data/foraging_raw.rds))
 
 [model params visualized](model_fits_viz.html)
-[Rmd version](model_fits_viz.Rmd)
+([Rmd version])(model_fits_viz.Rmd)
 
 <br/>
 <br/>
