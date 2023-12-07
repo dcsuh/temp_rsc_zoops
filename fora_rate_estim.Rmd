@@ -684,6 +684,15 @@ output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 
 What are some reasonable estimates for h?
 
+$$
+observed\; f R S= \frac{fL^{\gamma}RS}{1 + fL^{\gamma}hR} \\
+observed\; f  = \frac{fL^{\gamma}}{1 + fL^{\gamma}hR} \\
+1 + fL^{\gamma}hR\;(observed\; f) = fL^{\gamma} \\
+fL^{\gamma}hR\;(observed\; f) = fL^{\gamma} -1 \\
+h = \frac{fL^{\gamma} - 1}{fL^{\gamma}R\;(observed\; f)}\\
+$$
+
+
 ```{r, break up data by temp}
 data_15 <- data_summ %>% filter(temp==15)
 data_20 <- data_summ %>% filter(temp==20)
@@ -699,7 +708,7 @@ get_h <- function(data){
   }
   dat <- c()
   for (i in 1:2){
-      dat[i] <- -((f_ref*data$resource[i]*(1/15)-1)/f_ref*data$resource[i]*data$rate_mean[i])
+      dat[i] <- ((f_ref*data$resource[i]*(1/15)-1)/f_ref*data$resource[i]*data$rate_mean[i])
   }
   return(mean(dat))
 }
@@ -760,16 +769,6 @@ m3_check <- readRDS(here("mle", "m3_check.rds"))
 
 m3_check %>% na.omit() %>% ggplot(., aes(x = h, y = R, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
 ```
-
-
-
-$$
-observed\; f = - \frac{fL^{\gamma}RS}{1 + fL^{\gamma}hR} \\
-1 + fL^{\gamma}hR\;observed\; f = - fL^{\gamma}RS \\
-fL^{\gamma}hR\;observed\; f = - fL^{\gamma}RS -1 \\
-h = - \frac{fL^{\gamma}RS - 1}{fL^{\gamma}R\;observed\; f}\\
-$$
-
 
 
 

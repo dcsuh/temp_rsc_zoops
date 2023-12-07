@@ -39,6 +39,7 @@ ref_t <- 15
 ```
 
 
+# Fitting foraging rate
 
 ```{r}
 data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_mean, color=as.factor(resource))) + 
@@ -46,108 +47,195 @@ data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_mean, color=as.factor(reso
   geom_linerange(aes(ymin=rate_mean-rate_se, 
                      ymax=rate_mean+rate_se)) +
   labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource")
+
+data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_mean, color=as.factor(temp))) + 
+  geom_point() + 
+  geom_linerange(aes(ymin=rate_mean-rate_se, 
+                     ymax=rate_mean+rate_se)) +
+  labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
 ```
 
 
 
 Now let's get the results from the model
 ```{r}
-data_summ %<>% mutate(m0_rate = as.numeric(m0_coef))
+m0_f <- as.numeric(m0_coef)
+data_summ %<>% mutate(m0_rate = m0_f)
 ```
 
+
 ```{r}
-data_summ %>% ggplot(., aes(x=as.factor(temp), 
-                          y=rate_mean, 
-                          group = as.factor(resource), 
+m0_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
+                          y=rate_mean,
+                          group = as.factor(resource),
                           color = as.factor(resource),
-                          shape = as.factor(resource))) + 
-geom_point() + 
-geom_linerange(aes(ymin=rate_mean-rate_se, 
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=rate_mean-rate_se,
                  ymax=rate_mean+rate_se)) +
 labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = ) +
 new_scale_color() +
-geom_point(aes(x=as.factor(temp), 
+geom_point(aes(x=as.factor(temp),
+               y=m0_rate,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+
+m0_plot2 <- data_summ %>% ggplot(., aes(x=as.factor(resource), 
+                          y=rate_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+geom_point() + 
+geom_linerange(aes(ymin=rate_mean-rate_se, 
+                 ymax=rate_mean+rate_se)) +
+labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Independent model without size correction") +
+new_scale_color() +
+geom_point(aes(x=as.factor(resource), 
                y=m0_rate, 
-               shape=as.factor(resource))) +
+               shape=as.factor(temp))) +
 scale_color_manual(name="",values="black")
 ```
 
-
+```{r}
+m1_f <- as.numeric(m1_coef)
+data_summ %<>% mutate(m1_rate = mm_mean^gamma*m1_f)
+```
 
 
 ```{r}
-data_summ %<>% mutate(m1_rate = mm_mean^gamma*as.numeric(m1_coef))
-
-data_summ %>% ggplot(., aes(x=as.factor(temp), 
-                          y=rate_mean, 
-                          group = as.factor(resource), 
+m1_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
+                          y=rate_mean,
+                          group = as.factor(resource),
                           color = as.factor(resource),
-                          shape = as.factor(resource))) + 
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=rate_mean-rate_se,
+                 ymax=rate_mean+rate_se)) +
+labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = "Independent model with size correction") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m1_rate,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+m1_plot2 <- data_summ %>% ggplot(., aes(x=as.factor(resource), 
+                          y=rate_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
 geom_point() + 
 geom_linerange(aes(ymin=rate_mean-rate_se, 
                  ymax=rate_mean+rate_se)) +
-labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = ) +
+labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Independent model with size correction") +
 new_scale_color() +
-geom_point(aes(x=as.factor(temp), 
+geom_point(aes(x=as.factor(resource), 
                y=m1_rate, 
-               shape=as.factor(resource))) +
+               shape=as.factor(temp))) +
 scale_color_manual(name="",values="black")
 ```
 
+
+
+$$
+(observed\; f) = (reference\; f)*e^{T_{A}(1/T_{R}-1/T)}  \\
+$$
 
 ```{r}
 m2_coef
 m2_f <- as.numeric(m2_coef[1])
 m2_arr <- as.numeric(m2_coef[2])
 
-data_summ %<>% mutate(m2_rate = (mm_mean^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
+#data_summ %<>% mutate(m2_rate = (mm_mean^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
+data_summ %<>% mutate(m2_rate = m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
 ```
 
 ```{r}
-data_summ %>% ggplot(., aes(x=as.factor(temp), 
-                          y=rate_mean, 
-                          group = as.factor(resource), 
+m2_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
+                          y=rate_mean,
+                          group = as.factor(resource),
                           color = as.factor(resource),
-                          shape = as.factor(resource))) + 
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=rate_mean-rate_se,
+                 ymax=rate_mean+rate_se)) +
+labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = "Temperature-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m2_rate,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+m2_plot2 <- data_summ %>% ggplot(., aes(x=as.factor(resource), 
+                          y=rate_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
 geom_point() + 
 geom_linerange(aes(ymin=rate_mean-rate_se, 
                  ymax=rate_mean+rate_se)) +
-labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", 
-     title = "Temperature-dependent model") +
+labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Temperature-dependent model") +
 new_scale_color() +
-geom_point(aes(x=as.factor(temp), 
+geom_point(aes(x=as.factor(resource), 
                y=m2_rate, 
-               shape=as.factor(resource))) +
+               shape=as.factor(temp))) +
 scale_color_manual(name="",values="black")
 ```
 
+$$
+observed\; f  = \frac{fL^{\gamma}}{1 + fL^{\gamma}hR} \\
+
+observed\; f = \frac{fL^{\gamma} - 1}{fL^{\gamma}Rh}\\
+
+$$
+
+NOT SURE ABOUT THIS
 ```{r}
 m3_coef
 m3_f <- as.numeric(m3_coef[1])
 m3_h <- as.numeric(m3_coef[2])
 
-data_summ %<>% mutate(m3_rate = ((m3_f*mm_mean^gamma*resource)/(1+m3_f*mm_mean^gamma*m3_h*resource)))
+data_summ %<>% mutate(m3_rate = ((m3_f*mm_mean^gamma)/(1+m3_f*(mm_mean^gamma)*m3_h*resource)))
+data_summ %<>% mutate(m3_rate1 = ((m3_f*(mm_mean^gamma)-1)/(m3_f*(mm_mean^gamma)*m3_h*resource)))
+data_summ %<>% mutate(m3_rate2 = ((m3_f)/(1+m3_f*m3_h*resource)))
+
 ```
 
 ```{r}
-data_summ %>% ggplot(., aes(x=as.factor(temp), 
-                          y=rate_mean, 
-                          group = as.factor(resource), 
+m3_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
+                          y=rate_mean,
+                          group = as.factor(resource),
                           color = as.factor(resource),
-                          shape = as.factor(resource))) + 
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=rate_mean-rate_se,
+                 ymax=rate_mean+rate_se)) +
+labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = "Resource-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m3_rate,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+m3_plot2 <- data_summ %>% ggplot(., aes(x=as.factor(resource), 
+                          y=rate_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
 geom_point() + 
 geom_linerange(aes(ymin=rate_mean-rate_se, 
                  ymax=rate_mean+rate_se)) +
-labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", 
-     title = "Resource-dependent model") +
+labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Resource-dependent model") +
 new_scale_color() +
-geom_point(aes(x=as.factor(temp), 
+geom_point(aes(x=as.factor(resource), 
                y=m3_rate, 
-               shape=as.factor(resource))) +
+               shape=as.factor(temp))) +
 scale_color_manual(name="",values="black")
 ```
 
-
+$$
+observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} \\
+$$
 
 ```{r}
 m4_coef
@@ -155,24 +243,449 @@ m4_f <- as.numeric(m4_coef[1])
 m4_arr <- as.numeric(m4_coef[2])
 m4_h <- as.numeric(m4_coef[3])
 
-data_summ %<>% mutate(m4_rate = ((m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*resource)/
+data_summ %<>% mutate(m4_rate = ((m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
                                    (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*m4_h*(mm_mean^gamma)*resource)))
 ```
 
 ```{r}
-data_summ %>% ggplot(., aes(x=as.factor(temp), 
+m4_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
+                          y=rate_mean,
+                          group = as.factor(resource),
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=rate_mean-rate_se,
+                 ymax=rate_mean+rate_se)) +
+labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = "Temperature and resource dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m4_rate,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+m4_plot2 <- data_summ %>% ggplot(., aes(x=as.factor(resource), 
                           y=rate_mean, 
-                          color = as.factor(resource))) + 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
 geom_point() + 
 geom_linerange(aes(ymin=rate_mean-rate_se, 
                  ymax=rate_mean+rate_se)) +
-labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", 
-     title = "Temperature and Resource-dependent model") +
+labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Temperature and resource dependent model") +
 new_scale_color() +
-geom_point(aes(x=as.factor(temp), 
+geom_point(aes(x=as.factor(resource), 
                y=m4_rate, 
+               shape=as.factor(temp))) +
+scale_color_manual(name="",values="black")
+```
+
+```{r}
+m0_plot1
+m1_plot1
+m2_plot1
+m3_plot1
+m4_plot1
+```
+
+```{r}
+m0_plot2
+m1_plot2
+m2_plot2
+m3_plot2
+m4_plot2
+```
+
+
+
+
+
+# Fitting final concentration
+
+I am having difficulty relating foraging rate from our models to foraging rate from the data so I can do this slightly more explicitly by comparing the average amount consumed over the assay between the models and the data. This is actually what we were using to calculate our residuals.
+
+```{r}
+data_summ %>% ggplot(., aes(x=as.factor(temp), y=conc_mean, color=as.factor(resource))) + 
+  geom_point() + 
+  geom_linerange(aes(ymin=conc_mean-conc_se, 
+                     ymax=conc_mean+conc_se)) +
+  labs(x="Temperature", y="Final concentration", color="Resource")
+
+data_summ %>% ggplot(., aes(x=as.factor(resource), y=conc_mean, color=as.factor(temp))) + 
+  geom_point() + 
+  geom_linerange(aes(ymin=conc_mean-conc_se, 
+                     ymax=conc_mean+conc_se)) +
+  labs(x="Resource", y="Final concentration", color="Temperature")
+```
+
+
+For each, I will define the models and then loop through each treatment and use the solver to get the final resource concentration under each treatment under each model
+```{r}
+model_conc <- data_summ %>% dplyr::select(temp, resource, rate_mean, 
+                                          conc_mean, conc_se, 
+                                          amt_mean, time_mean, mm_mean, ID)
+```
+
+
+```{r, m0_num_sol}
+m0_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -f*R*S
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+
+```{r}
+for (i in 1:nrow(model_conc)){
+  maxTime <- model_conc$time_mean[i]
+  times <- seq(0,maxTime,by=0.5)
+  
+  params <- c(f=m0_f,
+              S=1/15)
+  
+  xstart <- c(R=model_conc$resource[i])
+  
+  output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  model_conc$m0_conc[i] <- r_end
+}
+```
+
+
+
+```{r, m1_num_sol}
+m1_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -(length^gamma)*f*R*S
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+```{r}
+for (i in 1:nrow(model_conc)){
+  maxTime <- model_conc$time_mean[i]
+  times <- seq(0,maxTime,by=0.5)
+  
+  params <- c(f=m1_f,
+              length=model_conc$mm_mean[i],
+              gamma=2,
+              S=1/15)
+  
+  xstart <- c(R=model_conc$resource[i])
+  
+  output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  model_conc$m1_conc[i] <- r_end
+}
+```
+
+
+
+```{r, m2_num_sol}
+m2_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*R*S
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+maxTime <- 641
+times <- seq(0,maxTime,by=0.5)
+
+params <- c(f=0.003,
+            length=1,
+            gamma=2,
+            arr_t=100, #arrhenius coefficient
+            ref_t=15, #reference temperature
+            temp=25,
+            S=1/15) #treatment temperature
+
+xstart <- c(R=0.1)
+
+output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
+
+r_end <- slice_max(output, time)[,2]
+```
+
+```{r}
+for (i in 1:nrow(model_conc)){
+  maxTime <- model_conc$time_mean[i]
+  times <- seq(0,maxTime,by=0.5)
+  
+  params <- c(f=m2_f,
+              length=model_conc$mm_mean[i],
+              gamma=2,
+              arr_t=m2_arr,
+              ref_t=ref_t,
+              temp=model_conc$temp[i],
+              S=1/15)
+  
+  xstart <- c(R=model_conc$resource[i])
+  
+  output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  model_conc$m2_conc[i] <- r_end
+}
+```
+
+
+```{r, m3_num_sol}
+m3_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -((f*length^gamma*R)/(1+f*length^gamma*h*R))*S
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+```{r}
+for (i in 1:nrow(model_conc)){
+  maxTime <- model_conc$time_mean[i]
+  times <- seq(0,maxTime,by=0.5)
+  
+  params <- c(f=m3_f,
+              length=model_conc$mm_mean[i],
+              gamma=2,
+              h=m3_h,
+              S=1/15)
+  
+  xstart <- c(R=model_conc$resource[i])
+  
+  output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  model_conc$m3_conc[i] <- r_end
+}
+```
+
+
+
+```{r, m4_num_sol}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*(length^gamma)*R))*S
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+```{r}
+for (i in 1:nrow(model_conc)){
+  maxTime <- model_conc$time_mean[i]
+  times <- seq(0,maxTime,by=0.5)
+  
+  params <- c(f=m4_f,
+              length=model_conc$mm_mean[i],
+              gamma=2,
+              arr_t=m4_arr,
+              ref_t=ref_t,
+              temp=model_conc$temp[i],
+              h=m4_h,
+              S=1/15)
+  
+  xstart <- c(R=model_conc$resource[i])
+  
+  output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  model_conc$m4_conc[i] <- r_end
+}
+```
+
+
+```{r}
+m0_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
+                          y=conc_mean,
+                          group = as.factor(resource),
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Temperature", y="Final Concentration", color="Resource", shape="Resource", title = "Independent model without size correction") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m0_conc,
                shape=as.factor(resource))) +
-scale_color_manual(name="",values=c("black"))
+scale_color_manual(name="",values="black")
+
+
+m0_resource <- model_conc %>% ggplot(., aes(x=as.factor(resource), 
+                          y=conc_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+geom_point() + 
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Resource", y="Final Concentration", color="Temperature", shape="Temperature", title = "Independent model without size correction") +
+new_scale_color() +
+geom_point(aes(x=as.factor(resource), 
+               y=m0_conc, 
+               shape=as.factor(temp))) +
+scale_color_manual(name="",values="black")
+```
+```{r}
+m1_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
+                          y=conc_mean,
+                          group = as.factor(resource),
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Temperature", y="Final Concentration", color="Resource", shape="Resource", title = "Independent model with size correction") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m1_conc,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+
+m1_resource <- model_conc %>% ggplot(., aes(x=as.factor(resource), 
+                          y=conc_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+geom_point() + 
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Resource", y="Final Concentration", color="Temperature", shape="Temperature", title = "Independent model with size correction") +
+new_scale_color() +
+geom_point(aes(x=as.factor(resource), 
+               y=m1_conc, 
+               shape=as.factor(temp))) +
+scale_color_manual(name="",values="black")
+```
+
+
+```{r}
+m2_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
+                          y=conc_mean,
+                          group = as.factor(resource),
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Temperature", y="Final Concentration", color="Resource", shape="Resource", title = "Temperature-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m2_conc,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+
+m2_resource <- model_conc %>% ggplot(., aes(x=as.factor(resource), 
+                          y=conc_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+geom_point() + 
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Resource", y="Final Concentration", color="Temperature", shape="Temperature", title = "Temperature-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(resource), 
+               y=m2_conc, 
+               shape=as.factor(temp))) +
+scale_color_manual(name="",values="black")
+
+
+```
+
+
+```{r}
+m3_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
+                          y=conc_mean,
+                          group = as.factor(resource),
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Temperature", y="Final Concentration", color="Resource", shape="Resource", title = "Resource-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m3_conc,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+
+m3_resource <- model_conc %>% ggplot(., aes(x=as.factor(resource), 
+                          y=conc_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+geom_point() + 
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Resource", y="Final Concentration", color="Temperature", shape="Temperature", title = "Resource-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(resource), 
+               y=m3_conc, 
+               shape=as.factor(temp))) +
+scale_color_manual(name="",values="black")
+```
+
+
+```{r}
+m4_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
+                          y=conc_mean,
+                          group = as.factor(resource),
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Temperature", y="Final Concentration", color="Resource", shape="Resource", title = "Full model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m4_conc,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+
+m4_resource <- model_conc %>% ggplot(., aes(x=as.factor(resource), 
+                          y=conc_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+geom_point() + 
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Resource", y="Final Concentration", color="Temperature", shape="Temperature", title = "Full model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(resource), 
+               y=m4_conc, 
+               shape=as.factor(temp))) +
+scale_color_manual(name="",values="black")
+```
+
+```{r}
+m0_temp
+m1_temp
+m2_temp
+m3_temp
+m4_temp
+```
+
+```{r}
+m0_temp
+m1_temp
+m2_temp
+m3_temp
+m4_temp
 ```
 
 

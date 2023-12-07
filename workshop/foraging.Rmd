@@ -45,6 +45,9 @@ data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(ra
                                                              rate_se = sd(rate)/sqrt(n()),
                                                              rate_len_mean = mean(rate_len, na.rm=T),
                                                              conc_mean = mean(amt_rem),
+                                                             conc_var = var(amt_rem),
+                                                             conc_sd = sd(amt_rem),
+                                                             conc_se = sd(amt_rem)/sqrt(n()),
                                                              amt_mean = mean(amt_rem_tot),
                                                              amt_var = var(amt_rem_tot),
                                                              amt_sd = sd(amt_rem_tot),
@@ -123,6 +126,16 @@ data_summ %>% ggplot(aes(x=ID, y=amt_mean)) +
   theme(axis.text.x = element_text(angle = 75, vjust = 1, hjust = 1)) + 
   labs(y = "amount remaining",
        x = "treatment")
+```
+
+```{r}
+data_summ %>% ggplot(aes(x=as.factor(resource), y=resource*15-amt_mean, group = temp, color = as.factor(temp))) + 
+  geom_point(position = position_dodge(width = 0.5)) + 
+  theme(axis.text.x = element_text(angle = 75, vjust = 1, hjust = 1)) + 
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  labs(y = "amount consumed",
+       x = "treatment",
+       color = "Temp")
 ```
 
 ```{r}
