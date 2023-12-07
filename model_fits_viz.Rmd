@@ -1,5 +1,5 @@
 ---
-title: "model fits visualized"
+title: "model parameters visualized"
 output: html_document
 date: "`r Sys.Date()`"
 ---
