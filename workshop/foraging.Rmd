@@ -53,6 +53,7 @@ data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(ra
                                                              length_var = var(length, na.rm = T),
                                                              length_sd = sd(length, na.rm = T),
                                                              length_se = sd(length, na.rm = T)/sqrt(n()),
+                                                             mm_mean = mean(mm, na.rm = T),
                                                              time_mean = mean(time, na.rm = T))
 
 # data_summ <- data %>% group_by(temp, resource, block) %>% summarize(mean_rate = mean(rate),
