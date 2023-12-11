@@ -1067,6 +1067,20 @@ m3 <- readRDS(here("mle","m3_f_fit.rds"))
 m4 <- readRDS(here("mle","m4_f_fit.rds"))
 ```
 
+```{r}
+getAIC <- function(n, L){
+  return(2*length(n)-(2*L))
+}
+```
+
+
+```{r}
+getAIC(m0@coef, m0@min)
+getAIC(m1@coef, m1@min)
+getAIC(m2@coef, m2@min)
+getAIC(m3@coef, m3@min)
+getAIC(m4@coef, m4@min)
+```
 
 
 
