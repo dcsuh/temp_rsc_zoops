@@ -543,6 +543,7 @@ geom_point(aes(x=as.factor(resource),
                shape=as.factor(temp))) +
 scale_color_manual(name="",values="black")
 ```
+
 ```{r}
 m1_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
                           y=conc_mean,
@@ -672,13 +673,6 @@ geom_point(aes(x=as.factor(resource),
 scale_color_manual(name="",values="black")
 ```
 
-```{r}
-m0_temp
-m1_temp
-m2_temp
-m3_temp
-m4_temp
-```
 
 ```{r}
 m0_temp
