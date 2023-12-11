@@ -15,6 +15,7 @@ library(deSolve)
 library(magrittr)
 library(bbmle)
 library(latex2exp)
+library(AICcmodavg)
 ```
 
 ```{r, set theme}
@@ -1056,5 +1057,17 @@ summary(readRDS(here("mle","m2_f_fit.rds"))) #temperature-dependent
 summary(readRDS(here("mle","m3_f_fit.rds"))) #resource-dependent
 summary(readRDS(here("mle","m4_f_fit.rds"))) #temperature and resource-dependent
 ```
+
+
+```{r, AIC}
+m0 <- readRDS(here("mle","m0_f_fit.rds"))
+m1 <- readRDS(here("mle","m1_f_fit.rds"))
+m2 <- readRDS(here("mle","m2_f_fit.rds"))
+m3 <- readRDS(here("mle","m3_f_fit.rds"))
+m4 <- readRDS(here("mle","m4_f_fit.rds"))
+```
+
+
+
 
 
