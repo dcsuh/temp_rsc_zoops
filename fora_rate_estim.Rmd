@@ -605,8 +605,8 @@ for(j in 1:length(unique(data$resource))){
                        method = "Nelder-Mead")
 }
 end_time <- Sys.time()
-m2_runtime <- end_time - start_time
-as.numeric(m2_runtime)
+end_time - start_time
+
 
 saveRDS(m2_f_fits, file = here("mle","m2_f_fits.rds"))
 
@@ -814,8 +814,8 @@ for(j in 1:length(unique(data$temp))){
                        method = "Nelder-Mead")
 }
 end_time <- Sys.time()
-m3_runtime <- end_time - start_time
-m3_runtime
+end_time - start_time
+
 
 saveRDS(m3_f_fits, file = here("mle","m3_f_fits.rds"))
 
@@ -1003,7 +1003,7 @@ m4_f_fit <- mle2(m4_ll,
                 upper = c(1, Inf, Inf))
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
-as.numeric(m4_runtime)
+m4_runtime
 
 saveRDS(m4_f_fit, file = here("mle","m4_f_fit.rds"))
 ```
@@ -1056,6 +1056,7 @@ summary(readRDS(here("mle","m1_f_fit.rds"))) #with size correction
 summary(readRDS(here("mle","m2_f_fit.rds"))) #temperature-dependent
 summary(readRDS(here("mle","m3_f_fit.rds"))) #resource-dependent
 summary(readRDS(here("mle","m4_f_fit.rds"))) #temperature and resource-dependent
+summary(readRDS(here("mle","m4_f_fita.rds"))) #temperature and resource-dependent
 ```
 
 
