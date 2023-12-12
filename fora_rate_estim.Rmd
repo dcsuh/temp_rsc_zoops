@@ -8,6 +8,13 @@ date: "`r Sys.Date()`"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Issues
+
+- Getting a lot of warning messages the lsoda() (i.e. the numerical integrator) about "Warning: an excessive amount of work (> maxsteps ) was done, but integration was not successful - increase maxstepsWarning: Returning early. Results are accurate, as far as they go". I am pretty unsure of how to debug lsoda
+
+- optimizer seems relatively sensitive to starting conditions? I get different results if I change the starting condition by a power of 10. (e.g. f = 0.03 instead of 0.003)
+
+
 ```{r packages, message=FALSE}
 library(here)
 library(tidyverse)
@@ -20,6 +27,7 @@ library(AICcmodavg)
 
 ```{r, set theme}
 theme_set(theme_minimal())
+set.seed(8878896)
 ```
 
 
@@ -40,8 +48,6 @@ data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
 data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube 
 
 treatment_IDs <- unique(data$treatment_ID)
-
-
 
 ```
 
@@ -382,7 +388,7 @@ m1_f_fit <- mle2(m1_ll,
                 upper = 0.07)
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
-as.numeric(m1_runtime)
+m1_runtime
 #opt1 <- optim(fn=m1_ll, par=c(30), method = "Brent", lower = 0, upper = 100) #this should be the same as mle2() since mle2() is a wrapper for optim()
 saveRDS(m1_f_fit, file = here("mle","m1_f_fit.rds"))
 ```
@@ -627,7 +633,7 @@ m2_f_fit <- mle2(m2_ll,
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
-as.numeric(m2_runtime)
+m2_runtime
 
 saveRDS(m2_f_fit, file = here("mle","m2_f_fit.rds"))
 
