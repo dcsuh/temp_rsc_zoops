@@ -566,6 +566,8 @@ m2_check %>% filter(R==1 & f>0) %>% ggplot(., aes(x = arr_t, y = temp, fill = 1-
 
 
 ```{r, m2_ll}
+kelvin <- 273
+
 m2_ll <- function(f, arr_t){
   data <- tmp
   resid_df <- tibble(resid=0, data$ID)
@@ -576,8 +578,8 @@ m2_ll <- function(f, arr_t){
                 length=data$mm[i],
                 gamma=2,
                 arr_t=arr_t,
-                ref_t=15,
-                temp=data$temp[i],
+                ref_t=15+kelvin,
+                temp=data$temp[i]+kelvin,
                 S=1/15)
     xstart <- c(R=data$resource[i])
 
@@ -631,7 +633,7 @@ start_time <- Sys.time()
 tmp <- data
 m2_f_fit <- mle2(m2_ll,
                 start=list(f=0.003,
-                           arr_t=10),
+                           arr_t=100),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
@@ -773,10 +775,19 @@ saveRDS(dat, here("mle","m3_check.rds"))
 ```
 
 
+
+Per-capita risk of being eaten
+
+$$
+\frac{1}{RS}\frac{dR}{dt} = - \frac{fL^{\gamma}}{1 + fL^{\gamma}hR} \\
+$$
+
 ```{r, m3 check plot}
 m3_check <- readRDS(here("mle", "m3_check.rds"))
 
-m3_check %>% na.omit() %>% ggplot(., aes(x = h, y = R, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
+m3_check %<>% mutate(attack=f/(1+f*h*R))
+
+m3_check %>% na.omit() %>% ggplot(., aes(x = h, y = R, fill = attack)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
 ```
 
 
