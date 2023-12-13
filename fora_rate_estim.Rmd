@@ -14,6 +14,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - optimizer seems relatively sensitive to starting conditions? I get different results if I change the starting condition by a power of 10. (e.g. f = 0.03 instead of 0.003)
 
+- likelihood of the more complex models is worse than the most basic model. Not sure why this is the case. The model results look like they fit the data better for the more complex models.
+
 
 ```{r packages, message=FALSE}
 library(here)

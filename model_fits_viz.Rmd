@@ -673,6 +673,7 @@ geom_point(aes(x=as.factor(resource),
 scale_color_manual(name="",values="black")
 ```
 
+# Temp on x-axis
 
 ```{r}
 m0_temp
@@ -682,4 +683,13 @@ m3_temp
 m4_temp
 ```
 
+# Resource on x-axis
+
+```{r}
+m0_resource
+m1_resource
+m2_resource
+m3_resource
+m4_resource
+```
 
