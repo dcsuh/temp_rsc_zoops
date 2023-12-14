@@ -632,8 +632,8 @@ summary(readRDS(here("mle", "m2_f_fits.rds")))
 start_time <- Sys.time()
 tmp <- data
 m2_f_fit <- mle2(m2_ll,
-                start=list(f=0.003,
-                           arr_t=100),
+                start=list(f=0.35,
+                           arr_t=10000),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
@@ -1016,10 +1016,10 @@ m4_ll <- function(f, arr_t, h){
 ```{r, m4_mle, eval = F}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=0.001, arr_t=100, h=10),
+                start=list(f=1, arr_t=1000, h=10),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0),
-                upper = c(1, Inf, Inf))
+                upper = c(Inf, Inf, Inf))
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 m4_runtime
