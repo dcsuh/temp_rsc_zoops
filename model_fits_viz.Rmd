@@ -42,9 +42,15 @@ ref_t <- 15
 # Fitting foraging rate
 
 ```{r}
+data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_len_mean, color=as.factor(resource))) + 
+  geom_point() + 
+  # geom_linerange(aes(ymin=rate_mean-rate_se, 
+  #                    ymax=rate_mean+rate_se)) +
+  labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource")
+
 data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_mean, color=as.factor(resource))) + 
   geom_point() + 
-  geom_linerange(aes(ymin=rate_mean-rate_se, 
+  geom_linerange(aes(ymin=rate_mean-rate_se,
                      ymax=rate_mean+rate_se)) +
   labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource")
 
@@ -186,7 +192,6 @@ $$
 observed\; f  = \frac{fL^{\gamma}}{1 + fL^{\gamma}hR} \\
 
 observed\; f = \frac{fL^{\gamma} - 1}{fL^{\gamma}Rh}\\
-
 $$
 
 NOT SURE ABOUT THIS
