@@ -506,6 +506,21 @@ r_end <- slice_max(output, time)[,2]
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
+Let's try to write out an analytical solution
+
+$$
+f = -ln(\frac{R_t}{R_0}) \frac{V}{tL^\gamma} \frac{1}{e^{T_A(\frac{1}{T_R}-\frac{1}{T})}}
+$$
+
+```{r}
+arr_t <- 1000
+data_summ %<>% mutate(m2_f = -log(conc_mean/resource)*(15/(time_mean*mm_mean^2))*(1/(exp(arr_t*((1/15)-(1/temp))))))
+```
+
+
+I need to rearrange that equation to get Rt on one side
+
+
 Let's loop through some example parameters to make sure that the temperature-dependent model is behaving the way we expect it to.
 
 ```{r, m2 check, eval = F}
@@ -566,7 +581,7 @@ m2_check %>% filter(R==1 & f>0) %>% ggplot(., aes(x = arr_t, y = temp, fill = 1-
 
 
 ```{r, m2_ll}
-kelvin <- 273
+kelvin <- 0 #set to 273 if you want it in Kelvin
 
 m2_ll <- function(f, arr_t){
   data <- tmp
@@ -583,7 +598,7 @@ m2_ll <- function(f, arr_t){
                 S=1/15)
     xstart <- c(R=data$resource[i])
 
-    output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params, hmax=0.1))
+    output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
     
     r_end <- slice_max(output, time)[,2]
       
@@ -632,8 +647,8 @@ summary(readRDS(here("mle", "m2_f_fits.rds")))
 start_time <- Sys.time()
 tmp <- data
 m2_f_fit <- mle2(m2_ll,
-                start=list(f=0.35,
-                           arr_t=10000),
+                start=list(f=0.03,
+                           arr_t=10),
                 method = "Nelder-Mead")
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
@@ -1016,7 +1031,7 @@ m4_ll <- function(f, arr_t, h){
 ```{r, m4_mle, eval = F}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=1, arr_t=1000, h=10),
+                start=list(f=0.003, arr_t=100, h=10),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0),
                 upper = c(Inf, Inf, Inf))
