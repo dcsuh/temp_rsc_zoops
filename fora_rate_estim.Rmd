@@ -30,6 +30,8 @@ library(AICcmodavg)
 ```{r, set theme}
 theme_set(theme_minimal())
 set.seed(8878896)
+
+kelvin <- 273.15
 ```
 
 
@@ -73,11 +75,11 @@ m0_num_sol <- function(t, x, params){
     )
 }
 
-maxTime <- 500
-times <- seq(0,maxTime,by=0.5)
+maxTime <- 0.4
+times <- seq(0,maxTime,by=0.01)
 
-params <- c(f=1,
-            S=1/15)
+params <- c(f=0.0003,
+            S=1/15*1000)
 
 xstart <- c(R=0.1)
 
@@ -97,10 +99,10 @@ m0_params <- data_summ %>% select(temp, resource, rate_mean, rate_len_mean, conc
 
 for (i in 1:nrow(m0_params)){
   maxTime <- m0_params$time_mean[i]
-  times <- seq(0,maxTime,by=0.5)
+  times <- seq(0,maxTime,by=0.01)
   
   params <- c(f=m0_params$rate_mean[i],
-              S=1/15)
+              S=1/15*1000)
   
   xstart <- c(R=m0_params$resource[i])
   
@@ -127,11 +129,11 @@ m0_ll <- function(f){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i] #sets endpoint time
-    times <- seq(0, maxTime, by=0.5)
+    times <- seq(0, maxTime, by=0.01)
     params <- c(f=f,
-                S=1/15)
+                S=1/15*1000)
     xstart <- c(R=data$resource[i]) #absolute resource amount in tube
-    output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params, hmax = 0.1))
+    output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params))
     
     r_end <- slice_max(output, time)[,2]
     
@@ -166,7 +168,7 @@ for(j in 1:nrow(m0_params)){
                     start=list(f=m0_params$rate_mean[j]),
                     method = "Brent", # I use Brent because we only have on parameter
                     lower = 0,
-                    upper = 0.005)
+                    upper = 0.1)
 }
 # m0_f_fit <- mle2(m0_ll,
 #                 start=list(f=0.003),
@@ -208,7 +210,7 @@ m0_f_fit <- mle2(m0_ll,
                 start=list(f=0.003),
                 method = "Brent", # I use Brent because we only have on parameter
                 lower = 0,
-                upper = 0.005)
+                upper = 0.01)
 end_time <- Sys.time()
 m0_runtime <- end_time - start_time
 m0_runtime
@@ -259,15 +261,15 @@ m1_num_sol <- function(t, x, params){
     )
 }
 
-maxTime <- 641
-times <- seq(0,maxTime,by=0.5)
+maxTime <- 0.4
+times <- seq(0,maxTime,by=0.01)
 
-params <- c(f=0.0122,
+params <- c(f=0.001,
             length=1,
             gamma=2,
-            S=1/15)
+            S=1/15*1000)
 
-xstart <- c(R=0.1)
+xstart <- c(R=1)
 
 output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
 
@@ -297,13 +299,13 @@ m1_ll <- function(f){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i] #sets endpoint time
-    times <- seq(0, maxTime, by=0.5)
+    times <- seq(0, maxTime, by=0.01)
     params <- c(f=f,
                 length=data$mm[i], #length measurement for each individual
                 gamma=2,
-                S=1/15)
+                S=1/15*1000)
     xstart <- c(R=data$resource[i]) #starting resource concentration
-    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
+    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
     
     r_end <- slice_max(output, time)[,2]
       
@@ -326,13 +328,13 @@ m1_ll_alt <- function(f, gamma){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
-    times <- seq(0, maxTime, by=0.5)
+    times <- seq(0, maxTime, by=0.01)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=gamma,
-                S=1/15)
+                S=1/15*1000)
     xstart <- c(R=data$resource[i])
-    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params, hmax = 0.1))
+    output <- as.data.frame(lsoda(xstart, times, m1_num_sol, params))
 
     r_end <- slice_max(output, time)[,2]
 
@@ -360,9 +362,9 @@ for(j in 1:nrow(m0_params)){
   tmp <- data %>% filter(treatment_ID==m0_params$ID[j])
   m1_f_fits[[j]]<-mle2(m1_ll,
                     start=list(f=m0_params$rate_len_mean[j]),
-                    method = "Brent", # I use Brent because we only have on parameter
+                    method = "Brent", # I use Brent because we only have one parameter
                     lower = 0,
-                    upper = 0.03)
+                    upper = 0.1)
 }
 saveRDS(m1_f_fits, file = here("mle","m1_f_fits.rds"))
 ```
@@ -384,10 +386,10 @@ Now we use the optimizer
 start_time <- Sys.time()
 tmp <- data
 m1_f_fit <- mle2(m1_ll,
-                start=list(f=0.003),
+                start=list(f=0.001),
                 method = "Brent", # I use Brent because we only have one parameter
                 lower = 0,
-                upper = 0.07)
+                upper = 0.1)
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
 m1_runtime
@@ -459,7 +461,7 @@ get_arr <- function(data){
   }
   dat <- c()
   for (i in 2:3){
-      dat[i-1] <- ((log(data$rate_mean[i]/f_ref))/((1/15)-(1/data$temp[i])))
+      dat[i-1] <- ((log(data$rate_mean[i]/f_ref))/((1/(15+kelvin))-(1/(data$temp[i]+kelvin))))
   }
   return(mean(dat))
 }
@@ -484,18 +486,18 @@ m2_num_sol <- function(t, x, params){
     )
 }
 
-maxTime <- 641
-times <- seq(0,maxTime,by=0.5)
+maxTime <- 0.4
+times <- seq(0,maxTime,by=0.005)
 
-params <- c(f=0.003,
+params <- c(f=0.005,
             length=1,
             gamma=2,
-            arr_t=100, #arrhenius coefficient
-            ref_t=15, #reference temperature
-            temp=25,
-            S=1/15) #treatment temperature
+            arr_t=10000, #arrhenius coefficient
+            ref_t=15+kelvin, #reference temperature
+            temp=25+kelvin,
+            S=1/15*1000) #treatment temperature
 
-xstart <- c(R=0.1)
+xstart <- c(R=1)
 
 output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
 
@@ -506,19 +508,6 @@ r_end <- slice_max(output, time)[,2]
 output %>% ggplot(., aes(x=time, y=R)) + geom_line()
 ```
 
-Let's try to write out an analytical solution
-
-$$
-f = -ln(\frac{R_t}{R_0}) \frac{V}{tL^\gamma} \frac{1}{e^{T_A(\frac{1}{T_R}-\frac{1}{T})}}
-$$
-
-```{r}
-arr_t <- 1000
-data_summ %<>% mutate(m2_f = -log(conc_mean/resource)*(15/(time_mean*mm_mean^2))*(1/(exp(arr_t*((1/15)-(1/temp))))))
-```
-
-
-I need to rearrange that equation to get Rt on one side
 
 
 Let's loop through some example parameters to make sure that the temperature-dependent model is behaving the way we expect it to.
@@ -527,8 +516,8 @@ Let's loop through some example parameters to make sure that the temperature-dep
 n <- 11
 
 param_set <- tibble(f = seq(0, 0.01, length.out = n),
-                    arr_t = seq(0, 1000, length.out = n),
-                    temp = seq(15,25, length.out = n),
+                    arr_t = seq(0, 10000, length.out = n),
+                    temp = seq(5,25, length.out = n),
                     R = seq(0, 1, length.out = n))
 
 dat <- tibble(f= NA,
@@ -545,21 +534,21 @@ for (i in 1:n){
       temp <- param_set$temp[k]
       for (m in 1:n){
         R <- param_set$R[m]
-        maxTime <- 600
-        times <- seq(0,maxTime,by=0.5)
+        maxTime <- 0.4
+        times <- seq(0,maxTime,by=0.01)
         params <- c(f=f,
                     length=0.9,
                     gamma=2,
                     arr_t=arr_t, #arrhenius coefficient
-                    ref_t=15, #reference temperature
-                    temp=temp,
-                    S=1/15) #treatment temperature
+                    ref_t=15+kelvin, #reference temperature
+                    temp=temp+kelvin,
+                    S=1/15*1000) #treatment temperature
         xstart <- c(R=R)
         output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
         r_end <- slice_max(output, time)[,2]
         dat %<>% add_row(f = f,
                          arr_t = arr_t,
-                         temp = temp,
+                         temp = temp+kelvin,
                          R = R,
                          end = r_end)
       }
@@ -577,25 +566,35 @@ m2_check <- readRDS(here("mle", "m2_check.rds"))
 m2_check %>% filter(R==1 & f>0) %>% ggplot(., aes(x = arr_t, y = temp, fill = 1-end/R)) + geom_tile() + facet_wrap(~f) + scale_fill_viridis_c()
 ```
 
+$$
+(observed\; f) = (reference\; f)*e^{T_{A}(1/T_{R}-1/T)}  \\
+$$
+
+```{r}
+m2_check %<>% mutate(f_adj = f*exp(arr_t*((1/(15+kelvin))-(1/(temp)))),
+                     arr_coef = exp(arr_t*((1/(15+kelvin))-(1/(temp)))))
+```
+
+```{r}
+m2_check %>% filter(R==1 & f > 0) %>% ggplot(., aes(x = arr_t, y = temp, fill = f_adj)) + geom_tile() + scale_fill_viridis_c() + facet_wrap(~f)
+```
 
 
 
 ```{r, m2_ll}
-kelvin <- 0 #set to 273 if you want it in Kelvin
-
 m2_ll <- function(f, arr_t){
   data <- tmp
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
-    times <- seq(0, maxTime, by=0.5)
+    times <- seq(0, maxTime, by=0.001)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
                 arr_t=arr_t,
                 ref_t=15+kelvin,
                 temp=data$temp[i]+kelvin,
-                S=1/15)
+                S=1/15*1000)
     xstart <- c(R=data$resource[i])
 
     output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
@@ -614,6 +613,8 @@ m2_ll <- function(f, arr_t){
 }
 ```
 
+
+
 ```{r, combine data}
 arr_data <- c(arr_0.1,arr_0.5,arr_1)
 ```
@@ -622,12 +623,12 @@ arr_data <- c(arr_0.1,arr_0.5,arr_1)
 ```{r, m2_f_fit for each resource level, eval = F}
 start_time <- Sys.time()
 m2_f_fits <- list()
-for(j in 1:length(unique(data$resource))){
+for(j in 1:(length(unique(data$resource)))){
   tmp <- data %>% filter(resource==unique(data$resource)[j])
   m2_f_fits[j] <- mle2(m2_ll,
-                       start=list(f=0.003,
-                                  arr_t=10),
-                       method = "Nelder-Mead")
+                       start=list(f=0.001,
+                                  arr_t=1000),
+                       method = "BFGS")
 }
 end_time <- Sys.time()
 end_time - start_time
@@ -638,7 +639,7 @@ saveRDS(m2_f_fits, file = here("mle","m2_f_fits.rds"))
 ```
 
 ```{r, m2_f_fits by resource}
-summary(readRDS(here("mle", "m2_f_fits.rds")))
+m2_f_fits
 ```
 
 
@@ -647,15 +648,16 @@ summary(readRDS(here("mle", "m2_f_fits.rds")))
 start_time <- Sys.time()
 tmp <- data
 m2_f_fit <- mle2(m2_ll,
-                start=list(f=0.03,
-                           arr_t=10),
-                method = "Nelder-Mead")
+                start=list(f=0.005,
+                           arr_t=10000),
+                method = "L-BFGS-B",
+                lower = c(0, 0),
+                upper = c(Inf, 100000))
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
 m2_runtime
 
 saveRDS(m2_f_fit, file = here("mle","m2_f_fit.rds"))
-
 ```
 
 ```{r, m2_f_fit}
@@ -767,13 +769,13 @@ for (i in 1:n){
     h <- param_set$h[j]
       for (m in 1:n){
         R <- param_set$R[m]
-        maxTime <- 600
-        times <- seq(0,maxTime,by=0.5)
+        maxTime <- 0.5
+        times <- seq(0,maxTime,by=0.01)
         params <- c(f=f,
                     length=1,
                     gamma=2,
                     h=h, #arrhenius coefficient
-                    S=1/15) #treatment temperature
+                    S=1/15*1000) #treatment temperature
         xstart <- c(R=R)
         output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
         r_end <- slice_max(output, time)[,2]
@@ -814,14 +816,14 @@ m3_ll <- function(f, h){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
-    times <- seq(0, maxTime, by=0.5)
+    times <- seq(0, maxTime, by=0.01)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
                 h=h,
-                S=1/15) #handling time
+                S=1/15*1000) #handling time
     xstart <- c(R=data$resource[i])
-    output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params, hmax = 0.1))
+    output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
     
     r_end <- slice_max(output, time)[,2]
       
@@ -843,8 +845,8 @@ m3_f_fits <- list()
 for(j in 1:length(unique(data$temp))){
   tmp <- data %>% filter(temp==unique(data$temp)[j])
   m3_f_fits[j] <- mle2(m3_ll,
-                       start=list(f=0.05,
-                                  h=0.6),
+                       start=list(f=0.003,
+                                  h=1),
                        method = "Nelder-Mead")
 }
 end_time <- Sys.time()
@@ -1001,17 +1003,17 @@ m4_ll <- function(f, arr_t, h){
   resid_df <- tibble(resid=0, data$ID)
     for (i in 1:nrow(data)) {
     maxTime <- data$time[i]
-    times <- seq(0, maxTime, by=1)
+    times <- seq(0, maxTime, by=0.005)
     params <- c(f=f,
                 length=data$mm[i],
                 gamma=2,
                 arr_t=arr_t,
-                ref_t=15,
-                temp=data$temp[i],
+                ref_t=15+kelvin,
+                temp=data$temp[i]+kelvin,
                 h=h,
-                S=1/15)
+                S=1/15*1000)
     xstart <- c(R=data$resource[i])
-    output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params, hmax = 0.1))
+    output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
     
     r_end <- slice_max(output, time)[,2]
       
@@ -1031,7 +1033,7 @@ m4_ll <- function(f, arr_t, h){
 ```{r, m4_mle, eval = F}
 start_time <- Sys.time()
 m4_f_fit <- mle2(m4_ll,
-                start=list(f=0.003, arr_t=100, h=10),
+                start=list(f=0.0001, arr_t=1000, h=10),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0),
                 upper = c(Inf, Inf, Inf))

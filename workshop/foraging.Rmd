@@ -19,10 +19,10 @@ Effects of temperature and resources on prevalence
 
 ```{r}
 data %<>% mutate(length = as.numeric(length),
-                 start_min = time_in_hr*60+time_in_min,
-                 end_min = time_measured_hr*60+time_measured_min,
+                 start_min = (time_in_hr+time_in_min/60)/24,
+                 end_min = (time_measured_hr+time_measured_min/60)/24,
                  time = end_min-start_min,
-                 vol = 15)
+                 vol = 0.015) #volume in L
 
 control <- data %>% filter(trt=="C") %>% group_by(temp, resource, block) %>% summarize(control_read = mean(read, na.rm=T))
 
@@ -88,7 +88,7 @@ data_summ %>%
   geom_point() + 
   geom_linerange(aes(ymin=rate_mean-rate_se, ymax=rate_mean+rate_se)) + 
   theme(axis.text.x = element_text(angle = 75, vjust = 1, hjust = 1)) + 
-  labs(y = "mL/minute",
+  labs(y = "L/day",
        x = "treatment")
 ```
 
@@ -99,7 +99,7 @@ data_summ %>%
   ggplot(aes(x=ID, y=rate_len_mean)) + 
   geom_point() + 
   theme(axis.text.x = element_text(angle = 75, vjust = 1, hjust = 1)) + 
-  labs(y = "mL/minute",
+  labs(y = "L/day",
        x = "treatment")
 ```
 
