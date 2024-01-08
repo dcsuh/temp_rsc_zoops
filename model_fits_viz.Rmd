@@ -36,6 +36,28 @@ m4_coef <- m4@coef
 
 gamma <- 2
 ref_t <- 15
+vol <- 15
+mean_time <- mean(data$time/60/24)
+```
+
+```{r, units}
+data_summ %<>% mutate(rate_len_mean = rate_len_mean*60*24)
+```
+
+
+```{r}
+temp_range <- seq(15,25,by=0.1)
+resource_range <- seq(0.1,1,by=0.01)
+
+seq_data <- tibble(temp=c(),
+                   resourece=c())
+
+for (i in 1:length(temp_range)){
+  tmp <- tibble(temp = temp_range[i],
+                resource = seq(0.1,1,by=0.01))
+  seq_data %<>% bind_rows(., tmp)
+}
+
 ```
 
 
@@ -46,19 +68,19 @@ data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_len_mean, color=as.factor(
   geom_point() + 
   # geom_linerange(aes(ymin=rate_mean-rate_se, 
   #                    ymax=rate_mean+rate_se)) +
-  labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource")
+  labs(x="Temperature", y="Foraging rate (mL/day)", color="Resource")
 
-data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_mean, color=as.factor(resource))) + 
-  geom_point() + 
-  geom_linerange(aes(ymin=rate_mean-rate_se,
-                     ymax=rate_mean+rate_se)) +
-  labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource")
-
-data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_mean, color=as.factor(temp))) + 
-  geom_point() + 
-  geom_linerange(aes(ymin=rate_mean-rate_se, 
-                     ymax=rate_mean+rate_se)) +
-  labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
+# data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_mean, color=as.factor(resource))) + 
+#   geom_point() + 
+#   geom_linerange(aes(ymin=rate_mean-rate_se,
+#                      ymax=rate_mean+rate_se)) +
+#   labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource")
+# 
+# data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_mean, color=as.factor(temp))) + 
+#   geom_point() + 
+#   geom_linerange(aes(ymin=rate_mean-rate_se, 
+#                      ymax=rate_mean+rate_se)) +
+#   labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
 ```
 
 
@@ -152,8 +174,8 @@ m2_coef
 m2_f <- as.numeric(m2_coef[1])
 m2_arr <- as.numeric(m2_coef[2])
 
-#data_summ %<>% mutate(m2_rate = (mm_mean^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
-data_summ %<>% mutate(m2_rate = m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
+data_summ %<>% mutate(m2_rate = (mm_mean^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
+seq_data %<>% mutate(m2_rate = (mm_mean^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
 ```
 
 ```{r}
@@ -204,6 +226,7 @@ data_summ %<>% mutate(m3_rate = ((m3_f*mm_mean^gamma)/(1+m3_f*(mm_mean^gamma)*m3
 data_summ %<>% mutate(m3_rate1 = ((m3_f*(mm_mean^gamma)-1)/(m3_f*(mm_mean^gamma)*m3_h*resource)))
 data_summ %<>% mutate(m3_rate2 = ((m3_f)/(1+m3_f*m3_h*resource)))
 
+seq_data %<>% mutate((m3_f*mm_mean^gamma)/(1+m3_f*(mm_mean^gamma)*m3_h*resource)))
 ```
 
 ```{r}
@@ -249,6 +272,9 @@ m4_arr <- as.numeric(m4_coef[2])
 m4_h <- as.numeric(m4_coef[3])
 
 data_summ %<>% mutate(m4_rate = ((m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
+                                   (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*m4_h*(mm_mean^gamma)*resource)))
+
+seq_data %<>% mutate(m4_rate = ((m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
                                    (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*m4_h*(mm_mean^gamma)*resource)))
 ```
 
@@ -335,7 +361,7 @@ model_conc <- data_summ %>% dplyr::select(temp, resource, rate_mean,
 m0_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -f*R*S
+    dR <- -f*R
     res <- c(dR)
     list(res)}
     )
@@ -344,12 +370,35 @@ m0_num_sol <- function(t, x, params){
 
 
 ```{r}
+m0_sim <- function(f, R, temp){
+    m0_num_sol <- function(t, x, params){
+    R <- x[1]
+    with(as.list(params),{
+      dR <- -f*R
+      res <- c(dR)
+      list(res)}
+      )
+    }
+  times <- seq(0,mean_time,by=0.01)
+  params <- c(f=m0_f/vol)
+  xstart <- c(R=R)
+  output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params))
+  r_end <- slice_max(output, time)[,2]
+  return(r_end)
+}
+```
+
+```{r}
+seq_data %<>% mutate(m0_end = mapply(m0_sim, f=m0_f, R=seq_data$resource, temp=seq_data$temp))
+```
+
+
+```{r}
 for (i in 1:nrow(model_conc)){
   maxTime <- model_conc$time_mean[i]
-  times <- seq(0,maxTime,by=0.5)
+  times <- seq(0,maxTime,by=0.01)
   
-  params <- c(f=m0_f,
-              S=1/15)
+  params <- c(f=m0_f/vol)
   
   xstart <- c(R=model_conc$resource[i])
   
@@ -367,22 +416,27 @@ for (i in 1:nrow(model_conc)){
 m1_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -(length^gamma)*f*R*S
+    dR <- -(length^gamma)*f*R
     res <- c(dR)
     list(res)}
     )
 }
 ```
 
+
+```{r}
+seq_data %<>% mutate(m0_end = mapply(m0_sim, f=m0_f, R=seq_data$resource, temp=seq_data$temp))
+```
+
+
 ```{r}
 for (i in 1:nrow(model_conc)){
   maxTime <- model_conc$time_mean[i]
-  times <- seq(0,maxTime,by=0.5)
+  times <- seq(0,maxTime,by=0.01)
   
-  params <- c(f=m1_f,
+  params <- c(f=m1_f/vol,
               length=model_conc$mm_mean[i],
-              gamma=2,
-              S=1/15)
+              gamma=2)
   
   xstart <- c(R=model_conc$resource[i])
   
@@ -400,42 +454,24 @@ for (i in 1:nrow(model_conc)){
 m2_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*R*S
+    dR <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*R
     res <- c(dR)
     list(res)}
     )
 }
-
-maxTime <- 641
-times <- seq(0,maxTime,by=0.5)
-
-params <- c(f=0.003,
-            length=1,
-            gamma=2,
-            arr_t=100, #arrhenius coefficient
-            ref_t=15, #reference temperature
-            temp=25,
-            S=1/15) #treatment temperature
-
-xstart <- c(R=0.1)
-
-output <- as.data.frame(lsoda(xstart, times, m2_num_sol, params))
-
-r_end <- slice_max(output, time)[,2]
 ```
 
 ```{r}
 for (i in 1:nrow(model_conc)){
   maxTime <- model_conc$time_mean[i]
-  times <- seq(0,maxTime,by=0.5)
+  times <- seq(0,maxTime,by=0.01)
   
-  params <- c(f=m2_f,
+  params <- c(f=m2_f/vol,
               length=model_conc$mm_mean[i],
               gamma=2,
               arr_t=m2_arr,
               ref_t=ref_t,
-              temp=model_conc$temp[i],
-              S=1/15)
+              temp=model_conc$temp[i])
   
   xstart <- c(R=model_conc$resource[i])
   
@@ -452,7 +488,7 @@ for (i in 1:nrow(model_conc)){
 m3_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -((f*length^gamma*R)/(1+f*length^gamma*h*R))*S
+    dR <- -((f*length^gamma*R)/(1+f*length^gamma*h*R))
     res <- c(dR)
     list(res)}
     )
@@ -462,13 +498,12 @@ m3_num_sol <- function(t, x, params){
 ```{r}
 for (i in 1:nrow(model_conc)){
   maxTime <- model_conc$time_mean[i]
-  times <- seq(0,maxTime,by=0.5)
+  times <- seq(0,maxTime,by=0.01)
   
-  params <- c(f=m3_f,
+  params <- c(f=m3_f/vol,
               length=model_conc$mm_mean[i],
               gamma=2,
-              h=m3_h,
-              S=1/15)
+              h=m3_h)
   
   xstart <- c(R=model_conc$resource[i])
   
@@ -486,7 +521,7 @@ for (i in 1:nrow(model_conc)){
 m4_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*(length^gamma)*R))*S
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*(length^gamma)*R))
     res <- c(dR)
     list(res)}
     )
@@ -496,16 +531,15 @@ m4_num_sol <- function(t, x, params){
 ```{r}
 for (i in 1:nrow(model_conc)){
   maxTime <- model_conc$time_mean[i]
-  times <- seq(0,maxTime,by=0.5)
+  times <- seq(0,maxTime,by=0.01)
   
-  params <- c(f=m4_f,
+  params <- c(f=m4_f/vol,
               length=model_conc$mm_mean[i],
               gamma=2,
               arr_t=m4_arr,
               ref_t=ref_t,
               temp=model_conc$temp[i],
-              h=m4_h,
-              S=1/15)
+              h=m4_h)
   
   xstart <- c(R=model_conc$resource[i])
   

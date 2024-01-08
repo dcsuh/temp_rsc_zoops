@@ -19,10 +19,11 @@ Effects of temperature and resources on prevalence
 
 ```{r}
 data %<>% mutate(length = as.numeric(length),
-                 start_min = (time_in_hr+time_in_min/60)/24,
-                 end_min = (time_measured_hr+time_measured_min/60)/24,
+                 start_min = time_in_hr*60+time_in_min,
+                 end_min = time_measured_hr*60+time_measured_min,
                  time = end_min-start_min,
-                 vol = 0.015) #volume in L
+                 time_day = end_min/60/24 - start_min/60/24,
+                 vol = 15) #volume in mL
 
 control <- data %>% filter(trt=="C") %>% group_by(temp, resource, block) %>% summarize(control_read = mean(read, na.rm=T))
 
@@ -57,7 +58,7 @@ data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(ra
                                                              length_sd = sd(length, na.rm = T),
                                                              length_se = sd(length, na.rm = T)/sqrt(n()),
                                                              mm_mean = mean(mm, na.rm = T),
-                                                             time_mean = mean(time, na.rm = T))
+                                                             time_mean = mean(time_day, na.rm = T))
 
 # data_summ <- data %>% group_by(temp, resource, block) %>% summarize(mean_rate = mean(rate),
 #                                                              var = var(rate),
