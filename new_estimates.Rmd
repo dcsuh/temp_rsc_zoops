@@ -1,5 +1,5 @@
 ---
-title: "m0_m1_m2"
+title: "foraging rate estimates"
 output: html_document
 date: "`r Sys.Date()`"
 ---
