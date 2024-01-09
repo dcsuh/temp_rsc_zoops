@@ -207,14 +207,13 @@ scale_color_manual(name="",values="black")
 m2_plot <- seq_data %>% filter(resource %in% c(1)) %>%
 ggplot(.) +
 geom_line(aes(x=temp, 
-               y=m2_rate, 
-               shape=as.factor(resource))) +
+               y=m2_rate)) +
 geom_point(data=data_summ, aes(x=temp, 
                           y=rate_len_mean, 
                           group = as.factor(resource), 
                           color = as.factor(resource),
                           shape = as.factor(resource))) + 
-labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Temperature-dependent model") 
+labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = "Temperature-dependent model") 
 ```
 
 
@@ -622,7 +621,7 @@ geom_point(data=model_conc, aes(x=resource,
                           group = as.factor(temp), 
                           color = as.factor(temp),
                           shape = as.factor(temp))) + 
-labs(x="Resource", y="Resource concentration", color="Temperature", shape="Temperature", title = "Independent model w/ size correction") 
+labs(x="Resource", y="Resource concentration", color="Temperature", shape="Temperature", title = "Independent model w/0 size correction") 
 ```
 
 
@@ -866,7 +865,6 @@ m4_resource
 ```
 
 ```{r}
-m0_plot_conc
 m1_plot_conc
 m2_plot_conc
 m3_plot_conc
