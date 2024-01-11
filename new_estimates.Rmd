@@ -124,7 +124,7 @@ summary(readRDS(here("mle","m0_f_fit.rds")))
 Recreate Alex's results from Model 1
 
 $$
-\frac{dR}{dt} = -L^{\gamma} fR \\
+\frac{dR}{dt} = -L^{\gamma} fRS\\
 $$
 
 ```{r, m1_num_sol}
@@ -200,7 +200,7 @@ summary(readRDS(here("mle","m1_f_fit.rds")))
 
 
 $$
-\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} R\\
+\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\
 $$
 
 
