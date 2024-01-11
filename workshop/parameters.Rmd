@@ -128,7 +128,7 @@ length(treatments) # how many unique? # this tells you how big to make the summa
 
 
 #########################################################
-# 2) some meta-information to now about the experiment:
+# 2) some meta-information to know about the experiment:
 
 age.at.start <- 5  #this tells the function what the starting age of animals in the spread sheet is
 # day.columns <- which(names(dataset)%in%c("4/10/22",       "4/11/22",       "4/12/22",       "4/13/22",
@@ -567,6 +567,7 @@ saveRDS(lt.summary_factors, file = here("processed_data","lt_full_summary.rds"))
 lt.summary_factors %>% filter(species=="D", temp_id %in% c(15, 20, 25)) %>% ggplot(.,aes(x=trt, y=S.R_naught)) + geom_point() + geom_linerange(aes(ymin=S.R_naught.025, ymax=S.R_naught.975)) + theme(axis.text.x = element_text(angle=90))
 
 ```
+
 
 
 
