@@ -34,7 +34,7 @@ Some work in progress:
 ([fora_rate_estim.Rmd](/fora_rate_estim.Rmd)) 
 ([foraging data](/processed_data/foraging_raw.rds))
 
-[updated estimates](/new_estimated.html)
+[updated estimates](/new_estimates.html)
 
 [model params visualized](/model_fits_viz.html)
 ([Rmd version](/model_fits_viz.Rmd))
