@@ -35,6 +35,8 @@ data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
 data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube 
 
 treatment_IDs <- unique(data$treatment_ID)
+resource_IDs <- unique(data$resource)
+temp_IDs <- unique(data$temp)
 
 
 vol <- 15
@@ -283,12 +285,6 @@ summary(readRDS(here("mle", "m2_f_fit.rds")))
 ```
 
 
-```{r}
-summary(readRDS(here("mle","m0_f_fit.rds")))
-summary(readRDS(here("mle","m1_f_fit.rds")))
-summary(readRDS(here("mle","m2_f_fit.rds")))
-
-```
 
 
 # Model 3 - Resource-dependent model
@@ -438,6 +434,7 @@ m4_ll <- function(f, arr_t, h){
 
 ```{r, m4_mle, eval = F}
 start_time <- Sys.time()
+tmp <- data
 m4_f_fit <- mle2(m4_ll,
                 skip.hessian = T,
                 start=list(f=10, arr_t=50, h=1),
@@ -458,15 +455,201 @@ saveRDS(m4_f_fit, file = here("mle","m4_f_fit.rds"))
 summary(readRDS(here("mle","m4_f_fit.rds")))
 ```
 
-Model results and runtimes
-```{r, results}
-summary(readRDS(here("mle","m0_f_fit.rds"))) #no size correction
-summary(readRDS(here("mle","m1_f_fit.rds"))) #with size correction
-summary(readRDS(here("mle","m2_f_fit.rds"))) #temperature-dependent
-summary(readRDS(here("mle","m3_f_fit.rds"))) #resource-dependent
-summary(readRDS(here("mle","m4_f_fit.rds"))) #temperature and resource-dependent
-summary(readRDS(here("mle","m4_f_fita.rds"))) #temperature and resource-dependent
+
+# Parameter Check
+
+How different are the parameters for each treatment?
+
+```{r}
+test_fit <- list(c())
+for(i in 1:length(treatment_IDs)){
+  tmp <- data %>% filter(treatment_ID==treatment_IDs[i])
+  test_fit[i] <- mle2(m4_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t=50, h=1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0),
+                upper = c(Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t=50, h=1), maxit=10000))
+}
 ```
+
+```{r}
+for(i in 1:length(treatment_IDs)){
+  print(test_fit[[i]]@coef)
+}
+```
+
+
+
+# Model 5 - Resource on Temperature Interaction
+
+This model uses a different Arrhenius coefficient for each resource level to see if there is an effect of resource level on the temperature effect.
+
+```{r, m5_ll}
+m5_ll <- function(f, arr_t_0.1, arr_t_0.5, arr_t_1, h){
+  arr_t_vec <- c(arr_t_0.1, arr_t_0.5, arr_t_1)
+  nll_vec <- c()
+  for (i in 1:length(resource_IDs)){
+  data <- tmp %>% filter(resource == resource_IDs[i])
+  output <- as.data.frame(mapply(m4_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t_vec[i], ref_t=15, temp=data$temp, h=h))
+  colnames(output) <- "endpoint"
+  data$end <- output$endpoint
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_vec[i] <- -sum(nll, na.rm = T)
+  }
+  sum(nll_vec)
+}
+```
+
+```{r}
+start_time <- Sys.time()
+tmp <- data
+m5_f_fit <- mle2(m5_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h=1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0, 0, 0),
+                upper = c(Inf, Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h=1), maxit=10000))
+end_time <- Sys.time()
+m5_runtime <- end_time-start_time
+m5_runtime
+
+coef(m5_f_fit)
+
+saveRDS(m5_f_fit, file = here("mle","m5_f_fit.rds"))
+```
+
+
+# Model 6 - Temperature on Resource Interaction
+
+This model uses a different handling time for each temperature level to see if there is an effect of temperature on the resource effect.
+
+```{r}
+m6_ll <- function(f, arr_t, h_15, h_20, h_25){
+  h_vec <- c(h_15, h_20, h_25)
+  nll_vec <- c()
+  for (i in 1:length(temp_IDs)){
+  data <- tmp %>% filter(temp == temp_IDs[i])
+  output <- as.data.frame(mapply(m4_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h_vec[i]))
+  colnames(output) <- "endpoint"
+  data$end <- output$endpoint
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_vec[i] <- -sum(nll, na.rm = T)
+  }
+  sum(nll_vec)
+}
+```
+
+
+```{r}
+start_time <- Sys.time()
+tmp <- data
+m6_f_fit <- mle2(m6_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t=50, h_15=1, h_20=1, h_25=1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0, 0, 0),
+                upper = c(Inf, Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t=50, h_15=1, h_20=1, h_25=1), maxit=10000))
+end_time <- Sys.time()
+m6_runtime <- end_time-start_time
+m6_runtime
+
+coef(m6_f_fit)
+
+saveRDS(m6_f_fit, file = here("mle","m6_f_fit.rds"))
+```
+
+
+# Model 7 - Full Interaction Model
+
+This is a full interaction model that will see if there are interactions between both temperature and resource on each other.
+
+```{r}
+for(i in 1:3){
+  for(j in 1:3){
+    print(i*3 + j - 3) #fun check to make sure we count from 1 to 9
+  }
+}
+```
+
+```{r}
+m7_ll <- function(f, arr_t_0.1, arr_t_0.5, arr_t_1, h_15, h_20, h_25){
+  arr_t_vec <- c(arr_t_0.1, arr_t_0.5, arr_t_1)
+  h_vec <- c(h_15, h_20, h_25)
+  nll_vec <- c()
+  for (i in 1:length(temp_IDs)){
+  data <- tmp %>% filter(temp == temp_IDs[i])
+
+    for (j in 1:length(resource_IDs)){
+    data <- tmp %>% filter(resource == resource_IDs[j])
+    output <- as.data.frame(mapply(m4_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+                                   length=data$mm, gamma=2, arr_t=arr_t_vec[j], ref_t=15, temp=data$temp, h=h_vec[i]))
+    colnames(output) <- "endpoint"
+    data$end <- output$endpoint
+    data %<>% mutate(resid = log(end) - log(amt_rem))
+    
+      nll <- dnorm(data$resid, 
+                   mean = 0, 
+                   sd = sd(data$resid, na.rm = T), 
+                   log = T)
+      nll_vec[i*3 + j - 3] <- -sum(nll, na.rm = T)
+    }
+  }
+  sum(nll_vec)
+}
+```
+
+
+```{r}
+start_time <- Sys.time()
+tmp <- data
+m7_f_fit <- mle2(m7_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h_15=1, h_20=1, h_25=1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0, 0, 0, 0, 0),
+                upper = c(Inf, Inf, Inf, Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h_15=1, h_20=1, h_25=1), maxit=10000))
+end_time <- Sys.time()
+m7_runtime <- end_time-start_time
+m7_runtime
+
+coef(m7_f_fit)
+
+saveRDS(m7_f_fit, file = here("mle","m7_f_fit.rds"))
+```
+
+
+
+
+
+Model results
+```{r, results}
+# summary(readRDS(here("mle","m0_f_fit.rds"))) #no size correction
+# summary(readRDS(here("mle","m1_f_fit.rds"))) #with size correction
+# summary(readRDS(here("mle","m2_f_fit.rds"))) #temperature-dependent
+# summary(readRDS(here("mle","m3_f_fit.rds"))) #resource-dependent
+# summary(readRDS(here("mle","m4_f_fit.rds"))) #temperature and resource-dependent
+# summary(readRDS(here("mle","m5_f_fit.rds"))) #resource on temp effect
+# summary(readRDS(here("mle","m6_f_fit.rds"))) #temp on resource effect
+# summary(readRDS(here("mle","m7_f_fit.rds"))) #full interaction
+```
+
 
 
 ```{r, AIC}
@@ -475,7 +658,33 @@ m1 <- readRDS(here("mle","m1_f_fit.rds"))
 m2 <- readRDS(here("mle","m2_f_fit.rds"))
 m3 <- readRDS(here("mle","m3_f_fit.rds"))
 m4 <- readRDS(here("mle","m4_f_fit.rds"))
+m5 <- readRDS(here("mle","m5_f_fit.rds"))
+m6 <- readRDS(here("mle","m6_f_fit.rds"))
+m7 <- readRDS(here("mle","m7_f_fit.rds"))
 ```
+
+```{r}
+m0@coef
+m1@coef
+m2@coef
+m3@coef
+m4@coef
+m5@coef
+m6@coef
+m7@coef
+```
+
+```{r}
+m0@min
+m1@min
+m2@min
+m3@min
+m4@min
+m5@min
+m6@min
+m7@min
+```
+
 
 ```{r}
 getAIC <- function(n, L){
@@ -490,6 +699,9 @@ getAIC(m1@coef, m1@min)
 getAIC(m2@coef, m2@min)
 getAIC(m3@coef, m3@min)
 getAIC(m4@coef, m4@min)
+getAIC(m5@coef, m5@min)
+getAIC(m6@coef, m6@min)
+getAIC(m7@coef, m7@min)
 ```
 
 
