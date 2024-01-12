@@ -348,7 +348,7 @@ geom_point(data=data_summ, aes(x=resource,
 labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Full model") 
 ```
 
-```{r}
+```{r, include=F}
 m0_plot1
 m1_plot1
 m2_plot1
@@ -356,7 +356,7 @@ m3_plot1
 m4_plot1
 ```
 
-```{r}
+```{r, include=F}
 m0_plot2
 m1_plot2
 m2_plot2
@@ -844,9 +844,8 @@ labs(x="Resource", y="Resource concentration", color="Temperature", shape="Tempe
 ```
 
 
-# Temp on x-axis
 
-```{r}
+```{r, include=F}
 m0_temp
 m1_temp
 m2_temp
@@ -854,9 +853,8 @@ m3_temp
 m4_temp
 ```
 
-# Resource on x-axis
 
-```{r}
+```{r, include=F}
 m0_resource
 m1_resource
 m2_resource
