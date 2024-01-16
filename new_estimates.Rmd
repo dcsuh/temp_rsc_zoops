@@ -98,7 +98,7 @@ m0_sim <- function(R, time, f){
 ```{r, m0_ll}
 m0_ll <- function(f){
   data <- tmp
-  m0_end <- as.data.frame(mapply(m0_sim, R=data$resource, time=data$time/60/24, f=f/data$vol))
+  m0_end <- as.data.frame(mapply(m0_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol))
   colnames(m0_end) <- "m0_end"
   data$end <- m0_end$m0_end
   data %<>% mutate(resid = log(end) - log(amt_rem))
@@ -174,7 +174,7 @@ m1_sim <- function(R, time, f, length, gamma){
 ```{r, m1_ll}
 m1_ll <- function(f){
   data <- tmp
-  m1_end <- as.data.frame(mapply(m1_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  m1_end <- as.data.frame(mapply(m1_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2))
   colnames(m1_end) <- "m1_end"
   data$end <- m1_end$m1_end
@@ -254,7 +254,7 @@ m2_sim <- function(R, time, f, length, gamma, ref_t, arr_t, temp){
 ```{r, m2_ll}
 m2_ll <- function(f, arr_t){
   data <- tmp
-  m2_end <- as.data.frame(mapply(m2_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  m2_end <- as.data.frame(mapply(m2_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp))
   colnames(m2_end) <- "m2_end"
   data$end <- m2_end$m2_end
@@ -346,7 +346,7 @@ m3_sim <- function(R, time, f, length, gamma, h){
 ```{r, m3_ll}
 m3_ll <- function(f, h){
   data <- tmp
-  output <- as.data.frame(mapply(m3_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  output <- as.data.frame(mapply(m3_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, h=h*data$vol))
   colnames(output) <- "end"
   data$end <- output$end
@@ -432,7 +432,7 @@ m3a_sim <- function(R, time, f, length, gamma, k){
 ```{r, m3a_ll}
 m3a_ll <- function(f, k){
   data <- tmp
-  output <- as.data.frame(mapply(m3a_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  output <- as.data.frame(mapply(m3a_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, k=k))
   colnames(output) <- "end"
   data$end <- output$end
@@ -493,6 +493,17 @@ m4_num_sol <- function(t, x, params){
 }
 ```
 
+```{r, m4_num_sol}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*h*R))
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
 ```{r, m4_sim}
 m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
   times <- seq(0, time, by=0.01)
@@ -517,7 +528,7 @@ m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
 ```{r, m4_ll}
 m4_ll <- function(f, arr_t, h){
   data <- tmp
-  m4_end <- as.data.frame(mapply(m4_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  m4_end <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
   colnames(m4_end) <- "m4_end"
   data$end <- m4_end$m4_end
@@ -601,7 +612,7 @@ m4a_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, k){
 ```{r, m4_ll}
 m4a_ll <- function(f, arr_t, k){
   data <- tmp
-  output <- as.data.frame(mapply(m4a_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  output <- as.data.frame(mapply(m4a_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, k=k))
   colnames(output) <- "end"
   data$end <- output$end
@@ -676,7 +687,7 @@ m5_ll <- function(f, arr_t_0.1, arr_t_0.5, arr_t_1, h){
   nll_vec <- c()
   for (i in 1:length(resource_IDs)){
   data <- tmp %>% filter(resource == resource_IDs[i])
-  output <- as.data.frame(mapply(m4_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t_vec[i], ref_t=15, temp=data$temp, h=h))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
@@ -722,7 +733,7 @@ m6_ll <- function(f, arr_t, h_15, h_20, h_25){
   nll_vec <- c()
   for (i in 1:length(temp_IDs)){
   data <- tmp %>% filter(temp == temp_IDs[i])
-  output <- as.data.frame(mapply(m4_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h_vec[i]))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
@@ -781,7 +792,7 @@ m7_ll <- function(f, arr_t_0.1, arr_t_0.5, arr_t_1, h_15, h_20, h_25){
 
     for (j in 1:length(resource_IDs)){
     data <- tmp %>% filter(resource == resource_IDs[j])
-    output <- as.data.frame(mapply(m4_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+    output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                    length=data$mm, gamma=2, arr_t=arr_t_vec[j], ref_t=15, temp=data$temp, h=h_vec[i]))
     colnames(output) <- "endpoint"
     data$end <- output$endpoint
