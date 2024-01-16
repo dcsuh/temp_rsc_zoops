@@ -27,19 +27,24 @@ data %<>% mutate(length = as.numeric(length),
 
 control <- data %>% filter(trt=="C") %>% group_by(temp, resource, block) %>% summarize(control_read = mean(read, na.rm=T))
 
-data %<>% left_join(., control)
+data %<>% left_join(., control) %>% filter(trt=="trt")
 ```
 
 ```{r}
 #this calculation comes from Hite et al. 2020 and assumes a strong linear relationship between fluorescence and algae conc
-data %<>% filter(trt=="trt") %>% mutate(mm = as.numeric(length)*17.86/1000,
-                                        rate = log(control_read/read)*(vol/time), 
-                                        #vol is mL and time is min for a rate of mL/min
-                                        rate_len = rate/mm^2,
-                                        amt_rem = ((resource/control_read)*read), #final resource concentration
-                                        amt_rem_tot = ((resource*vol/control_read)*read)) #final resource amount
+control_coef <- summary(lm(control_read~resource, data=data))$coef[2]
+
+data %<>% mutate(mm = as.numeric(length)*17.86/1000,
+                rate = log(control_read/read)*(vol/time), 
+                #vol is mL and time is min for a rate of mL/min
+                rate_len = rate/mm^2,
+                amt_rem = read/control_coef, #final resource concentration
+                amt_rem_tot = amt_rem*vol,
+                amt_init = control_read/control_coef) #final resource amount
+```
 
 
+```{r}
 data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(rate),
                                                              rate_var = var(rate),
                                                              rate_sd = sd(rate),

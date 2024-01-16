@@ -42,6 +42,19 @@ temp_IDs <- unique(data$temp)
 vol <- 15
 ```
 
+Some of the lengths are missing so we impute these missing values by using the average length from that treatment
+```{r}
+mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)
+data %<>% left_join(., mean_length_summ)
+data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
+```
+
+Test with Alex's method of converting rfu to dry weight
+```{r}
+# data %<>% mutate(amt_rem = read/299.4443)
+# data %<>% mutate(resource = control_read/299.4443)
+```
+
 
 
 # Model 0 - Basic model
@@ -333,10 +346,10 @@ m3_sim <- function(R, time, f, length, gamma, h){
 ```{r, m3_ll}
 m3_ll <- function(f, h){
   data <- tmp
-  m3_end <- as.data.frame(mapply(m3_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, h=h))
-  colnames(m3_end) <- "m3_end"
-  data$end <- m3_end$m3_end
+  output <- as.data.frame(mapply(m3_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, h=h*data$vol))
+  colnames(output) <- "end"
+  data$end <- output$end
   data %<>% mutate(resid = log(end) - log(amt_rem))
   
     nll <- dnorm(data$resid, 
@@ -353,12 +366,12 @@ start_time <- Sys.time()
 tmp <- data
 m3_f_fit <- mle2(m3_ll,
                 skip.hessian = T,
-                start=list(f=10,
-                           h=1),
+                start=list(f=40,
+                           h=0.2),
                 method = "L-BFGS-B",
                 lower = c(0, 0),
                 upper = c(Inf, Inf),
-                control=list(parscale=c(f=10, h=1), maxit=10000))
+                control=list(parscale=c(f=40, h=0.2), maxit=10000))
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
 m3_runtime
@@ -386,7 +399,7 @@ $$
 
 
 
-```{r, m3_num_sol}
+```{r, m3a_num_sol}
 m3a_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
@@ -398,7 +411,7 @@ m3a_num_sol <- function(t, x, params){
 ```
 
 
-```{r, m3_sim}
+```{r, m3a_sim}
 m3a_sim <- function(R, time, f, length, gamma, k){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R)
@@ -416,7 +429,7 @@ m3a_sim <- function(R, time, f, length, gamma, k){
 }
 ```
 
-```{r, m3_ll}
+```{r, m3a_ll}
 m3a_ll <- function(f, k){
   data <- tmp
   output <- as.data.frame(mapply(m3a_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
@@ -434,7 +447,7 @@ m3a_ll <- function(f, k){
 ```
 
 
-```{r, m3_mle, eval = F}
+```{r, m3a_mle, eval = F}
 start_time <- Sys.time()
 tmp <- data
 m3a_f_fit <- mle2(m3a_ll,
@@ -454,7 +467,7 @@ coef(m3a_f_fit)
 saveRDS(m3a_f_fit, file = here("mle","m3a_f_fit.rds"))
 ```
 
-```{r, m3_f_fit}
+```{r, m3a_f_fit}
 summary(readRDS(here("mle", "m3_f_fit.rds")))
 ```
 
@@ -473,7 +486,7 @@ $$
 m4_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*(length^gamma)*R))
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*R))
     res <- c(dR)
     list(res)}
     )
@@ -505,7 +518,7 @@ m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
 m4_ll <- function(f, arr_t, h){
   data <- tmp
   m4_end <- as.data.frame(mapply(m4_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h))
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
   colnames(m4_end) <- "m4_end"
   data$end <- m4_end$m4_end
   data %<>% mutate(resid = log(end) - log(amt_rem))
@@ -525,7 +538,7 @@ start_time <- Sys.time()
 tmp <- data
 m4_f_fit <- mle2(m4_ll,
                 skip.hessian = T,
-                start=list(f=10, arr_t=50, h=1),
+                start=list(f=5, arr_t=50, h=0.1),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0),
                 upper = c(Inf, Inf, Inf),
