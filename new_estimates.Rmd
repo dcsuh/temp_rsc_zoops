@@ -307,7 +307,7 @@ I try to incorporate resource-dependence by using an equation for the type II fu
 
 
 $$
-\frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR} \\
+\frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fhR} \\
 $$
 
 
@@ -317,7 +317,7 @@ $$
 m3_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -((f*length^gamma*R)/(1+f*length^gamma*h*R))
+    dR <- -((f*length^gamma*R)/(1+f*h*R))
     res <- c(dR)
     list(res)}
     )
@@ -478,7 +478,7 @@ summary(readRDS(here("mle", "m3_f_fit.rds")))
 I try to incorporate both here by just smashing everything together.
 
 $$
-\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} \\
+\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR} \\
 $$
 
 
@@ -487,17 +487,6 @@ m4_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
     dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*h*R))
-    res <- c(dR)
-    list(res)}
-    )
-}
-```
-
-```{r, m4_num_sol}
-m4_num_sol <- function(t, x, params){
-  R <- x[1]
-  with(as.list(params),{
-    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*h*R))
     res <- c(dR)
     list(res)}
     )
@@ -553,7 +542,7 @@ m4_f_fit <- mle2(m4_ll,
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0),
                 upper = c(Inf, Inf, Inf),
-                control=list(parscale=c(f=10, arr_t=50, h=1), maxit=10000))
+                control=list(parscale=c(f=5, arr_t=50, h=0.1), maxit=10000))
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 m4_runtime

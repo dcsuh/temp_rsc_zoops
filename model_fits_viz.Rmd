@@ -342,7 +342,7 @@ labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Tempe
 
 
 $$
-observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} \\
+observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR} \\
 $$
 
 ```{r}
@@ -350,6 +350,7 @@ m4_coef
 m4_f <- as.numeric(m4_coef[1])
 m4_arr <- as.numeric(m4_coef[2])
 m4_h <- as.numeric(m4_coef[3])
+
 
 data_summ %<>% mutate(m4_rate = ((m4_f*exp(m4_arr*(1/ref_t - 1/temp)))/
                                    (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*m4_h*resource)))
