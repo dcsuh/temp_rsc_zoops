@@ -24,6 +24,7 @@ m0 <- readRDS(here("mle", "m0_f_fit.rds"))
 m1 <- readRDS(here("mle", "m1_f_fit.rds"))
 m2 <- readRDS(here("mle", "m2_f_fit.rds"))
 m3 <- readRDS(here("mle", "m3_f_fit.rds"))
+m3a <- readRDS(here("mle", "m3a_f_fit.rds"))
 m4 <- readRDS(here("mle", "m4_f_fit.rds"))
 ```
 
@@ -32,6 +33,7 @@ m0_coef <- m0@coef
 m1_coef <- m1@coef
 m2_coef <- m2@coef
 m3_coef <- m3@coef
+m3a_coef <- m3a@coef
 m4_coef <- m4@coef
 
 gamma <- 2
@@ -278,6 +280,66 @@ labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Tempe
 ```
 
 
+$$
+observed\; f  = \frac{f}{k + R} \\
+$$
+
+```{r}
+m3a_coef
+m3a_f <- as.numeric(m3_coef[1])
+m3a_k <- as.numeric(m3_coef[2])
+
+data_summ %<>% mutate(m3a_rate = ((m3a_f)/(m3a_k + resource)))
+
+seq_data %<>% mutate(m3a_rate=((m3a_f)/(m3a_k + resource)))
+```
+
+```{r}
+m3a_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
+                          y=rate_len_mean,
+                          group = as.factor(resource),
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) +
+geom_point() +
+# geom_linerange(aes(ymin=rate_mean-rate_se,
+#                  ymax=rate_mean+rate_se)) +
+labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = "Resource-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m3a_rate,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+m3a_plot2 <- data_summ %>% ggplot(., aes(x=as.factor(resource), 
+                          y=rate_len_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+geom_point() + 
+# geom_linerange(aes(ymin=rate_mean-rate_se, 
+#                  ymax=rate_mean+rate_se)) +
+labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Resource-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(resource), 
+               y=m3a_rate, 
+               shape=as.factor(temp))) +
+scale_color_manual(name="",values="black")
+```
+
+
+```{r}
+m3a_plot <- seq_data %>% filter(temp %in% c(15)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+               y=m3a_rate)) +
+geom_point(data=data_summ, aes(x=resource, 
+                          y=rate_len_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Resource-dependent model") 
+```
+
 
 $$
 observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} \\
@@ -353,6 +415,7 @@ m0_plot1
 m1_plot1
 m2_plot1
 m3_plot1
+m3a_plot1
 m4_plot1
 ```
 
@@ -361,12 +424,14 @@ m0_plot2
 m1_plot2
 m2_plot2
 m3_plot2
+m3a_plot2
 m4_plot2
 ```
 
 ```{r}
 m2_plot
 m3_plot
+m3a_plot
 m4_plot
 ```
 
@@ -536,6 +601,41 @@ model_conc %<>% mutate(m3_conc = mapply(m3_sim, f=m3_f, R=model_conc$resource, t
                                      h=m3_h))
 ```
 
+```{r}
+m3a_sim <- function(f, R, temp, length, gamma, k){
+  m3a_num_sol <- function(t, x, params){
+    R <- x[1]
+    with(as.list(params),{
+      dR <- -((f*length^gamma*R)/(k + R))
+      res <- c(dR)
+      list(res)}
+      )
+  }
+  times <- seq(0,mean_time,by=0.01)
+  params <- c(f=m0_f/vol,
+              length=length,
+              gamma=gamma,
+              k=k)
+  xstart <- c(R=R)
+  output <- as.data.frame(lsoda(xstart, times, m3a_num_sol, params))
+  r_end <- slice_max(output, time)[,2]
+  return(r_end)
+}
+```
+
+
+```{r}
+seq_data %<>% mutate(m3a_end = mapply(m3a_sim, f=m3a_f, R=seq_data$resource, temp=seq_data$temp,
+                                     length=mean_length,
+                                     gamma=gamma,
+                                     k=m3a_k))
+
+model_conc %<>% mutate(m3a_conc = mapply(m3a_sim, f=m3a_f, R=model_conc$resource, temp=model_conc$temp,
+                                     length=mean_length,
+                                     gamma=gamma,
+                                     k=m3a_k))
+```
+
 
 ```{r}
 m4_sim <- function(f, R, temp, length, gamma, arr_t, ref_t, h){
@@ -576,6 +676,48 @@ model_conc %<>% mutate(m4_conc = mapply(m4_sim, f=m4_f, R=model_conc$resource, t
                                      ref_t=15,
                                      h=m4_h))
 ```
+
+```{r}
+m4_sim <- function(f, R, temp, length, gamma, 
+                   arr_t_0.1, arr_t_0.5, arr_t_1, ref_t, 
+                   h_15, h_20, h_25){
+  arr_t_vec <- c(arr_t_0.1, arr_t_0.5, arr_t_1)
+  h_vec <- c(h_15, h_20, h_25)
+  for (i in 1:length(temp_IDs)){
+  data <- tmp %>% filter(temp == temp_IDs[i])
+
+    for (j in 1:length(resource_IDs)){
+
+    m4_num_sol <- function(t, x, params){
+      R <- x[1]
+      with(as.list(params),{
+        dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/
+                  (1+f*exp(arr_t*(1/ref_t - 1/temp))*h*(length^gamma)*R))
+        res <- c(dR)
+        list(res)}
+        )
+    }
+  }
+  times <- seq(0,mean_time,by=0.01)
+  params <- c(f=m0_f/vol,
+              length=length,
+              gamma=gamma,
+              arr_t=arr_t[j],
+              ref_t=ref_t,
+              h=h[i])
+  xstart <- c(R=R)
+  output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
+  r_end <- slice_max(output, time)[,2]
+  return(r_end)
+  }
+}
+```
+
+```{r}
+seq_data_subset <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>% filter(resource %in% c(0.1, 0.5, 1))
+
+```
+
 
 
 
@@ -796,6 +938,69 @@ labs(x="Temperature", y="Resource concentration", color="Resource", shape="Resou
 # labs(x="Resource", y="Resource concentration", color="Temperature", shape="Temperature", title = "Resource-dependent model") 
 ```
 
+
+```{r}
+m3a_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
+                          y=conc_mean,
+                          group = as.factor(resource),
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) +
+geom_point() +
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Temperature", y="Final Concentration", color="Resource", shape="Resource", title = "Resource-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(temp),
+               y=m3a_conc,
+               shape=as.factor(resource))) +
+scale_color_manual(name="",values="black")
+
+
+m3a_resource <- model_conc %>% ggplot(., aes(x=as.factor(resource), 
+                          y=conc_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+geom_point() + 
+geom_linerange(aes(ymin=conc_mean-conc_se, ymax=conc_mean+conc_se)) +
+labs(x="Resource", y="Final Concentration", color="Temperature", shape="Temperature", title = "Resource-dependent model") +
+new_scale_color() +
+geom_point(aes(x=as.factor(resource), 
+               y=m3a_conc, 
+               shape=as.factor(temp))) +
+scale_color_manual(name="",values="black")
+```
+
+```{r}
+m3a_plot_conc <- seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
+ggplot(.) +
+geom_line(aes(x=temp, 
+              y=m3a_end,
+              group=resource,
+              color=as.factor(resource))) +
+new_scale_color() +
+geom_point(data=model_conc, aes(x=temp, 
+                          y=conc_mean, 
+                          group = as.factor(resource), 
+                          color = as.factor(resource),
+                          shape = as.factor(resource))) + 
+labs(x="Temperature", y="Resource concentration", color="Resource", shape="Resource", title = "Resource-dependent model") 
+
+# m3_plot_conc <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+# ggplot(.) +
+# geom_line(aes(x=resource, 
+#               y=m3_end,
+#               group=temp,
+#               color=as.factor(temp))) +
+# new_scale_color() +
+# geom_point(data=model_conc, aes(x=resource, 
+#                           y=conc_mean, 
+#                           group = as.factor(temp), 
+#                           color = as.factor(temp),
+#                           shape = as.factor(temp))) + 
+# labs(x="Resource", y="Resource concentration", color="Temperature", shape="Temperature", title = "Resource-dependent model") 
+```
+
+
 ```{r}
 m4_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
                           y=conc_mean,
@@ -850,6 +1055,7 @@ m0_temp
 m1_temp
 m2_temp
 m3_temp
+m3a_temp
 m4_temp
 ```
 
@@ -859,6 +1065,7 @@ m0_resource
 m1_resource
 m2_resource
 m3_resource
+m3a_resource
 m4_resource
 ```
 
@@ -866,6 +1073,7 @@ m4_resource
 m1_plot_conc
 m2_plot_conc
 m3_plot_conc
+m3a_plot_conc
 m4_plot_conc
 ```
 
