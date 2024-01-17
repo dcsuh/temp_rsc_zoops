@@ -32,15 +32,23 @@ data %<>% left_join(., control) %>% filter(trt=="trt")
 
 ```{r}
 #this calculation comes from Hite et al. 2020 and assumes a strong linear relationship between fluorescence and algae conc
-control_coef <- summary(lm(control_read~resource, data=data))$coef[2]
+data_A <- data %>% filter(block=="A")
+data_B <- data %>% filter(block=="B")
+control_coef_A <- summary(lm(control_read~resource, data=data_A))$coef[2]
+control_coef_B <- summary(lm(control_read~resource, data=data_B))$coef[2]
+
+data_A$read_coef <- control_coef_A
+data_B$read_coef <- control_coef_B
+
+data <- rbind(data_A, data_B)
 
 data %<>% mutate(mm = as.numeric(length)*17.86/1000,
                 rate = log(control_read/read)*(vol/time), 
                 #vol is mL and time is min for a rate of mL/min
                 rate_len = rate/mm^2,
-                amt_rem = read/control_coef, #final resource concentration
+                amt_rem = read/read_coef, #final resource concentration
                 amt_rem_tot = amt_rem*vol,
-                amt_init = control_read/control_coef) #final resource amount
+                amt_init = control_read/read_coef) #final resource amount
 ```
 
 

@@ -1,0 +1,96 @@
+---
+title: "model results"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+```
+
+
+
+Model results
+```{r, results}
+# summary(readRDS(here("mle","m0_f_fit.rds"))) #no size correction
+# summary(readRDS(here("mle","m1_f_fit.rds"))) #with size correction
+# summary(readRDS(here("mle","m2_f_fit.rds"))) #temperature-dependent
+# summary(readRDS(here("mle","m3_f_fit.rds"))) #resource-dependent
+# summary(readRDS(here("mle","m4_f_fit.rds"))) #temperature and resource-dependent
+# summary(readRDS(here("mle","m5_f_fit.rds"))) #resource on temp effect
+# summary(readRDS(here("mle","m6_f_fit.rds"))) #temp on resource effect
+# summary(readRDS(here("mle","m7_f_fit.rds"))) #full interaction
+```
+
+
+
+```{r, AIC}
+m0 <- readRDS(here("mle","m0_f_fit.rds"))
+m1 <- readRDS(here("mle","m1_f_fit.rds"))
+m2 <- readRDS(here("mle","m2_f_fit.rds"))
+m3 <- readRDS(here("mle","m3_f_fit.rds"))
+m3a <- readRDS(here("mle","m3a_f_fit.rds"))
+m4 <- readRDS(here("mle","m4_f_fit.rds"))
+m4a <- readRDS(here("mle","m4a_f_fit.rds"))
+m5 <- readRDS(here("mle","m5_f_fit.rds"))
+m5a <- readRDS(here("mle","m5a_f_fit.rds"))
+m6 <- readRDS(here("mle","m6_f_fit.rds"))
+m6a <- readRDS(here("mle","m6a_f_fit.rds"))
+m7 <- readRDS(here("mle","m7_f_fit.rds"))
+m7a <- readRDS(here("mle","m7a_f_fit.rds"))
+```
+
+```{r}
+m0@coef
+m1@coef
+m2@coef
+m3@coef
+m3a@coef
+m4@coef
+# m4a@coef
+# m5@coef
+# m6@coef
+# m7@coef
+```
+
+```{r}
+m0@min
+m1@min
+m2@min
+m3@min
+m3a@min
+m4@min
+# m4a@min
+# m5@min
+# m6@min
+# m7@min
+```
+
+
+```{r}
+getAIC <- function(n, L){
+  return(2*length(n)-(2*L))
+}
+```
+
+
+```{r}
+getAIC(m0@coef, m0@min)
+getAIC(m1@coef, m1@min)
+getAIC(m2@coef, m2@min)
+getAIC(m3@coef, m3@min)
+getAIC(m3a@coef, m3a@min)
+getAIC(m4@coef, m4@min)
+getAIC(m4a@coef, m4a@min)
+getAIC(m5@coef, m5@min)
+getAIC(m5a@coef, m5a@min)
+getAIC(m6@coef, m6@min)
+getAIC(m6a@coef, m6a@min)
+getAIC(m7@coef, m7@min)
+getAIC(m7a@coef, m7a@min)
+```

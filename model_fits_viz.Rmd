@@ -26,6 +26,7 @@ m2 <- readRDS(here("mle", "m2_f_fit.rds"))
 m3 <- readRDS(here("mle", "m3_f_fit.rds"))
 m3a <- readRDS(here("mle", "m3a_f_fit.rds"))
 m4 <- readRDS(here("mle", "m4_f_fit.rds"))
+m7 <- readRDS(here("mle", "m7_f_fit.rds"))
 ```
 
 ```{r}
@@ -35,6 +36,7 @@ m2_coef <- m2@coef
 m3_coef <- m3@coef
 m3a_coef <- m3a@coef
 m4_coef <- m4@coef
+m7_coef <- m7@coef
 
 gamma <- 2
 ref_t <- 15
@@ -678,15 +680,22 @@ model_conc %<>% mutate(m4_conc = mapply(m4_sim, f=m4_f, R=model_conc$resource, t
 ```
 
 ```{r}
-m4_sim <- function(f, R, temp, length, gamma, 
+m7_coef
+m7_f <- as.numeric(m7_coef[1])
+m7_arr <- as.numeric(m7_coef[2:4])
+m7_h <- as.numeric(m7_coef[5:7])
+```
+
+
+```{r}
+m7_sim <- function(f, R, temp, length, gamma, 
                    arr_t_0.1, arr_t_0.5, arr_t_1, ref_t, 
                    h_15, h_20, h_25){
   arr_t_vec <- c(arr_t_0.1, arr_t_0.5, arr_t_1)
   h_vec <- c(h_15, h_20, h_25)
-  for (i in 1:length(temp_IDs)){
-  data <- tmp %>% filter(temp == temp_IDs[i])
+  for (i in 1:length(arr_t_vec)){
 
-    for (j in 1:length(resource_IDs)){
+    for (j in 1:length(h_vec)){
 
     m4_num_sol <- function(t, x, params){
       R <- x[1]
@@ -702,9 +711,9 @@ m4_sim <- function(f, R, temp, length, gamma,
   params <- c(f=m0_f/vol,
               length=length,
               gamma=gamma,
-              arr_t=arr_t[j],
+              arr_t=arr_t_vec[j],
               ref_t=ref_t,
-              h=h[i])
+              h=h_vec[i])
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
   r_end <- slice_max(output, time)[,2]
@@ -715,8 +724,26 @@ m4_sim <- function(f, R, temp, length, gamma,
 
 ```{r}
 seq_data_subset <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>% filter(resource %in% c(0.1, 0.5, 1))
-
 ```
+
+```{r}
+seq_data_subset %<>% mutate(m7_end = mapply(m7_sim, f=m7_f, R=seq_data_subset$resource, temp=seq_data_subset$temp,
+                                     length=mean_length,
+                                     gamma=gamma,
+                                     arr_t_0.1=m7_arr[1], arr_t_0.5=m7_arr[2], arr_t_1=m7_arr[3],
+                                     ref_t=15,
+                                     h_15=m7_h[1], h_20=m7_h[2], h_25=m7_h[3]))
+
+model_conc %<>% mutate(m7_conc = mapply(m7_sim, f=m7_f, R=model_conc$resource, temp=model_conc$temp,
+                                     length=mean_length,
+                                     gamma=gamma,
+                                     arr_t_0.1=m7_arr[1], arr_t_0.5=m7_arr[2], arr_t_1=m7_arr[3],
+                                     ref_t=15,
+                                     h_15=m7_h[1], h_20=m7_h[2], h_25=m7_h[3]))
+```
+
+
+
 
 
 
@@ -1049,6 +1076,22 @@ labs(x="Resource", y="Resource concentration", color="Temperature", shape="Tempe
 ```
 
 
+```{r}
+m7_plot_conc <- seq_data_subset %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m7_end,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=model_conc, aes(x=resource, 
+                          y=conc_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Resource concentration", color="Temperature", shape="Temperature", title = "Full model") 
+```
+
 
 ```{r, include=F}
 m0_temp
@@ -1075,6 +1118,7 @@ m2_plot_conc
 m3_plot_conc
 m3a_plot_conc
 m4_plot_conc
+m7_plot_conc
 ```
 
 
