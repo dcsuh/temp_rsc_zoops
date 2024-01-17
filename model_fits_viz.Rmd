@@ -691,13 +691,9 @@ m7_h <- as.numeric(m7_coef[5:7])
 m7_sim <- function(f, R, temp, length, gamma, 
                    arr_t_0.1, arr_t_0.5, arr_t_1, ref_t, 
                    h_15, h_20, h_25){
-  arr_t_vec <- c(arr_t_0.1, arr_t_0.5, arr_t_1)
   h_vec <- c(h_15, h_20, h_25)
-  for (i in 1:length(arr_t_vec)){
-
-    for (j in 1:length(h_vec)){
-
-    m4_num_sol <- function(t, x, params){
+  
+  m4_num_sol <- function(t, x, params){
       R <- x[1]
       with(as.list(params),{
         dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/
@@ -705,25 +701,45 @@ m7_sim <- function(f, R, temp, length, gamma,
         res <- c(dR)
         list(res)}
         )
-    }
   }
-  times <- seq(0,mean_time,by=0.01)
+  
+    times <- seq(0,mean_time,by=0.01)
+  
+  if(R==0.1){
+    arr_t <- arr_t_0.1
+  }
+  else if(R==0.5){
+    arr_t <- arr_t_0.5
+  }
+  else if(R==1){
+    arr_t <- arr_t_1
+  }
+    
+  if(temp==15){
+    h <- h_15
+  }
+  else if(temp==20){
+    h <- h_20
+  }
+  else if(temp==25){
+    h <- h_25
+  }
   params <- c(f=m0_f/vol,
               length=length,
               gamma=gamma,
-              arr_t=arr_t_vec[j],
+              arr_t=arr_t,
               ref_t=ref_t,
-              h=h_vec[i])
+              h=h)
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
   r_end <- slice_max(output, time)[,2]
   return(r_end)
-  }
 }
 ```
 
 ```{r}
 seq_data_subset <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>% filter(resource %in% c(0.1, 0.5, 1))
+
 ```
 
 ```{r}
@@ -1077,7 +1093,7 @@ labs(x="Resource", y="Resource concentration", color="Temperature", shape="Tempe
 
 
 ```{r}
-m7_plot_conc <- seq_data_subset %>% filter(temp %in% c(15, 20, 25)) %>%
+m7_plot_conc <- seq_data_subset %>% 
 ggplot(.) +
 geom_line(aes(x=resource, 
               y=m7_end,
