@@ -1,0 +1,115 @@
+---
+title: "spore yield"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+```
+
+
+Objective: Write functions for spore yield that incorporate resource and temperature dependence
+
+```{r}
+data <- read_csv(here("raw_data/main_mort_edit.csv"))
+```
+```{r}
+data %<>% filter(!is.na(spore_RAW)) %>% filter(!is.na(length)) %>% filter(inf==1) %>% filter(temp %in% const_temp) %>% mutate(temp = as.numeric(temp))
+
+data %<>% mutate(spore_conc = ((spore_RAW/8)*10000))
+#this doubles the spore count if the water was added because that would make it twice as dilute
+#spore yield is calculated by dividing total counted spores by 8 (number of cells used in hemocytomer) and then multiplying by 10000 to get spores/mL
+data %<>% mutate(spore_yield = ifelse(spore_water_added==1,spore_conc*0.5,spore_conc*0.25))
+```
+
+# Model 1
+
+Spore yield as a function of size alone
+
+```{r}
+m1_ll <- function(m, L){
+  
+  get_yield <- function(m, L){
+    m*L^2
+  }
+  
+  data$model_yield <- mapply(get_yield, m=m, L=data$length)
+  
+  resid <- log(data$spore_yield) - log(data$model_yield)
+  
+    nll <- dnorm(resid, 
+                 mean = 0, 
+                 sd = sd(resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+
+}
+```
+
+```{r}
+start_time <- Sys.time()
+m1_yield_fit <- mle2(m1_ll,
+                skip.hessian = T,
+                start=list(m=20000),
+                method = "L-BFGS-B",
+                lower = c(0),
+                upper = c(Inf),
+                control=list(parscale=c(m=20000), maxit=10000))
+end_time <- Sys.time()
+m1_runtime <- end_time-start_time
+m1_runtime
+
+coef(m1_yield_fit)
+```
+
+
+# Model 2
+
+Temperature-dependence
+
+```{r}
+m2_ll <- function(m, L, arr_t){
+  
+  get_yield <- function(m, L, arr_t, ref_t, temp){
+    m*exp(arr_t*(1/ref_t - 1/temp))*L^2
+  }
+  
+  data$model_yield <- mapply(get_yield, m=m, L=data$length, ref_t=15, arr_t=arr_t, temp=data$temp)
+  
+  resid <- log(data$spore_yield) - log(data$model_yield)
+  
+    nll <- dnorm(resid, 
+                 mean = 0, 
+                 sd = sd(resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+
+}
+```
+
+```{r}
+start_time <- Sys.time()
+m2_yield_fit <- mle2(m2_ll,
+                skip.hessian = T,
+                start=list(m=20000, arr_t=10),
+                method = "L-BFGS-B",
+                lower = c(0, 0),
+                upper = c(Inf, Inf),
+                control=list(parscale=c(m=20000, arr_t=10), maxit=10000))
+end_time <- Sys.time()
+m2_runtime <- end_time-start_time
+m2_runtime
+
+coef(m2_yield_fit)
+```
+
+
+
+
+

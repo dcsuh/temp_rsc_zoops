@@ -639,7 +639,7 @@ summary(readRDS(here("mle","m4a_f_fit.rds")))
 
 How different are the parameters for each treatment?
 
-```{r}
+```{r, eval=F}
 test_fit <- list(c())
 for(i in 1:length(treatment_IDs)){
   tmp <- data %>% filter(treatment_ID==treatment_IDs[i])
@@ -651,9 +651,7 @@ for(i in 1:length(treatment_IDs)){
                 upper = c(Inf, Inf, Inf),
                 control=list(parscale=c(f=10, arr_t=50, h=1), maxit=10000))
 }
-```
 
-```{r}
 for(i in 1:length(treatment_IDs)){
   print(test_fit[[i]]@coef)
 }
@@ -687,7 +685,7 @@ m5_ll <- function(f, arr_t_0.1, arr_t_0.5, arr_t_1, h){
 }
 ```
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 m5_f_fit <- mle2(m5_ll,
@@ -706,13 +704,15 @@ coef(m5_f_fit)
 saveRDS(m5_f_fit, file = here("mle","m5_f_fit.rds"))
 ```
 
+
+
 # Model 5a - Resource on Temperature Interaction - continuous
 
 This model uses a resource-dependent Arrhenius coefficient for each resource level to see if there is an effect of resource level on the temperature effect.
 
 
 
-```{r, m5_ll}
+```{r, m5a_ll}
 m5a_ll <- function(f, arr_t, h){
 
   data <- tmp
@@ -750,18 +750,18 @@ coef(m5a_f_fit)
 saveRDS(m5a_f_fit, file = here("mle","m5a_f_fit.rds"))
 ```
 
-# Model 5a - Resource on Temperature Interaction - continuous w/ extra param
+# Model 5b - Resource on Temperature Interaction - w/ linear relationship
 
 This model uses a resource-dependent Arrhenius coefficient for each resource level to see if there is an effect of resource level on the temperature effect.
 
 
 
-```{r, m5_ll}
-m5a_ll <- function(f, arr_t, h){
+```{r, m5b_ll}
+m5b_ll <- function(f, arr_t, h, p){
 
   data <- tmp
   output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=data$resource*arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
+                                 length=data$mm, gamma=2, arr_t=data$resource*p + arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
   data %<>% mutate(resid = log(end) - log(amt_rem))
@@ -775,24 +775,69 @@ m5a_ll <- function(f, arr_t, h){
 }
 ```
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m5a_f_fit <- mle2(m5a_ll,
+m5b_f_fit <- mle2(m5b_ll,
                 skip.hessian = T,
-                start=list(f=10, arr_t=50, h=1),
+                start=list(f=10, arr_t=50, h=0.1, p=10),
                 method = "L-BFGS-B",
-                lower = c(0, 0, 0),
-                upper = c(Inf, Inf, Inf),
-                control=list(parscale=c(f=10, arr_t=50, h=1), maxit=10000))
+                lower = c(0, 0, 0, 0),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t=50, h=0.1, p=10), maxit=10000))
 end_time <- Sys.time()
-m5a_runtime <- end_time-start_time
-m5a_runtime
+m5b_runtime <- end_time-start_time
+m5b_runtime
 
-coef(m5a_f_fit)
+coef(m5b_f_fit)
 
-saveRDS(m5a_f_fit, file = here("mle","m5a_f_fit.rds"))
+saveRDS(m5b_f_fit, file = here("mle","m5b_f_fit.rds"))
 ```
+
+# Model 5c - Resource on Temperature Interaction - w/ exp relationship
+
+This model uses a resource-dependent Arrhenius coefficient for each resource level to see if there is an effect of resource level on the temperature effect.
+
+
+
+```{r, m5c_ll}
+m5c_ll <- function(f, arr_t, h, p){
+
+  data <- tmp
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=p^data$resource + arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
+  colnames(output) <- "endpoint"
+  data$end <- output$endpoint
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+
+}
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m5c_f_fit <- mle2(m5c_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t=50, h=0.1, p=1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0, 0),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t=50, h=0.1, p=1), maxit=10000))
+end_time <- Sys.time()
+m5c_runtime <- end_time-start_time
+m5c_runtime
+
+coef(m5c_f_fit)
+
+saveRDS(m5c_f_fit, file = here("mle","m5c_f_fit.rds"))
+```
+
 # Model 6 - Temperature on Resource Interaction
 
 This model uses a different handling time for each temperature level to see if there is an effect of temperature on the resource effect.
@@ -975,7 +1020,7 @@ m7a_f_fit <- mle2(m7a_ll,
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0),
                 upper = c(Inf, Inf, Inf),
-                control=list(parscale=c(f=10, arr_t=50, h=1), maxit=10000))
+                control=list(parscale=c(f=10, arr_t=50, h=0.1), maxit=10000))
 end_time <- Sys.time()
 m7a_runtime <- end_time-start_time
 m7a_runtime

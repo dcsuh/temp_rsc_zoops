@@ -29,6 +29,7 @@ m4 <- readRDS(here("mle", "m4_f_fit.rds"))
 m5 <- readRDS(here("mle", "m5_f_fit.rds"))
 m6 <- readRDS(here("mle", "m6_f_fit.rds"))
 m7 <- readRDS(here("mle", "m7_f_fit.rds"))
+m7a <- readRDS(here("mle", "m7a_f_fit.rds"))
 ```
 
 ```{r}
@@ -41,6 +42,7 @@ m4_coef <- m4@coef
 m5_coef <- m5@coef
 m6_coef <- m6@coef
 m7_coef <- m7@coef
+m7a_coef <- m7a@coef
 
 gamma <- 2
 ref_t <- 15
@@ -103,7 +105,7 @@ data_summ %<>% mutate(m0_rate = m0_f)
 ```
 
 
-```{r}
+```{r, echo=F}
 m0_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
                           y=rate_len_mean,
                           group = as.factor(resource),
@@ -134,7 +136,7 @@ data_summ %<>% mutate(m1_rate = mm_mean^gamma*m1_f)
 ```
 
 
-```{r}
+```{r, echo=F}
 m1_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
                           y=rate_len_mean,
                           group = as.factor(resource),
@@ -181,7 +183,7 @@ data_summ %<>% mutate(m2_rate = (mm_mean^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/tem
 seq_data %<>% mutate(m2_rate = (mean_length^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
 ```
 
-```{r}
+```{r, echo=F}
 m2_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
                           y=rate_len_mean,
                           group = as.factor(resource),
@@ -213,7 +215,7 @@ geom_point(aes(x=as.factor(resource),
 scale_color_manual(name="",values="black")
 ```
 
-```{r}
+```{r, echo=F}
 m2_plot <- seq_data %>% filter(resource %in% c(1)) %>%
 ggplot(.) +
 geom_line(aes(x=temp, 
@@ -241,7 +243,7 @@ data_summ %<>% mutate(m3_rate = ((m3_f)/(1+m3_f*m3_h*resource)))
 seq_data %<>% mutate(m3_rate=((m3_f)/(1+m3_f*m3_h*resource)))
 ```
 
-```{r}
+```{r, echo=F}
 m3_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
                           y=rate_len_mean,
                           group = as.factor(resource),
@@ -274,7 +276,7 @@ scale_color_manual(name="",values="black")
 ```
 
 
-```{r}
+```{r, echo=F}
 m3_plot <- seq_data %>% filter(temp %in% c(15)) %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -302,7 +304,7 @@ data_summ %<>% mutate(m3a_rate = ((m3a_f)/(m3a_k + resource)))
 seq_data %<>% mutate(m3a_rate=((m3a_f)/(m3a_k + resource)))
 ```
 
-```{r}
+```{r, echo=F}
 m3a_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
                           y=rate_len_mean,
                           group = as.factor(resource),
@@ -335,7 +337,7 @@ scale_color_manual(name="",values="black")
 ```
 
 
-```{r}
+```{r, echo=F}
 m3a_plot <- seq_data %>% filter(temp %in% c(15)) %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -367,7 +369,7 @@ seq_data %<>% mutate(m4_rate = ((m4_f*exp(m4_arr*(1/ref_t - 1/temp)))/
                                    (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*m4_h*resource)))
 ```
 
-```{r}
+```{r, echo=F}
 m4_plot1 <- data_summ %>% ggplot(., aes(x=as.factor(temp),
                           y=rate_len_mean,
                           group = as.factor(resource),
@@ -399,13 +401,13 @@ geom_point(aes(x=as.factor(resource),
 scale_color_manual(name="",values="black")
 ```
 
-```{r}
+```{r, echo=F}
 seq_data %<>% mutate(temp_factor = case_when(temp==15 ~ 15,
                                              temp==20 ~ 20,
                                              temp==25 ~ 25))
 ```
 
-```{r}
+```{r, echo=F}
 m4_plot <- seq_data %>% na.omit() %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -421,11 +423,11 @@ labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Tempe
 
 ```{r}
 m5_coef
-m5_f <- as.numeric(m7_coef[1])
-m5_arr_0.1 <- as.numeric(m7_coef[2])
-m5_arr_0.5 <- as.numeric(m7_coef[3])
-m5_arr_1 <- as.numeric(m7_coef[4])
-m5_h <- as.numeric(m7_coef[5])
+m5_f <- as.numeric(m5_coef[1])
+m5_arr_0.1 <- as.numeric(m5_coef[2])
+m5_arr_0.5 <- as.numeric(m5_coef[3])
+m5_arr_1 <- as.numeric(m5_coef[4])
+m5_h <- as.numeric(m5_coef[5])
 
 data_summ %<>% mutate(m5_arr = case_when(resource==0.1 ~ m5_arr_0.1,
                                          resource==0.5 ~ m5_arr_0.5,
@@ -441,7 +443,7 @@ seq_data %<>% mutate(m5_arr = case_when(resource==0.1 ~ m5_arr_0.1,
                                    (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*m5_h*resource)))
 ```
 
-```{r}
+```{r, echo=F}
 m5_plot <- seq_data %>% na.omit() %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -459,11 +461,11 @@ labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Tempe
 
 ```{r}
 m6_coef
-m6_f <- as.numeric(m7_coef[1])
-m6_arr <- as.numeric(m7_coef[2])
-m6_h_15 <- as.numeric(m7_coef[3])
-m6_h_20 <- as.numeric(m7_coef[4])
-m6_h_25 <- as.numeric(m7_coef[5])
+m6_f <- as.numeric(m6_coef[1])
+m6_arr <- as.numeric(m6_coef[2])
+m6_h_15 <- as.numeric(m6_coef[3])
+m6_h_20 <- as.numeric(m6_coef[4])
+m6_h_25 <- as.numeric(m6_coef[5])
 
 
 data_summ %<>% mutate(m6_h = case_when(temp==15 ~ m6_h_15,
@@ -480,7 +482,7 @@ seq_data %<>% mutate(m6_h = case_when(temp==15 ~ m6_h_15,
                                    (1+m6_f*exp(m6_arr*(1/ref_t - 1/temp))*m6_h*resource)))
 ```
 
-```{r}
+```{r, echo=F}
 m6_plot <- seq_data %>% na.omit() %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -525,11 +527,40 @@ seq_data %<>% mutate(m7_h = case_when(temp==15 ~ m7_h_15,
                                    (1+m7_f*exp(m7_arr*(1/ref_t - 1/temp))*m7_h*resource)))
 ```
 
-```{r}
+```{r, echo=F}
 m7_plot <- seq_data %>% na.omit() %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
               y=m7_rate,
+              group=temp_factor)) +
+geom_point(data=data_summ, aes(x=resource, 
+                          y=rate_len_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Full model") 
+```
+
+
+```{r}
+m7a_coef
+m7a_f <- as.numeric(m7a_coef[1])
+m7a_arr <- as.numeric(m7a_coef[2])
+m7a_h <- as.numeric(m7a_coef[3])
+
+
+data_summ %<>% mutate(m7a_rate = ((m7a_f*exp(m7a_arr*(1/ref_t - 1/temp)))/
+                                   (1+m7a_f*exp(m7a_arr*(1/ref_t - 1/temp))*m7a_h*resource)))
+
+seq_data %<>% mutate(m7a_rate = ((m7a_f*exp(m7a_arr*(1/ref_t - 1/temp)))/
+                                   (1+m7a_f*exp(m7a_arr*(1/ref_t - 1/temp))*m7a_h*resource)))
+```
+
+```{r, echo=F}
+m7a_plot <- seq_data %>% na.omit() %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m7a_rate,
               group=temp_factor)) +
 geom_point(data=data_summ, aes(x=resource, 
                           y=rate_len_mean, 
@@ -564,6 +595,7 @@ m4_plot
 m5_plot
 m6_plot
 m7_plot
+m7a_plot
 ```
 
 
@@ -893,7 +925,7 @@ model_conc %<>% mutate(m7_conc = mapply(m7_sim, f=m7_f, R=model_conc$resource, t
 
 
 
-```{r}
+```{r, echo=F}
 m0_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
                           y=conc_mean,
                           group = as.factor(resource),
@@ -924,7 +956,7 @@ geom_point(aes(x=as.factor(resource),
 scale_color_manual(name="",values="black")
 ```
 
-```{r}
+```{r, echo=F}
 m0_plot_conc <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -940,7 +972,7 @@ labs(x="Resource", y="Resource concentration", color="Temperature", shape="Tempe
 
 
 
-```{r}
+```{r, echo=F}
 m1_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
                           y=conc_mean,
                           group = as.factor(resource),
@@ -972,7 +1004,7 @@ scale_color_manual(name="",values="black")
 ```
 
 
-```{r}
+```{r, echo=F}
 m1_plot_conc <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -987,7 +1019,7 @@ labs(x="Resource", y="Resource concentration", color="Temperature", shape="Tempe
 ```
 
 
-```{r}
+```{r, echo=F}
 m2_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
                           y=conc_mean,
                           group = as.factor(resource),
@@ -1020,7 +1052,7 @@ scale_color_manual(name="",values="black")
 
 ```
 
-```{r}
+```{r, echo=F}
 m2_plot_conc <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -1049,7 +1081,7 @@ labs(x="Resource", y="Resource concentration", color="Temperature", shape="Tempe
 ```
 
 
-```{r}
+```{r, echo=F}
 m3_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
                           y=conc_mean,
                           group = as.factor(resource),
@@ -1080,7 +1112,7 @@ geom_point(aes(x=as.factor(resource),
 scale_color_manual(name="",values="black")
 ```
 
-```{r}
+```{r, echo=F}
 m3_plot_conc <- seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
 ggplot(.) +
 geom_line(aes(x=temp, 
@@ -1111,7 +1143,7 @@ labs(x="Temperature", y="Resource concentration", color="Resource", shape="Resou
 ```
 
 
-```{r}
+```{r, echo=F}
 m3a_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
                           y=conc_mean,
                           group = as.factor(resource),
@@ -1142,7 +1174,7 @@ geom_point(aes(x=as.factor(resource),
 scale_color_manual(name="",values="black")
 ```
 
-```{r}
+```{r, echo=F}
 m3a_plot_conc <- seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
 ggplot(.) +
 geom_line(aes(x=temp, 
@@ -1173,7 +1205,7 @@ labs(x="Temperature", y="Resource concentration", color="Resource", shape="Resou
 ```
 
 
-```{r}
+```{r, echo=F}
 m4_temp <- model_conc %>% ggplot(., aes(x=as.factor(temp),
                           y=conc_mean,
                           group = as.factor(resource),
@@ -1204,7 +1236,7 @@ geom_point(aes(x=as.factor(resource),
 scale_color_manual(name="",values="black")
 ```
 
-```{r}
+```{r, echo=F}
 m4_plot_conc <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
 ggplot(.) +
 geom_line(aes(x=resource, 
@@ -1221,7 +1253,7 @@ labs(x="Resource", y="Resource concentration", color="Temperature", shape="Tempe
 ```
 
 
-```{r}
+```{r, echo=F}
 m7_plot_conc <- seq_data_subset %>% 
 ggplot(.) +
 geom_line(aes(x=resource, 
