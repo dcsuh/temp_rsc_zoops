@@ -538,7 +538,7 @@ geom_point(data=data_summ, aes(x=resource,
                           group = as.factor(temp), 
                           color = as.factor(temp),
                           shape = as.factor(temp))) + 
-labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Full model") 
+labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Full interaction model") 
 ```
 
 
@@ -595,7 +595,6 @@ m4_plot
 m5_plot
 m6_plot
 m7_plot
-m7a_plot
 ```
 
 
