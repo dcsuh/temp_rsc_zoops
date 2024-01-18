@@ -742,7 +742,7 @@ m3_sim <- function(f, R, temp, length, gamma, h){
   params <- c(f=m0_f/vol,
               length=length,
               gamma=gamma,
-              h=h)
+              h=h*vol)
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
   r_end <- slice_max(output, time)[,2]
@@ -815,7 +815,7 @@ m4_sim <- function(f, R, temp, length, gamma, arr_t, ref_t, h){
               gamma=gamma,
               arr_t=arr_t,
               ref_t=ref_t,
-              h=h)
+              h=h*vol)
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
   r_end <- slice_max(output, time)[,2]
@@ -842,16 +842,12 @@ model_conc %<>% mutate(m4_conc = mapply(m4_sim, f=m4_f, R=model_conc$resource, t
 ```{r}
 m7_coef
 m7_f <- as.numeric(m7_coef[1])
-m7_arr <- as.numeric(m7_coef[2:4])
-m7_h <- as.numeric(m7_coef[5:7])
+
 ```
 
 
 ```{r}
-m7_sim <- function(f, R, temp, length, gamma, 
-                   arr_t_0.1, arr_t_0.5, arr_t_1, ref_t, 
-                   h_15, h_20, h_25){
-  h_vec <- c(h_15, h_20, h_25)
+m7_sim <- function(f, R, temp, length, gamma, arr_t, ref_t, h){
   
   m4_num_sol <- function(t, x, params){
       R <- x[1]
@@ -864,32 +860,13 @@ m7_sim <- function(f, R, temp, length, gamma,
   }
   
     times <- seq(0,mean_time,by=0.01)
-  
-  if(R==0.1){
-    arr_t <- arr_t_0.1
-  }
-  else if(R==0.5){
-    arr_t <- arr_t_0.5
-  }
-  else if(R==1){
-    arr_t <- arr_t_1
-  }
-    
-  if(temp==15){
-    h <- h_15
-  }
-  else if(temp==20){
-    h <- h_20
-  }
-  else if(temp==25){
-    h <- h_25
-  }
+
   params <- c(f=m0_f/vol,
               length=length,
               gamma=gamma,
               arr_t=arr_t,
               ref_t=ref_t,
-              h=h)
+              h=h*vol)
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
   r_end <- slice_max(output, time)[,2]
@@ -906,16 +883,16 @@ seq_data_subset <- seq_data %>% filter(temp %in% c(15, 20, 25)) %>% filter(resou
 seq_data_subset %<>% mutate(m7_end = mapply(m7_sim, f=m7_f, R=seq_data_subset$resource, temp=seq_data_subset$temp,
                                      length=mean_length,
                                      gamma=gamma,
-                                     arr_t_0.1=m7_arr[1], arr_t_0.5=m7_arr[2], arr_t_1=m7_arr[3],
+                                     arr_t=seq_data_subset$m7_arr,
                                      ref_t=15,
-                                     h_15=m7_h[1], h_20=m7_h[2], h_25=m7_h[3]))
+                                     h=seq_data_subset$m7_h))
 
 model_conc %<>% mutate(m7_conc = mapply(m7_sim, f=m7_f, R=model_conc$resource, temp=model_conc$temp,
                                      length=mean_length,
                                      gamma=gamma,
-                                     arr_t_0.1=m7_arr[1], arr_t_0.5=m7_arr[2], arr_t_1=m7_arr[3],
+                                     arr_t=seq_data_subset$m7_arr,
                                      ref_t=15,
-                                     h_15=m7_h[1], h_20=m7_h[2], h_25=m7_h[3]))
+                                     h=seq_data_subset$m7_h))
 ```
 
 
@@ -1274,7 +1251,6 @@ m0_temp
 m1_temp
 m2_temp
 m3_temp
-m3a_temp
 m4_temp
 ```
 
@@ -1284,7 +1260,6 @@ m0_resource
 m1_resource
 m2_resource
 m3_resource
-m3a_resource
 m4_resource
 ```
 
@@ -1292,7 +1267,6 @@ m4_resource
 m1_plot_conc
 m2_plot_conc
 m3_plot_conc
-m3a_plot_conc
 m4_plot_conc
 m7_plot_conc
 ```
