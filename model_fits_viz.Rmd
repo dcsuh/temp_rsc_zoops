@@ -26,6 +26,8 @@ m2 <- readRDS(here("mle", "m2_f_fit.rds"))
 m3 <- readRDS(here("mle", "m3_f_fit.rds"))
 m3a <- readRDS(here("mle", "m3a_f_fit.rds"))
 m4 <- readRDS(here("mle", "m4_f_fit.rds"))
+m5 <- readRDS(here("mle", "m5_f_fit.rds"))
+m6 <- readRDS(here("mle", "m6_f_fit.rds"))
 m7 <- readRDS(here("mle", "m7_f_fit.rds"))
 ```
 
@@ -36,6 +38,8 @@ m2_coef <- m2@coef
 m3_coef <- m3@coef
 m3a_coef <- m3a@coef
 m4_coef <- m4@coef
+m5_coef <- m5@coef
+m6_coef <- m6@coef
 m7_coef <- m7@coef
 
 gamma <- 2
@@ -87,6 +91,8 @@ data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_len_mean, color=as.factor(
 #                      ymax=rate_mean+rate_se)) +
 #   labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
 ```
+
+
 
 
 
@@ -413,6 +419,126 @@ geom_point(data=data_summ, aes(x=resource,
 labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Full model") 
 ```
 
+```{r}
+m5_coef
+m5_f <- as.numeric(m7_coef[1])
+m5_arr_0.1 <- as.numeric(m7_coef[2])
+m5_arr_0.5 <- as.numeric(m7_coef[3])
+m5_arr_1 <- as.numeric(m7_coef[4])
+m5_h <- as.numeric(m7_coef[5])
+
+data_summ %<>% mutate(m5_arr = case_when(resource==0.1 ~ m5_arr_0.1,
+                                         resource==0.5 ~ m5_arr_0.5,
+                                         resource==1 ~ m5_arr_1),
+                      m5_rate = ((m5_f*exp(m5_arr*(1/ref_t - 1/temp)))/
+                                   (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*m5_h*resource)))
+  
+
+seq_data %<>% mutate(m5_arr = case_when(resource==0.1 ~ m5_arr_0.1,
+                                         resource==0.5 ~ m5_arr_0.5,
+                                         resource==1 ~ m5_arr_1),
+                     m5_rate = ((m5_f*exp(m5_arr*(1/ref_t - 1/temp)))/
+                                   (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*m5_h*resource)))
+```
+
+```{r}
+m5_plot <- seq_data %>% na.omit() %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m5_rate,
+              group=temp_factor)) +
+geom_point(data=data_summ, aes(x=resource, 
+                          y=rate_len_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Resource on temp interaction model") 
+```
+
+
+
+```{r}
+m6_coef
+m6_f <- as.numeric(m7_coef[1])
+m6_arr <- as.numeric(m7_coef[2])
+m6_h_15 <- as.numeric(m7_coef[3])
+m6_h_20 <- as.numeric(m7_coef[4])
+m6_h_25 <- as.numeric(m7_coef[5])
+
+
+data_summ %<>% mutate(m6_h = case_when(temp==15 ~ m6_h_15,
+                                       temp==20 ~ m6_h_20,
+                                       temp==25 ~ m6_h_25),
+                      m6_rate = ((m6_f*exp(m6_arr*(1/ref_t - 1/temp)))/
+                                   (1+m6_f*exp(m6_arr*(1/ref_t - 1/temp))*m6_h*resource)))
+  
+
+seq_data %<>% mutate(m6_h = case_when(temp==15 ~ m6_h_15,
+                                       temp==20 ~ m6_h_20,
+                                       temp==25 ~ m6_h_25),
+                     m6_rate = ((m6_f*exp(m6_arr*(1/ref_t - 1/temp)))/
+                                   (1+m6_f*exp(m6_arr*(1/ref_t - 1/temp))*m6_h*resource)))
+```
+
+```{r}
+m6_plot <- seq_data %>% na.omit() %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m6_rate,
+              group=temp_factor)) +
+geom_point(data=data_summ, aes(x=resource, 
+                          y=rate_len_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Temp on resource interaction model") 
+```
+
+
+```{r}
+m7_coef
+m7_f <- as.numeric(m7_coef[1])
+m7_arr_0.1 <- as.numeric(m7_coef[2])
+m7_arr_0.5 <- as.numeric(m7_coef[3])
+m7_arr_1 <- as.numeric(m7_coef[4])
+m7_h_15 <- as.numeric(m7_coef[5])
+m7_h_20 <- as.numeric(m7_coef[6])
+m7_h_25 <- as.numeric(m7_coef[7])
+
+data_summ %<>% mutate(m7_h = case_when(temp==15 ~ m7_h_15,
+                                       temp==20 ~ m7_h_20,
+                                       temp==25 ~ m7_h_25),
+                      m7_arr = case_when(resource==0.1 ~ m7_arr_0.1,
+                                         resource==0.5 ~ m7_arr_0.5,
+                                         resource==1 ~ m7_arr_1),
+                      m7_rate = ((m7_f*exp(m7_arr*(1/ref_t - 1/temp)))/
+                                   (1+m7_f*exp(m7_arr*(1/ref_t - 1/temp))*m7_h*resource)))
+  
+
+seq_data %<>% mutate(m7_h = case_when(temp==15 ~ m7_h_15,
+                                       temp==20 ~ m7_h_20,
+                                       temp==25 ~ m7_h_25),
+                     m7_arr = case_when(resource==0.1 ~ m7_arr_0.1,
+                                         resource==0.5 ~ m7_arr_0.5,
+                                         resource==1 ~ m7_arr_1),
+                     m7_rate = ((m7_f*exp(m7_arr*(1/ref_t - 1/temp)))/
+                                   (1+m7_f*exp(m7_arr*(1/ref_t - 1/temp))*m7_h*resource)))
+```
+
+```{r}
+m7_plot <- seq_data %>% na.omit() %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m7_rate,
+              group=temp_factor)) +
+geom_point(data=data_summ, aes(x=resource, 
+                          y=rate_len_mean, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Full model") 
+```
+
 ```{r, include=F}
 m0_plot1
 m1_plot1
@@ -435,6 +561,9 @@ m4_plot2
 m2_plot
 m3_plot
 m4_plot
+m5_plot
+m6_plot
+m7_plot
 ```
 
 

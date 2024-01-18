@@ -49,11 +49,6 @@ data %<>% left_join(., mean_length_summ)
 data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
 ```
 
-Test with Alex's method of converting rfu to dry weight
-```{r}
-# data %<>% mutate(amt_rem = read/299.4443)
-# data %<>% mutate(resource = control_read/299.4443)
-```
 
 
 
@@ -830,11 +825,11 @@ start_time <- Sys.time()
 tmp <- data
 m6_f_fit <- mle2(m6_ll,
                 skip.hessian = T,
-                start=list(f=10, arr_t=50, h_15=0.1, h_20=1, h_25=1),
+                start=list(f=10, arr_t=50, h_15=0.1, h_20=0.1, h_25=0.1),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0, 0, 0),
                 upper = c(Inf, Inf, Inf, Inf, Inf),
-                control=list(parscale=c(f=10, arr_t=50, h_15=1, h_20=1, h_25=1), maxit=10000))
+                control=list(parscale=c(f=10, arr_t=50, h_15=0.1, h_20=0.1, h_25=0.1), maxit=10000))
 end_time <- Sys.time()
 m6_runtime <- end_time-start_time
 m6_runtime
@@ -911,7 +906,7 @@ m7_ll <- function(f, arr_t_0.1, arr_t_0.5, arr_t_1, h_15, h_20, h_25){
     for (j in 1:length(resource_IDs)){
     data <- temp_data %>% filter(resource == resource_IDs[j])
     output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                   length=data$mm, gamma=2, arr_t=arr_t_vec[j], ref_t=15, temp=data$temp, h=h_vec[i]))
+                                   length=data$mm, gamma=2, arr_t=arr_t_vec[j], ref_t=15, temp=data$temp, h=h_vec[i]*data$vol))
     colnames(output) <- "endpoint"
     data$end <- output$endpoint
     data %<>% mutate(resid = log(end) - log(amt_rem))
@@ -933,11 +928,11 @@ start_time <- Sys.time()
 tmp <- data
 m7_f_fit <- mle2(m7_ll,
                 skip.hessian = T,
-                start=list(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h_15=1, h_20=1, h_25=1),
+                start=list(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h_15=0.1, h_20=0.1, h_25=0.1),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0, 0, 0, 0, 0),
                 upper = c(Inf, Inf, Inf, Inf, Inf, Inf, Inf),
-                control=list(parscale=c(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h_15=1, h_20=1, h_25=1), maxit=10000))
+                control=list(parscale=c(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h_15=0.1, h_20=0.1, h_25=0.1), maxit=10000))
 end_time <- Sys.time()
 m7_runtime <- end_time-start_time
 m7_runtime
