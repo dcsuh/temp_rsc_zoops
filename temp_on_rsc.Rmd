@@ -134,7 +134,8 @@ m6a_ll <- function(f, arr_t, h){
 
   data <- tmp 
   output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h*data$vol*data$temp))
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp,
+                                 h=h*data$vol*data$temp))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
   data %<>% mutate(resid = log(end) - log(amt_rem))
@@ -179,7 +180,8 @@ m6b_ll <- function(f, arr_t, h, w){
 
   data <- tmp 
   output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h*data$vol + w*data$temp))
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, 
+                                 h=(h + w*data$temp)*data$vol))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
   data %<>% mutate(resid = log(end) - log(amt_rem))
@@ -224,7 +226,8 @@ m6c_ll <- function(f, arr_t, h, w){
 
   data <- tmp 
   output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h*data$vol*exp(w*data$temp)))
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, 
+                                 h=h*data$vol*exp(w*data$temp)))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
   data %<>% mutate(resid = log(end) - log(amt_rem))

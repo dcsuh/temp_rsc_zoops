@@ -53,6 +53,8 @@ m7 <- readRDS(here("mle","m7_f_fit.rds"))
 m7a <- readRDS(here("mle","m7a_f_fit.rds"))
 m7b <- readRDS(here("mle","m7b_f_fit.rds"))
 m7c <- readRDS(here("mle","m7c_f_fit.rds"))
+m7d <- readRDS(here("mle","m7d_f_fit.rds"))
+m7e <- readRDS(here("mle","m7e_f_fit.rds"))
 ```
 
 ```{r}
@@ -87,6 +89,8 @@ m7@coef
 m7a@coef
 m7b@coef
 m7c@coef
+m7d@coef
+m7e@coef
 ```
 
 ```{r}
@@ -141,17 +145,37 @@ getAIC(m7@coef, m7@min)
 getAIC(m7a@coef, m7a@min)
 getAIC(m7b@coef, m7b@min)
 getAIC(m7c@coef, m7c@min)
+getAIC(m7d@coef, m7d@min)
+getAIC(m7e@coef, m7e@min)
 ```
 
 ```{r}
+m7@coef
 arr_t_vec <- c(146.6, 124.8, 118.4)
 resource <- c(0.1, 0.5, 1)
-df <- tibble(arr_t=arr_t_vec,
+arr_t_df <- tibble(arr_t=arr_t_vec,
              resource=resource)
 
-ggplot(df,aes(x=arr_t_vec, y=resource)) + geom_line()
-ggplot(df,aes(x=arr_t_vec, y=log(resource))) + geom_line()
+ggplot(arr_t_df,aes(x=resource, y=arr_t_vec)) + geom_line()
+ggplot(arr_t_df,aes(x=log(resource), y=arr_t_vec)) + geom_line()
+ggplot(arr_t_df,aes(x=resource, y=arr_t_vec*exp(resource))) + geom_line()
+
+summary(lm(arr_t_vec ~ resource))
+summary(lm(arr_t_vec ~ log(resource)))
+summary(lm(arr_t_vec*exp(resource) ~ resource))
 
 ```
+
+```{r}
+m7@coef
+h_vec <- c(4.57, 0.187, 0.0683)
+temp <- c(15,20,25)
+
+h_df <- tibble(h=h_vec,
+               temp=temp)
+
+ggplot(h_df, aes(x=temp, y=h)) + geom_line()
+```
+
 
 

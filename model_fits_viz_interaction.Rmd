@@ -23,14 +23,17 @@ data_summ <- readRDS(here("processed_data", "foraging.rds"))
 m0 <- readRDS(here("mle", "m0_f_fit.rds"))
 
 m4 <- readRDS(here("mle", "m4_f_fit.rds"))
+
 m5 <- readRDS(here("mle", "m5_f_fit.rds"))
 m5a <- readRDS(here("mle", "m5a_f_fit.rds"))
 m5b <- readRDS(here("mle", "m5b_f_fit.rds"))
 m5c <- readRDS(here("mle", "m5c_f_fit.rds"))
+
 m6 <- readRDS(here("mle", "m6_f_fit.rds"))
 m6a <- readRDS(here("mle", "m6a_f_fit.rds"))
 m6b <- readRDS(here("mle", "m6b_f_fit.rds"))
 m6c <- readRDS(here("mle", "m6c_f_fit.rds"))
+
 m7 <- readRDS(here("mle", "m7_f_fit.rds"))
 m7a <- readRDS(here("mle", "m7a_f_fit.rds"))
 m7b <- readRDS(here("mle", "m7b_f_fit.rds"))
@@ -85,6 +88,7 @@ for (i in 1:length(temp_range)){
   seq_data %<>% bind_rows(., tmp)
 }
 
+m7_range <- seq_data
 ```
 
 ```{r, echo=F}
@@ -101,13 +105,29 @@ seq_plot <- function(rate){
   ggplot(.) +
   geom_line(aes(x=resource, 
                 y=!!sym(rate),
-                group=temp_factor)) +
+                group=temp_factor,
+                color=as.factor(temp_factor))) +
   geom_point(data=data_summ, aes(x=resource, 
                             y=rate_len_mean, 
                             group = as.factor(temp), 
                             color = as.factor(temp),
                             shape = as.factor(temp))) + 
   labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+}
+
+seq_plot_temp <- function(rate){
+  seq_data %>% na.omit() %>% filter(resource = c(0.1, 0.5, 1))
+  ggplot(.) +
+  geom_line(aes(x=temp, 
+                y=!!sym(rate),
+                group=resource,
+                color=as.factor(resource))) +
+  geom_point(data=data_summ, aes(x=temp, 
+                            y=rate_len_mean, 
+                            group = as.factor(resource), 
+                            color = as.factor(resource),
+                            shape = as.factor(resource))) + 
+  labs(x="Temperature", y="Foraging rate (mL/day)", color="", shape="", title = "") 
 }
 
 ```
@@ -209,26 +229,26 @@ m5b_p <- as.numeric(m5b_coef[4])
 data_summ %<>% mutate(m5b_rate = mapply(get_rate, f=m5b_f, arr=data_summ$resource*m5b_p + m5b_arr, h=m5b_h, temp=data_summ$temp, resource=data_summ$resource))
   seq_data %<>% mutate(m5b_rate = mapply(get_rate, f=m5b_f, arr=seq_data$resource*m5b_p + m5b_arr, h=m5b_h, temp=seq_data$temp, resource=seq_data$resource))
   
-m6b_coef
-m6b_f <- as.numeric(m6b_coef[1])
-m6b_arr <- as.numeric(m6b_coef[2])
-m6b_h <- as.numeric(m6b_coef[3])
-m6b_p <- as.numeric(m6b_coef[4])
-
-  data_summ %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr*exp(data_summ$resource*m6b_p), h=m6b_h, temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=seq_data$resource*m6b_p + m6b_arr, h=m6b_h, temp=seq_data$temp, resource=seq_data$resource))
-```
-
-
-```{r}
 m5c_coef
 m5c_f <- as.numeric(m5c_coef[1])
 m5c_arr <- as.numeric(m5c_coef[2])
 m5c_h <- as.numeric(m5c_coef[3])
-m5c_w <- as.numeric(m5c_coef[4])
+m5c_p <- as.numeric(m5c_coef[4])
 
-data_summ %<>% mutate(m5c_rate = mapply(get_rate, f=m5c_f, arr=m5c_arr, h=m5c_h*vol + m5c_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m5c_rate = mapply(get_rate, f=m5c_f, arr=m5c_arr, h=m5c_h*vol + m5c_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
+  data_summ %<>% mutate(m5c_rate = mapply(get_rate, f=m5c_f, arr=m5c_arr*exp(data_summ$resource*m5c_p), h=m5c_h, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m5c_rate = mapply(get_rate, f=m5c_f, arr=m5c_arr*exp(seq_data$resource*m5c_p), h=m5c_h, temp=seq_data$temp, resource=seq_data$resource))
+```
+
+
+```{r}
+m6b_coef
+m6b_f <- as.numeric(m6b_coef[1])
+m6b_arr <- as.numeric(m6b_coef[2])
+m6b_h <- as.numeric(m6b_coef[3])
+m6b_w <- as.numeric(m6b_coef[4])
+
+data_summ %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr, h=m6b_h*vol + m6b_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m6b_rate = mapply(get_rate, f=m5c_f, arr=m6b_arr, h=m6b_h*vol + m6b_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
   
 m6c_coef
 m6c_f <- as.numeric(m6c_coef[1])
@@ -373,20 +393,18 @@ m7e_w <- as.numeric(m7e_coef[5])
 ```{r}
 seq_plot("m4_rate")
 seq_plot("m5a_rate")
-seq_plot("m6a_rate")
-seq_plot("m6a_rate")
-seq_plot("m6a_rate")
+seq_plot_temp("m6a_rate")
 ```
 
 ```{r}
 seq_plot("m4_rate")
 seq_plot("m5b_rate")
-seq_plot("m6b_rate")
+seq_plot("m5c_rate")
 ```
 
 ```{r}
 seq_plot("m4_rate")
-seq_plot("m5c_rate")
+seq_plot("m6b_rate")
 seq_plot("m6c_rate")
 ```
 
@@ -397,4 +415,58 @@ seq_plot("m7c_rate")
 seq_plot("m7e_rate")
 seq_plot("m7e_rate")
 ```
+
+# Interaction parameters
+
+## Resource on temp
+
+How does arr_t vary over resources?
+
+```{r}
+m5_range <- tibble(resource = resource_range)
+m5_range %<>% mutate(arr_t_b = resource*m5b_p + m5b_arr,
+                     arr_t_c = m5c_arr*exp(m5c_p*resource))
+
+m5_range %<>% pivot_longer(cols=c(arr_t_b, arr_t_c))
+
+m5_range %>% ggplot(., aes(x=resource, y=value, group=name, color=name)) + geom_point()
+```
+
+```{r}
+m6_range <- tibble(temp = temp_range)
+
+m6_range %<>% mutate(h_b = m6b_h*vol + m6b_w*temp,
+                     h_c = m6c_h*vol*exp(m6c_w*temp))
+
+m6_range %<>% pivot_longer(cols=c(h_b, h_c))
+
+m6_range %>% ggplot(., aes(x=temp, y=value, group=name, color=name)) + geom_point()
+```
+
+```{r}
+m7_arr_t_range <- m7_range %>% mutate(arr_b = resource*m7b_p + m7b_arr,
+                               arr_c = m7c_arr*exp(m7c_p*resource),
+                               arr_d = resource*m7d_p + m7d_arr,
+                               arr_e = m7e_arr*exp(m7e_p*resource))
+m7_h_range <- m7_range %>% mutate(h_b = m7b_h*vol + m7b_w*temp,
+                               h_c = m7c_h*vol*exp(m7c_w*temp),
+                               h_d = m7d_h*vol*exp(m7d_w*temp),
+                               h_e = m7e_h*vol + m7e_w*temp)
+```
+
+```{r}
+m7_arr_t_range %<>% pivot_longer(cols=c(arr_b,arr_c,arr_d,arr_e))
+m7_h_range %<>% pivot_longer(cols=c(h_b,h_c,h_d,h_e))
+```
+
+```{r}
+m7_arr_t_range %>% ggplot(.,aes(x=resource, y=value, group=name, color=name)) + geom_point()
+m7_h_range %>% ggplot(.,aes(x=temp, y=value, group=name, color=name)) + geom_point()
+```
+
+
+
+
+
+
 
