@@ -1,0 +1,400 @@
+---
+title: "model parameters visualized"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+library(ggnewscale)
+```
+
+
+First, make basic plot that shows temperature gradient on x-axis, foraging rate on y-axis, and a geom layer for resource concentration. This will be the actual data and will be consistent between each of the model fit visualizations.
+
+```{r, data}
+data <- readRDS(here("processed_data","foraging_raw.rds"))
+data_summ <- readRDS(here("processed_data", "foraging.rds"))
+m0 <- readRDS(here("mle", "m0_f_fit.rds"))
+
+m4 <- readRDS(here("mle", "m4_f_fit.rds"))
+m5 <- readRDS(here("mle", "m5_f_fit.rds"))
+m5a <- readRDS(here("mle", "m5a_f_fit.rds"))
+m5b <- readRDS(here("mle", "m5b_f_fit.rds"))
+m5c <- readRDS(here("mle", "m5c_f_fit.rds"))
+m6 <- readRDS(here("mle", "m6_f_fit.rds"))
+m6a <- readRDS(here("mle", "m6a_f_fit.rds"))
+m6b <- readRDS(here("mle", "m6b_f_fit.rds"))
+m6c <- readRDS(here("mle", "m6c_f_fit.rds"))
+m7 <- readRDS(here("mle", "m7_f_fit.rds"))
+m7a <- readRDS(here("mle", "m7a_f_fit.rds"))
+m7b <- readRDS(here("mle", "m7b_f_fit.rds"))
+m7c <- readRDS(here("mle", "m7c_f_fit.rds"))
+m7d <- readRDS(here("mle", "m7d_f_fit.rds"))
+m7e <- readRDS(here("mle", "m7e_f_fit.rds"))
+```
+
+```{r}
+m0_coef <- m0@coef
+
+m4_coef <- m4@coef
+m5_coef <- m5@coef
+m5a_coef <- m5a@coef
+m5b_coef <- m5b@coef
+m5c_coef <- m5c@coef
+
+m6_coef <- m6@coef
+m6a_coef <- m6a@coef
+m6b_coef <- m6b@coef
+m6c_coef <- m6c@coef
+
+m7_coef <- m7@coef
+m7a_coef <- m7a@coef
+m7b_coef <- m7b@coef
+m7c_coef <- m7c@coef
+m7d_coef <- m7d@coef
+m7e_coef <- m7e@coef
+
+gamma <- 2
+ref_t <- 15
+vol <- 15
+mean_time <- mean(data$time/60/24)
+mean_length <- mean(data$mm, na.rm=T)
+```
+
+```{r, units}
+data_summ %<>% mutate(rate_len_mean = rate_len_mean*60*24)
+```
+
+
+```{r}
+temp_range <- seq(15,25,by=0.1)
+resource_range <- seq(0.1,1,by=0.01)
+
+seq_data <- tibble(temp=c(),
+                   resourece=c())
+
+for (i in 1:length(temp_range)){
+  tmp <- tibble(temp = temp_range[i],
+                resource = seq(0.1,1,by=0.01))
+  seq_data %<>% bind_rows(., tmp)
+}
+
+```
+
+```{r, echo=F}
+seq_data %<>% mutate(temp_factor = case_when(temp==15 ~ 15,
+                                             temp==20 ~ 20,
+                                             temp==25 ~ 25))
+```
+
+# plotting function
+
+```{r}
+seq_plot <- function(rate){
+  seq_data %>% na.omit() %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(rate),
+                group=temp_factor)) +
+  geom_point(data=data_summ, aes(x=resource, 
+                            y=rate_len_mean, 
+                            group = as.factor(temp), 
+                            color = as.factor(temp),
+                            shape = as.factor(temp))) + 
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+}
+
+```
+
+
+
+
+# Fitting foraging rate
+
+```{r}
+data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_len_mean, color=as.factor(resource))) + 
+  geom_point() + 
+  # geom_linerange(aes(ymin=rate_mean-rate_se, 
+  #                    ymax=rate_mean+rate_se)) +
+  labs(x="Temperature", y="Foraging rate (mL/day)", color="Resource")
+
+# data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_mean, color=as.factor(resource))) + 
+#   geom_point() + 
+#   geom_linerange(aes(ymin=rate_mean-rate_se,
+#                      ymax=rate_mean+rate_se)) +
+#   labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource")
+# 
+# data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_mean, color=as.factor(temp))) + 
+#   geom_point() + 
+#   geom_linerange(aes(ymin=rate_mean-rate_se, 
+#                      ymax=rate_mean+rate_se)) +
+#   labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
+```
+
+
+
+
+
+Now let's get the results from the model
+```{r}
+m0_f <- as.numeric(m0_coef)
+data_summ %<>% mutate(m0_rate = m0_f)
+```
+
+
+$$
+observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR} \\
+$$
+
+```{r}
+get_rate <- function(f, arr, temp, h, resource){
+  ((f*exp(arr*(1/ref_t - 1/temp)))/(1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
+}
+```
+
+
+```{r}
+m4_coef
+m4_f <- as.numeric(m4_coef[1])
+m4_arr <- as.numeric(m4_coef[2])
+m4_h <- as.numeric(m4_coef[3])
+
+data_summ %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=data_summ$temp, h=m4_h, resource=data_summ$resource))
+
+seq_data %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=seq_data$temp, h=m4_h, resource=seq_data$resource))
+```
+
+```{r}
+  
+m5a_coef
+m5a_f <- as.numeric(m5a_coef[1])
+m5a_arr <- as.numeric(m5a_coef[2])
+m5a_h <- as.numeric(m5a_coef[3])
+
+  data_summ %<>% mutate(m5a_rate = mapply(get_rate, f=m5a_f, arr=m5a_arr, h=m5a_h, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m5a_rate = mapply(get_rate, f=m5a_f, arr=m5a_arr, h=m5a_h, temp=seq_data$temp, resource=seq_data$resource))  
+  
+m6a_coef
+m6a_f <- as.numeric(m6a_coef[1])
+m6a_arr <- as.numeric(m6a_coef[2])
+m6a_h <- as.numeric(m6a_coef[3])
+  
+  data_summ %<>% mutate(m6a_rate = mapply(get_rate, f=m6a_f, arr=m6a_arr, h=m6a_h, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m6a_rate = mapply(get_rate, f=m6a_f, arr=m6a_arr, h=m6a_h, temp=seq_data$temp, resource=seq_data$resource))
+  
+m7a_coef
+m7a_f <- as.numeric(m7a_coef[1])
+m7a_arr <- as.numeric(m7a_coef[2])
+m7a_h <- as.numeric(m7a_coef[3])
+  
+  data_summ %<>% mutate(m7a_rate = mapply(get_rate, f=m7a_f, arr=m7a_arr, h=m7a_h, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7a_rate = mapply(get_rate, f=m7a_f, arr=m7a_arr, h=m7a_h, temp=seq_data$temp, resource=seq_data$resource))  
+  
+```
+
+
+```{r}
+m5b_coef
+m5b_f <- as.numeric(m5b_coef[1])
+m5b_arr <- as.numeric(m5b_coef[2])
+m5b_h <- as.numeric(m5b_coef[3])
+m5b_p <- as.numeric(m5b_coef[4])
+
+data_summ %<>% mutate(m5b_rate = mapply(get_rate, f=m5b_f, arr=data_summ$resource*m5b_p + m5b_arr, h=m5b_h, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m5b_rate = mapply(get_rate, f=m5b_f, arr=seq_data$resource*m5b_p + m5b_arr, h=m5b_h, temp=seq_data$temp, resource=seq_data$resource))
+  
+m6b_coef
+m6b_f <- as.numeric(m6b_coef[1])
+m6b_arr <- as.numeric(m6b_coef[2])
+m6b_h <- as.numeric(m6b_coef[3])
+m6b_p <- as.numeric(m6b_coef[4])
+
+  data_summ %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr*exp(data_summ$resource*m6b_p), h=m6b_h, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=seq_data$resource*m6b_p + m6b_arr, h=m6b_h, temp=seq_data$temp, resource=seq_data$resource))
+```
+
+
+```{r}
+m5c_coef
+m5c_f <- as.numeric(m5c_coef[1])
+m5c_arr <- as.numeric(m5c_coef[2])
+m5c_h <- as.numeric(m5c_coef[3])
+m5c_w <- as.numeric(m5c_coef[4])
+
+data_summ %<>% mutate(m5c_rate = mapply(get_rate, f=m5c_f, arr=m5c_arr, h=m5c_h*vol + m5c_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m5c_rate = mapply(get_rate, f=m5c_f, arr=m5c_arr, h=m5c_h*vol + m5c_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
+  
+m6c_coef
+m6c_f <- as.numeric(m6c_coef[1])
+m6c_arr <- as.numeric(m6c_coef[2])
+m6c_h <- as.numeric(m6c_coef[3])
+m6c_w <- as.numeric(m6c_coef[4])
+
+  data_summ %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*vol*exp(m6c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*vol*exp(m6c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+```
+
+
+```{r}
+
+m7b_coef
+m7b_f <- as.numeric(m7b_coef[1])
+m7b_arr <- as.numeric(m7b_coef[2])
+m7b_h <- as.numeric(m7b_coef[3])
+m7b_p <- as.numeric(m7b_coef[4])
+m7b_w <- as.numeric(m7b_coef[5])
+
+  data_summ %<>% mutate(m7b_rate = mapply(get_rate, f=m7b_f, arr=data_summ$resource*m7b_p + m7b_arr, h=m7b_h*vol + m7b_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7b_rate = mapply(get_rate, f=m7b_f, arr=seq_data$resource*m7b_p + m7b_arr, h=m7b_h*vol + m7b_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
+  
+m7c_coef
+m7c_f <- as.numeric(m7c_coef[1])
+m7c_arr <- as.numeric(m7c_coef[2])
+m7c_h <- as.numeric(m7c_coef[3])
+m7c_p <- as.numeric(m7c_coef[4])
+m7c_w <- as.numeric(m7c_coef[5])
+
+      data_summ %<>% mutate(m7c_rate = mapply(get_rate, f=m7c_f, arr=m7c_arr*exp(data_summ$resource*m7c_p), h=m7c_h*vol*exp(m7c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7c_rate = mapply(get_rate, f=m7c_f, arr=m7c_arr*exp(seq_data$resource*m7c_p), h=m7c_h*vol*exp(m7c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+  
+m7d_coef
+m7d_f <- as.numeric(m7d_coef[1])
+m7d_arr <- as.numeric(m7d_coef[2])
+m7d_h <- as.numeric(m7d_coef[3])
+m7d_p <- as.numeric(m7d_coef[4])
+m7d_w <- as.numeric(m7d_coef[5])
+
+      data_summ %<>% mutate(m7d_rate = mapply(get_rate, f=m7d_f, arr=data_summ$resource*m7d_p + m7d_arr, h=m7d_h*vol*exp(m7d_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7d_rate = mapply(get_rate, f=m7d_f, arr=m7d_arr*exp(seq_data$resource*m7d_p), h=m7d_h*vol*exp(m7d_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+  
+m7e_coef
+m7e_f <- as.numeric(m7e_coef[1])
+m7e_arr <- as.numeric(m7e_coef[2])
+m7e_h <- as.numeric(m7e_coef[3])
+m7e_p <- as.numeric(m7e_coef[4])
+m7e_w <- as.numeric(m7e_coef[5])
+
+      data_summ %<>% mutate(m7e_rate = mapply(get_rate, f=m7e_f, arr=m7e_arr*exp(data_summ$resource*m7e_p), h=m7e_h*vol + m7e_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7e_rate = mapply(get_rate, f=m7e_f, arr=m7e_arr*exp(seq_data$resource*m7e_p), h=m7e_h*vol + m7e_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
+
+```
+
+
+
+
+
+
+```{r}
+# m5_coef
+# m5_f <- as.numeric(m5_coef[1])
+# m5_arr_0.1 <- as.numeric(m5_coef[2])
+# m5_arr_0.5 <- as.numeric(m5_coef[3])
+# m5_arr_1 <- as.numeric(m5_coef[4])
+# m5_h <- as.numeric(m5_coef[5])
+# 
+# data_summ %<>% mutate(m5_arr = case_when(resource==0.1 ~ m5_arr_0.1,
+#                                          resource==0.5 ~ m5_arr_0.5,
+#                                          resource==1 ~ m5_arr_1),
+#                       m5_rate = ((m5_f*exp(m5_arr*(1/ref_t - 1/temp)))/
+#                                    (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*m5_h*resource)))
+#   
+# 
+# seq_data %<>% mutate(m5_arr = case_when(resource==0.1 ~ m5_arr_0.1,
+#                                          resource==0.5 ~ m5_arr_0.5,
+#                                          resource==1 ~ m5_arr_1),
+#                      m5_rate = ((m5_f*exp(m5_arr*(1/ref_t - 1/temp)))/
+#                                    (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*m5_h*resource)))
+```
+
+
+
+```{r}
+# m6_coef
+# m6_f <- as.numeric(m6_coef[1])
+# m6_arr <- as.numeric(m6_coef[2])
+# m6_h_15 <- as.numeric(m6_coef[3])
+# m6_h_20 <- as.numeric(m6_coef[4])
+# m6_h_25 <- as.numeric(m6_coef[5])
+# 
+# 
+# data_summ %<>% mutate(m6_h = case_when(temp==15 ~ m6_h_15,
+#                                        temp==20 ~ m6_h_20,
+#                                        temp==25 ~ m6_h_25),
+#                       m6_rate = ((m6_f*exp(m6_arr*(1/ref_t - 1/temp)))/
+#                                    (1+m6_f*exp(m6_arr*(1/ref_t - 1/temp))*m6_h*resource)))
+#   
+# 
+# seq_data %<>% mutate(m6_h = case_when(temp==15 ~ m6_h_15,
+#                                        temp==20 ~ m6_h_20,
+#                                        temp==25 ~ m6_h_25),
+#                      m6_rate = ((m6_f*exp(m6_arr*(1/ref_t - 1/temp)))/
+#                                    (1+m6_f*exp(m6_arr*(1/ref_t - 1/temp))*m6_h*resource)))
+```
+
+
+```{r}
+# m7_coef
+# m7_f <- as.numeric(m7_coef[1])
+# m7_arr_0.1 <- as.numeric(m7_coef[2])
+# m7_arr_0.5 <- as.numeric(m7_coef[3])
+# m7_arr_1 <- as.numeric(m7_coef[4])
+# m7_h_15 <- as.numeric(m7_coef[5])
+# m7_h_20 <- as.numeric(m7_coef[6])
+# m7_h_25 <- as.numeric(m7_coef[7])
+# 
+# data_summ %<>% mutate(m7_h = case_when(temp==15 ~ m7_h_15,
+#                                        temp==20 ~ m7_h_20,
+#                                        temp==25 ~ m7_h_25),
+#                       m7_arr = case_when(resource==0.1 ~ m7_arr_0.1,
+#                                          resource==0.5 ~ m7_arr_0.5,
+#                                          resource==1 ~ m7_arr_1),
+#                       m7_rate = ((m7_f*exp(m7_arr*(1/ref_t - 1/temp)))/
+#                                    (1+m7_f*exp(m7_arr*(1/ref_t - 1/temp))*m7_h*resource)))
+#   
+# 
+# seq_data %<>% mutate(m7_h = case_when(temp==15 ~ m7_h_15,
+#                                        temp==20 ~ m7_h_20,
+#                                        temp==25 ~ m7_h_25),
+#                      m7_arr = case_when(resource==0.1 ~ m7_arr_0.1,
+#                                          resource==0.5 ~ m7_arr_0.5,
+#                                          resource==1 ~ m7_arr_1),
+#                      m7_rate = ((m7_f*exp(m7_arr*(1/ref_t - 1/temp)))/
+#                                    (1+m7_f*exp(m7_arr*(1/ref_t - 1/temp))*m7_h*resource)))
+```
+
+
+
+```{r}
+seq_plot("m4_rate")
+seq_plot("m5a_rate")
+seq_plot("m6a_rate")
+seq_plot("m6a_rate")
+seq_plot("m6a_rate")
+```
+
+```{r}
+seq_plot("m4_rate")
+seq_plot("m5b_rate")
+seq_plot("m6b_rate")
+```
+
+```{r}
+seq_plot("m4_rate")
+seq_plot("m5c_rate")
+seq_plot("m6c_rate")
+```
+
+```{r}
+seq_plot("m4_rate")
+seq_plot("m7b_rate")
+seq_plot("m7c_rate")
+seq_plot("m7e_rate")
+seq_plot("m7e_rate")
+```
+
