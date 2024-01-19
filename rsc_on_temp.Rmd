@@ -1,0 +1,261 @@
+---
+title: "rsc_on_temp"
+output: html_document
+date: '`r Sys.Date()`'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages, message=FALSE}
+library(here)
+library(tidyverse)
+library(deSolve)
+library(magrittr)
+library(bbmle)
+library(latex2exp)
+library(AICcmodavg)
+```
+
+```{r, set theme}
+theme_set(theme_minimal())
+
+```
+
+
+```{r, real data}
+data <- readRDS(here("processed_data","foraging_raw.rds"))
+data_summ <- readRDS(here("processed_data", "foraging.rds"))
+
+data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
+
+data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube 
+
+treatment_IDs <- unique(data$treatment_ID)
+resource_IDs <- unique(data$resource)
+temp_IDs <- unique(data$temp)
+
+
+vol <- 15
+```
+
+Some of the lengths are missing so we impute these missing values by using the average length from that treatment
+```{r}
+mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)
+data %<>% left_join(., mean_length_summ)
+data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
+```
+
+```{r, m4_num_sol}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+```{r, m4_sim}
+m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma,
+              arr_t=arr_t,
+              ref_t=ref_t,
+              temp=temp,
+              h=h)
+  output <- as.data.frame(lsoda(y=xstart, times, m4_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(r_end)
+}
+```
+
+# Model 5 - Resource on Temperature Interaction
+
+This model uses a different Arrhenius coefficient for each resource level to see if there is an effect of resource level on the temperature effect.
+
+```{r, m5_ll}
+m5_ll <- function(f, arr_t_0.1, arr_t_0.5, arr_t_1, h){
+  arr_t_vec <- c(arr_t_0.1, arr_t_0.5, arr_t_1)
+  nll_vec <- c()
+  for (i in 1:length(resource_IDs)){
+  data <- tmp %>% filter(resource == resource_IDs[i])
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t_vec[i], ref_t=15, temp=data$temp, h=h*data$vol))
+  colnames(output) <- "endpoint"
+  data$end <- output$endpoint
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_vec[i] <- -sum(nll, na.rm = T)
+  }
+  sum(nll_vec)
+}
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m5_f_fit <- mle2(m5_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h=0.1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0, 0, 0),
+                upper = c(Inf, Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t_0.1=50, arr_t_0.5=50, arr_t_1=50, h=0.1), maxit=10000))
+end_time <- Sys.time()
+m5_runtime <- end_time-start_time
+m5_runtime
+
+coef(m5_f_fit)
+
+saveRDS(m5_f_fit, file = here("mle","m5_f_fit.rds"))
+```
+
+
+
+# Model 5a - Resource on Temperature Interaction - continuous
+
+This model uses a resource-dependent Arrhenius coefficient for each resource level to see if there is an effect of resource level on the temperature effect.
+
+
+
+```{r, m5a_ll}
+m5a_ll <- function(f, arr_t, h){
+
+  data <- tmp
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=data$resource*arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
+  colnames(output) <- "endpoint"
+  data$end <- output$endpoint
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+
+}
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m5a_f_fit <- mle2(m5a_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t=50, h=1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0),
+                upper = c(Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t=50, h=1), maxit=10000))
+end_time <- Sys.time()
+m5a_runtime <- end_time-start_time
+m5a_runtime
+
+coef(m5a_f_fit)
+
+saveRDS(m5a_f_fit, file = here("mle","m5a_f_fit.rds"))
+```
+
+# Model 5b - Resource on Temperature Interaction - w/ linear relationship
+
+This model uses a resource-dependent Arrhenius coefficient for each resource level to see if there is an effect of resource level on the temperature effect.
+
+
+
+```{r, m5b_ll}
+m5b_ll <- function(f, arr_t, h, p){
+
+  data <- tmp
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=data$resource*p + arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
+  colnames(output) <- "endpoint"
+  data$end <- output$endpoint
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+
+}
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m5b_f_fit <- mle2(m5b_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t=50, h=0.1, p=10),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0, -Inf),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t=50, h=0.1, p=10), maxit=10000))
+end_time <- Sys.time()
+m5b_runtime <- end_time-start_time
+m5b_runtime
+
+coef(m5b_f_fit)
+
+saveRDS(m5b_f_fit, file = here("mle","m5b_f_fit.rds"))
+```
+
+# Model 5c - Resource on Temperature Interaction - w/ exp relationship
+
+This model uses a resource-dependent Arrhenius coefficient for each resource level to see if there is an effect of resource level on the temperature effect.
+
+
+
+```{r, m5c_ll}
+m5c_ll <- function(f, arr_t, h, p){
+
+  data <- tmp
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t*exp(p*data$resource), ref_t=15, temp=data$temp, h=h*data$vol))
+  colnames(output) <- "endpoint"
+  data$end <- output$endpoint
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+
+}
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m5c_f_fit <- mle2(m5c_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t=50, h=0.1, p=1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, 0, -Inf),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10, arr_t=50, h=0.1, p=1), maxit=10000))
+end_time <- Sys.time()
+m5c_runtime <- end_time-start_time
+m5c_runtime
+
+coef(m5c_f_fit)
+
+saveRDS(m5c_f_fit, file = here("mle","m5c_f_fit.rds"))
+```
+
+

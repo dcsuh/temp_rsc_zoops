@@ -71,15 +71,16 @@ m3@min
 m3a@min
 m4@min
 # m4a@min
-# m5@min
-# m6@min
-# m7@min
+m5@min
+m6@min
+m7@min
 ```
 
+# Check this formula and the values from model output
 
 ```{r}
 getAIC <- function(n, L){
-  return(2*length(n)-(2*L))
+  return(2*length(n)-(2*-L))
 }
 ```
 
@@ -97,7 +98,20 @@ getAIC(m5a@coef, m5a@min)
 getAIC(m5b@coef, m5b@min)
 getAIC(m5c@coef, m5c@min)
 # getAIC(m6@coef, m6@min)
-# getAIC(m6a@coef, m6a@min)
+# # getAIC(m6a@coef, m6a@min)
 # getAIC(m7@coef, m7@min)
 # getAIC(m7a@coef, m7a@min)
 ```
+
+```{r}
+arr_t_vec <- c(146.6, 124.8, 118.4)
+resource <- c(0.1, 0.5, 1)
+df <- tibble(arr_t=arr_t_vec,
+             resource=resource)
+
+ggplot(df,aes(x=arr_t_vec, y=resource)) + geom_line()
+ggplot(df,aes(x=arr_t_vec, y=log(resource))) + geom_line()
+
+```
+
+
