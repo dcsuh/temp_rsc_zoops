@@ -336,11 +336,11 @@ start_time <- Sys.time()
 tmp <- data
 m7e_f_fit <- mle2(m7e_ll,
                 skip.hessian = T,
-                start=list(f=10, arr_t=50, h=0.1, p=0.1, w=1),
+                start=list(f=10, arr_t=50, h=0.1, p=0.1, w=0.1),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0, -Inf, -Inf),
                 upper = c(Inf, Inf, Inf, Inf, Inf),
-                control=list(parscale=c(f=10, arr_t=50, h=0.1, p=0.1, w=1), maxit=10000))
+                control=list(parscale=c(f=10, arr_t=50, h=0.1, p=0.1, w=0.1), maxit=10000))
 end_time <- Sys.time()
 m7e_runtime <- end_time-start_time
 m7e_runtime

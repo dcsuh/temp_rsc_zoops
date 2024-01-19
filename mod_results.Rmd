@@ -37,14 +37,22 @@ m3 <- readRDS(here("mle","m3_f_fit.rds"))
 m3a <- readRDS(here("mle","m3a_f_fit.rds"))
 m4 <- readRDS(here("mle","m4_f_fit.rds"))
 m4a <- readRDS(here("mle","m4a_f_fit.rds"))
+```
+
+
+```{r}
 m5 <- readRDS(here("mle","m5_f_fit.rds"))
 m5a <- readRDS(here("mle","m5a_f_fit.rds"))
 m5b <- readRDS(here("mle","m5b_f_fit.rds"))
 m5c <- readRDS(here("mle","m5c_f_fit.rds"))
 m6 <- readRDS(here("mle","m6_f_fit.rds"))
 m6a <- readRDS(here("mle","m6a_f_fit.rds"))
+m6b <- readRDS(here("mle","m6b_f_fit.rds"))
+m6c <- readRDS(here("mle","m6c_f_fit.rds"))
 m7 <- readRDS(here("mle","m7_f_fit.rds"))
 m7a <- readRDS(here("mle","m7a_f_fit.rds"))
+m7b <- readRDS(here("mle","m7b_f_fit.rds"))
+m7c <- readRDS(here("mle","m7c_f_fit.rds"))
 ```
 
 ```{r}
@@ -55,12 +63,30 @@ m3@coef
 m3a@coef
 m4@coef
 # m4a@coef
+```
+
+
+```{r}
 m5@coef
 m5a@coef
 m5b@coef
 m5c@coef
-# m6@coef
-# m7@coef
+```
+
+
+```{r}
+m6@coef
+m6a@coef
+m6b@coef
+m6c@coef
+```
+
+
+```{r}
+m7@coef
+m7a@coef
+m7b@coef
+m7c@coef
 ```
 
 ```{r}
@@ -93,14 +119,28 @@ getAIC <- function(n, L){
 # getAIC(m3a@coef, m3a@min)
 getAIC(m4@coef, m4@min)
 # getAIC(m4a@coef, m4a@min)
+```
+
+
+```{r}
 getAIC(m5@coef, m5@min)
 getAIC(m5a@coef, m5a@min)
 getAIC(m5b@coef, m5b@min)
 getAIC(m5c@coef, m5c@min)
-# getAIC(m6@coef, m6@min)
-# # getAIC(m6a@coef, m6a@min)
-# getAIC(m7@coef, m7@min)
-# getAIC(m7a@coef, m7a@min)
+```
+
+```{r}
+getAIC(m6@coef, m6@min)
+getAIC(m6a@coef, m6a@min)
+getAIC(m6b@coef, m6b@min)
+getAIC(m6c@coef, m6c@min)
+```
+
+```{r}
+getAIC(m7@coef, m7@min)
+getAIC(m7a@coef, m7a@min)
+getAIC(m7b@coef, m7b@min)
+getAIC(m7c@coef, m7c@min)
 ```
 
 ```{r}
