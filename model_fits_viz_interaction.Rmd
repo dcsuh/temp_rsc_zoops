@@ -116,7 +116,7 @@ seq_plot <- function(rate){
 }
 
 seq_plot_temp <- function(rate){
-  seq_data %>% na.omit() %>% filter(resource = c(0.1, 0.5, 1))
+  seq_data %>% na.omit() %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
   ggplot(.) +
   geom_line(aes(x=temp, 
                 y=!!sym(rate),
@@ -394,6 +394,7 @@ m7e_w <- as.numeric(m7e_coef[5])
 seq_plot("m4_rate")
 seq_plot("m5a_rate")
 seq_plot_temp("m6a_rate")
+seq_plot("m7a_rate")
 ```
 
 ```{r}
@@ -403,7 +404,7 @@ seq_plot("m5c_rate")
 ```
 
 ```{r}
-seq_plot("m4_rate")
+seq_plot_temp("m4_rate")
 seq_plot("m6b_rate")
 seq_plot("m6c_rate")
 ```
@@ -412,7 +413,7 @@ seq_plot("m6c_rate")
 seq_plot("m4_rate")
 seq_plot("m7b_rate")
 seq_plot("m7c_rate")
-seq_plot("m7e_rate")
+seq_plot("m7d_rate")
 seq_plot("m7e_rate")
 ```
 

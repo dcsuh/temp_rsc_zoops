@@ -210,11 +210,11 @@ start_time <- Sys.time()
 tmp <- data
 m7b_f_fit <- mle2(m7b_ll,
                 skip.hessian = T,
-                start=list(f=10, arr_t=50, h=0.1, p=10, w=10),
+                start=list(f=10, arr_t=50, h=0.1, p=1, w=0.01),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0, -Inf, -Inf),
                 upper = c(Inf, Inf, Inf, Inf, Inf),
-                control=list(parscale=c(f=10, arr_t=50, h=0.1, p=10, w=10), maxit=10000))
+                control=list(parscale=c(f=10, arr_t=50, h=0.1, p=1, w=0.01), maxit=10000))
 end_time <- Sys.time()
 m7b_runtime <- end_time-start_time
 m7b_runtime

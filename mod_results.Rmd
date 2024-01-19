@@ -175,6 +175,10 @@ h_df <- tibble(h=h_vec,
                temp=temp)
 
 ggplot(h_df, aes(x=temp, y=h)) + geom_line()
+ggplot(h_df, aes(x=log(temp), y=h)) + geom_line()
+ggplot(h_df, aes(x=temp, y=log(h))) + geom_line()
+
+
 ```
 
 
