@@ -130,7 +130,7 @@ getAIC(m4a)
 getAIC(m4)
 
 getAIC(m5)
-getAIC(m5a)
+#getAIC(m5a)
 getAIC(m5b)
 getAIC(m5c)
 ```
@@ -139,7 +139,7 @@ getAIC(m5c)
 getAIC(m4)
 
 getAIC(m6)
-getAIC(m6a)
+#getAIC(m6a)
 getAIC(m6b)
 getAIC(m6c)
 ```
@@ -148,7 +148,7 @@ getAIC(m6c)
 getAIC(m4)
 
 getAIC(m7)
-getAIC(m7a)
+#getAIC(m7a)
 getAIC(m7b)
 getAIC(m7c)
 getAIC(m7d)

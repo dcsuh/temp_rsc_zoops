@@ -169,23 +169,11 @@ seq_plot_temp <- function(rate){
 # Fitting foraging rate
 
 ```{r}
-data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_len_mean, color=as.factor(resource))) + 
-  geom_point() + 
-  # geom_linerange(aes(ymin=rate_mean-rate_se, 
-  #                    ymax=rate_mean+rate_se)) +
-  labs(x="Temperature", y="Foraging rate (mL/day)", color="Resource")
-
-# data_summ %>% ggplot(., aes(x=as.factor(temp), y=rate_mean, color=as.factor(resource))) + 
-#   geom_point() + 
-#   geom_linerange(aes(ymin=rate_mean-rate_se,
-#                      ymax=rate_mean+rate_se)) +
-#   labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource")
-# 
-# data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_mean, color=as.factor(temp))) + 
-#   geom_point() + 
-#   geom_linerange(aes(ymin=rate_mean-rate_se, 
-#                      ymax=rate_mean+rate_se)) +
-#   labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
+data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_mean, color=as.factor(temp))) +
+  geom_point() +
+  geom_linerange(aes(ymin=rate_mean-rate_se,
+                     ymax=rate_mean+rate_se)) +
+  labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
 ```
 
 
@@ -338,90 +326,6 @@ m7e_w <- as.numeric(m7e_coef[5])
 
 
 
-
-
-
-```{r}
-# m5_coef
-# m5_f <- as.numeric(m5_coef[1])
-# m5_arr_0.1 <- as.numeric(m5_coef[2])
-# m5_arr_0.5 <- as.numeric(m5_coef[3])
-# m5_arr_1 <- as.numeric(m5_coef[4])
-# m5_h <- as.numeric(m5_coef[5])
-# 
-# data_summ %<>% mutate(m5_arr = case_when(resource==0.1 ~ m5_arr_0.1,
-#                                          resource==0.5 ~ m5_arr_0.5,
-#                                          resource==1 ~ m5_arr_1),
-#                       m5_rate = ((m5_f*exp(m5_arr*(1/ref_t - 1/temp)))/
-#                                    (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*m5_h*resource)))
-#   
-# 
-# seq_data %<>% mutate(m5_arr = case_when(resource==0.1 ~ m5_arr_0.1,
-#                                          resource==0.5 ~ m5_arr_0.5,
-#                                          resource==1 ~ m5_arr_1),
-#                      m5_rate = ((m5_f*exp(m5_arr*(1/ref_t - 1/temp)))/
-#                                    (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*m5_h*resource)))
-```
-
-
-
-```{r}
-# m6_coef
-# m6_f <- as.numeric(m6_coef[1])
-# m6_arr <- as.numeric(m6_coef[2])
-# m6_h_15 <- as.numeric(m6_coef[3])
-# m6_h_20 <- as.numeric(m6_coef[4])
-# m6_h_25 <- as.numeric(m6_coef[5])
-# 
-# 
-# data_summ %<>% mutate(m6_h = case_when(temp==15 ~ m6_h_15,
-#                                        temp==20 ~ m6_h_20,
-#                                        temp==25 ~ m6_h_25),
-#                       m6_rate = ((m6_f*exp(m6_arr*(1/ref_t - 1/temp)))/
-#                                    (1+m6_f*exp(m6_arr*(1/ref_t - 1/temp))*m6_h*resource)))
-#   
-# 
-# seq_data %<>% mutate(m6_h = case_when(temp==15 ~ m6_h_15,
-#                                        temp==20 ~ m6_h_20,
-#                                        temp==25 ~ m6_h_25),
-#                      m6_rate = ((m6_f*exp(m6_arr*(1/ref_t - 1/temp)))/
-#                                    (1+m6_f*exp(m6_arr*(1/ref_t - 1/temp))*m6_h*resource)))
-```
-
-
-```{r}
-# m7_coef
-# m7_f <- as.numeric(m7_coef[1])
-# m7_arr_0.1 <- as.numeric(m7_coef[2])
-# m7_arr_0.5 <- as.numeric(m7_coef[3])
-# m7_arr_1 <- as.numeric(m7_coef[4])
-# m7_h_15 <- as.numeric(m7_coef[5])
-# m7_h_20 <- as.numeric(m7_coef[6])
-# m7_h_25 <- as.numeric(m7_coef[7])
-# 
-# data_summ %<>% mutate(m7_h = case_when(temp==15 ~ m7_h_15,
-#                                        temp==20 ~ m7_h_20,
-#                                        temp==25 ~ m7_h_25),
-#                       m7_arr = case_when(resource==0.1 ~ m7_arr_0.1,
-#                                          resource==0.5 ~ m7_arr_0.5,
-#                                          resource==1 ~ m7_arr_1),
-#                       m7_rate = ((m7_f*exp(m7_arr*(1/ref_t - 1/temp)))/
-#                                    (1+m7_f*exp(m7_arr*(1/ref_t - 1/temp))*m7_h*resource)))
-#   
-# 
-# seq_data %<>% mutate(m7_h = case_when(temp==15 ~ m7_h_15,
-#                                        temp==20 ~ m7_h_20,
-#                                        temp==25 ~ m7_h_25),
-#                      m7_arr = case_when(resource==0.1 ~ m7_arr_0.1,
-#                                          resource==0.5 ~ m7_arr_0.5,
-#                                          resource==1 ~ m7_arr_1),
-#                      m7_rate = ((m7_f*exp(m7_arr*(1/ref_t - 1/temp)))/
-#                                    (1+m7_f*exp(m7_arr*(1/ref_t - 1/temp))*m7_h*resource)))
-```
-
-
-
-
 ```{r}
 seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC = ", round(m4_aic, 3)))
 seq_plot("m5b_rate") + labs(title = paste("arr_t(resource) ~ LINEAR. AIC = ", round(m5b_aic, 3)))
@@ -489,10 +393,4 @@ m7_h_range %<>% pivot_longer(cols=c(h_b,h_c,h_d,h_e))
 m7_arr_t_range %>% ggplot(.,aes(x=resource, y=value, group=name, color=name)) + geom_point()
 m7_h_range %>% ggplot(.,aes(x=temp, y=value, group=name, color=name)) + geom_point()
 ```
-
-
-
-
-
-
 
