@@ -209,33 +209,7 @@ data_summ %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=data_s
 seq_data %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=seq_data$temp, h=m4_h, resource=seq_data$resource))
 ```
 
-```{r}
-  
-m5a_coef
-m5a_f <- as.numeric(m5a_coef[1])
-m5a_arr <- as.numeric(m5a_coef[2])
-m5a_h <- as.numeric(m5a_coef[3])
 
-  data_summ %<>% mutate(m5a_rate = mapply(get_rate, f=m5a_f, arr=m5a_arr, h=m5a_h, temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m5a_rate = mapply(get_rate, f=m5a_f, arr=m5a_arr, h=m5a_h, temp=seq_data$temp, resource=seq_data$resource))  
-  
-m6a_coef
-m6a_f <- as.numeric(m6a_coef[1])
-m6a_arr <- as.numeric(m6a_coef[2])
-m6a_h <- as.numeric(m6a_coef[3])
-  
-  data_summ %<>% mutate(m6a_rate = mapply(get_rate, f=m6a_f, arr=m6a_arr, h=m6a_h, temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m6a_rate = mapply(get_rate, f=m6a_f, arr=m6a_arr, h=m6a_h, temp=seq_data$temp, resource=seq_data$resource))
-  
-m7a_coef
-m7a_f <- as.numeric(m7a_coef[1])
-m7a_arr <- as.numeric(m7a_coef[2])
-m7a_h <- as.numeric(m7a_coef[3])
-  
-  data_summ %<>% mutate(m7a_rate = mapply(get_rate, f=m7a_f, arr=m7a_arr, h=m7a_h, temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m7a_rate = mapply(get_rate, f=m7a_f, arr=m7a_arr, h=m7a_h, temp=seq_data$temp, resource=seq_data$resource))  
-  
-```
 
 
 ```{r}
