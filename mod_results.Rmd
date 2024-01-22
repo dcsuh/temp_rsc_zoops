@@ -127,6 +127,8 @@ getAIC(m4@coef, m4@min)
 
 
 ```{r}
+getAIC(m4@coef, m4@min)
+
 getAIC(m5@coef, m5@min)
 getAIC(m5a@coef, m5a@min)
 getAIC(m5b@coef, m5b@min)
@@ -134,6 +136,8 @@ getAIC(m5c@coef, m5c@min)
 ```
 
 ```{r}
+getAIC(m4@coef, m4@min)
+
 getAIC(m6@coef, m6@min)
 getAIC(m6a@coef, m6a@min)
 getAIC(m6b@coef, m6b@min)
@@ -141,6 +145,8 @@ getAIC(m6c@coef, m6c@min)
 ```
 
 ```{r}
+getAIC(m4@coef, m4@min)
+
 getAIC(m7@coef, m7@min)
 getAIC(m7a@coef, m7a@min)
 getAIC(m7b@coef, m7b@min)

@@ -247,8 +247,8 @@ m6b_arr <- as.numeric(m6b_coef[2])
 m6b_h <- as.numeric(m6b_coef[3])
 m6b_w <- as.numeric(m6b_coef[4])
 
-data_summ %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr, h=m6b_h*vol + m6b_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m6b_rate = mapply(get_rate, f=m5c_f, arr=m6b_arr, h=m6b_h*vol + m6b_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
+data_summ %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr, h=(m6b_h + m6b_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m6b_rate = mapply(get_rate, f=m5c_f, arr=m6b_arr, h=(m6b_h + m6b_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
   
 m6c_coef
 m6c_f <- as.numeric(m6c_coef[1])
@@ -256,8 +256,8 @@ m6c_arr <- as.numeric(m6c_coef[2])
 m6c_h <- as.numeric(m6c_coef[3])
 m6c_w <- as.numeric(m6c_coef[4])
 
-  data_summ %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*vol*exp(m6c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*vol*exp(m6c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+  data_summ %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
 ```
 
 
@@ -270,8 +270,8 @@ m7b_h <- as.numeric(m7b_coef[3])
 m7b_p <- as.numeric(m7b_coef[4])
 m7b_w <- as.numeric(m7b_coef[5])
 
-  data_summ %<>% mutate(m7b_rate = mapply(get_rate, f=m7b_f, arr=data_summ$resource*m7b_p + m7b_arr, h=m7b_h*vol + m7b_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m7b_rate = mapply(get_rate, f=m7b_f, arr=seq_data$resource*m7b_p + m7b_arr, h=m7b_h*vol + m7b_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
+  data_summ %<>% mutate(m7b_rate = mapply(get_rate, f=m7b_f, arr=data_summ$resource*m7b_p + m7b_arr, h=m7b_h + m7b_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7b_rate = mapply(get_rate, f=m7b_f, arr=seq_data$resource*m7b_p + m7b_arr, h=m7b_h + m7b_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
   
 m7c_coef
 m7c_f <- as.numeric(m7c_coef[1])
@@ -280,8 +280,8 @@ m7c_h <- as.numeric(m7c_coef[3])
 m7c_p <- as.numeric(m7c_coef[4])
 m7c_w <- as.numeric(m7c_coef[5])
 
-      data_summ %<>% mutate(m7c_rate = mapply(get_rate, f=m7c_f, arr=m7c_arr*exp(data_summ$resource*m7c_p), h=m7c_h*vol*exp(m7c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m7c_rate = mapply(get_rate, f=m7c_f, arr=m7c_arr*exp(seq_data$resource*m7c_p), h=m7c_h*vol*exp(m7c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+      data_summ %<>% mutate(m7c_rate = mapply(get_rate, f=m7c_f, arr=m7c_arr*exp(data_summ$resource*m7c_p), h=m7c_h*exp(m7c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7c_rate = mapply(get_rate, f=m7c_f, arr=m7c_arr*exp(seq_data$resource*m7c_p), h=m7c_h*exp(m7c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
   
 m7d_coef
 m7d_f <- as.numeric(m7d_coef[1])
@@ -290,8 +290,8 @@ m7d_h <- as.numeric(m7d_coef[3])
 m7d_p <- as.numeric(m7d_coef[4])
 m7d_w <- as.numeric(m7d_coef[5])
 
-      data_summ %<>% mutate(m7d_rate = mapply(get_rate, f=m7d_f, arr=data_summ$resource*m7d_p + m7d_arr, h=m7d_h*vol*exp(m7d_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m7d_rate = mapply(get_rate, f=m7d_f, arr=m7d_arr*exp(seq_data$resource*m7d_p), h=m7d_h*vol*exp(m7d_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+      data_summ %<>% mutate(m7d_rate = mapply(get_rate, f=m7d_f, arr=data_summ$resource*m7d_p + m7d_arr, h=m7d_h*exp(m7d_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7d_rate = mapply(get_rate, f=m7d_f, arr=m7d_arr*exp(seq_data$resource*m7d_p), h=m7d_h*exp(m7d_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
   
 m7e_coef
 m7e_f <- as.numeric(m7e_coef[1])
@@ -300,8 +300,8 @@ m7e_h <- as.numeric(m7e_coef[3])
 m7e_p <- as.numeric(m7e_coef[4])
 m7e_w <- as.numeric(m7e_coef[5])
 
-      data_summ %<>% mutate(m7e_rate = mapply(get_rate, f=m7e_f, arr=m7e_arr*exp(data_summ$resource*m7e_p), h=m7e_h*vol + m7e_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m7e_rate = mapply(get_rate, f=m7e_f, arr=m7e_arr*exp(seq_data$resource*m7e_p), h=m7e_h*vol + m7e_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
+      data_summ %<>% mutate(m7e_rate = mapply(get_rate, f=m7e_f, arr=m7e_arr*exp(data_summ$resource*m7e_p), h=m7e_h + m7e_w*data_summ$temp, temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m7e_rate = mapply(get_rate, f=m7e_f, arr=m7e_arr*exp(seq_data$resource*m7e_p), h=m7e_h + m7e_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
 
 ```
 
@@ -389,7 +389,7 @@ m7e_w <- as.numeric(m7e_coef[5])
 ```
 
 
-
+These are not right
 ```{r}
 seq_plot("m4_rate")
 seq_plot("m5a_rate")
@@ -404,7 +404,7 @@ seq_plot("m5c_rate")
 ```
 
 ```{r}
-seq_plot_temp("m4_rate")
+seq_plot("m4_rate")
 seq_plot("m6b_rate")
 seq_plot("m6c_rate")
 ```
@@ -436,8 +436,8 @@ m5_range %>% ggplot(., aes(x=resource, y=value, group=name, color=name)) + geom_
 ```{r}
 m6_range <- tibble(temp = temp_range)
 
-m6_range %<>% mutate(h_b = m6b_h*vol + m6b_w*temp,
-                     h_c = m6c_h*vol*exp(m6c_w*temp))
+m6_range %<>% mutate(h_b = (m6b_h + m6b_w*temp)*vol,
+                     h_c = (m6c_h*exp(m6c_w*temp))*vol)
 
 m6_range %<>% pivot_longer(cols=c(h_b, h_c))
 
@@ -449,10 +449,10 @@ m7_arr_t_range <- m7_range %>% mutate(arr_b = resource*m7b_p + m7b_arr,
                                arr_c = m7c_arr*exp(m7c_p*resource),
                                arr_d = resource*m7d_p + m7d_arr,
                                arr_e = m7e_arr*exp(m7e_p*resource))
-m7_h_range <- m7_range %>% mutate(h_b = m7b_h*vol + m7b_w*temp,
-                               h_c = m7c_h*vol*exp(m7c_w*temp),
-                               h_d = m7d_h*vol*exp(m7d_w*temp),
-                               h_e = m7e_h*vol + m7e_w*temp)
+m7_h_range <- m7_range %>% mutate(h_b = (m7b_h + m7b_w*temp)*vol,
+                               h_c = m7c_h*exp(m7c_w*temp)*vol,
+                               h_d = m7d_h*exp(m7d_w*temp)*vol,
+                               h_e = (m7e_h + m7e_w*temp)*vol)
 ```
 
 ```{r}
