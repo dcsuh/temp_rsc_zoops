@@ -109,50 +109,50 @@ m7@min
 # Check this formula and the values from model output
 
 ```{r}
-getAIC <- function(n, L){
-  return(2*length(n)-(2*-L))
+getAIC <- function(model){
+  return(2*length(summary(m4)@coef[,1])-(2*summary(model)@m2logL/-2))
 }
 ```
 
 
 ```{r}
-# getAIC(m0@coef, m0@min)
-# getAIC(m1@coef, m1@min)
-# getAIC(m2@coef, m2@min)
-# getAIC(m3@coef, m3@min)
-# getAIC(m3a@coef, m3a@min)
-getAIC(m4@coef, m4@min)
-# getAIC(m4a@coef, m4a@min)
+getAIC(m0)
+getAIC(m1)
+getAIC(m2)
+getAIC(m3)
+getAIC(m3a)
+getAIC(m4)
+getAIC(m4a)
 ```
 
 
 ```{r}
-getAIC(m4@coef, m4@min)
+getAIC(m4)
 
-getAIC(m5@coef, m5@min)
-getAIC(m5a@coef, m5a@min)
-getAIC(m5b@coef, m5b@min)
-getAIC(m5c@coef, m5c@min)
+getAIC(m5)
+getAIC(m5a)
+getAIC(m5b)
+getAIC(m5c)
 ```
 
 ```{r}
-getAIC(m4@coef, m4@min)
+getAIC(m4)
 
-getAIC(m6@coef, m6@min)
-getAIC(m6a@coef, m6a@min)
-getAIC(m6b@coef, m6b@min)
-getAIC(m6c@coef, m6c@min)
+getAIC(m6)
+getAIC(m6a)
+getAIC(m6b)
+getAIC(m6c)
 ```
 
 ```{r}
-getAIC(m4@coef, m4@min)
+getAIC(m4)
 
-getAIC(m7@coef, m7@min)
-getAIC(m7a@coef, m7a@min)
-getAIC(m7b@coef, m7b@min)
-getAIC(m7c@coef, m7c@min)
-getAIC(m7d@coef, m7d@min)
-getAIC(m7e@coef, m7e@min)
+getAIC(m7)
+getAIC(m7a)
+getAIC(m7b)
+getAIC(m7c)
+getAIC(m7d)
+getAIC(m7e)
 ```
 
 ```{r}

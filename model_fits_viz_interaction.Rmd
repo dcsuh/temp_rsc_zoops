@@ -97,6 +97,37 @@ seq_data %<>% mutate(temp_factor = case_when(temp==15 ~ 15,
                                              temp==25 ~ 25))
 ```
 
+# AIC
+
+```{r}
+getAIC <- function(model){
+  return(2*length(summary(m4)@coef[,1])-(2*summary(model)@m2logL/-2))
+}
+```
+
+Log-Likelihoods
+```{r}
+m4_aic <- getAIC(m4)
+
+m5_aic <- getAIC(m5)
+m5a_aic <- getAIC(m5a)
+m5b_aic <- getAIC(m5b)
+m5c_aic <- getAIC(m5c)
+
+m6_aic <- getAIC(m6)
+m6a_aic <- getAIC(m6a)
+m6b_aic <- getAIC(m6b)
+m6c_aic <- getAIC(m6c)
+
+m7a_aic <- getAIC(m5)
+m7b_aic <- getAIC(m7a)
+m7c_aic <- getAIC(m7b)
+m7d_aic <- getAIC(m7c)
+m7e_aic <- getAIC(m7d)
+m7f_aic <- getAIC(m7e)
+```
+
+
 # plotting function
 
 ```{r}
@@ -389,32 +420,26 @@ m7e_w <- as.numeric(m7e_coef[5])
 ```
 
 
-These are not right
+
+
 ```{r}
-seq_plot("m4_rate")
-seq_plot("m5a_rate")
-seq_plot_temp("m6a_rate")
-seq_plot("m7a_rate")
+seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC = ", round(m4_aic, 3)))
+seq_plot("m5b_rate") + labs(title = paste("arr_t(resource) ~ LINEAR. AIC = ", round(m5b_aic, 3)))
+seq_plot("m5c_rate") + labs(title = paste("arr_t(resource) ~ EXP. AIC = ", round(m5c_aic, 3)))
 ```
 
 ```{r}
-seq_plot("m4_rate")
-seq_plot("m5b_rate")
-seq_plot("m5c_rate")
+seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC = ", round(m4_aic, 3)))
+seq_plot("m6b_rate") + labs(title = paste("h(temp) ~ LINEAR. AIC = ", round(m6b_aic, 3)))
+seq_plot("m6c_rate") + labs(title = paste("h(temp) ~ EXP. AIC = ", round(m6c_aic, 3)))
 ```
 
 ```{r}
-seq_plot("m4_rate")
-seq_plot("m6b_rate")
-seq_plot("m6c_rate")
-```
-
-```{r}
-seq_plot("m4_rate")
-seq_plot("m7b_rate")
-seq_plot("m7c_rate")
-seq_plot("m7d_rate")
-seq_plot("m7e_rate")
+seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC = ", round(m4_aic, 3)))
+seq_plot("m7b_rate") + labs(title = paste("arr_t-h ~ LINEAR-LINEAR AIC = ", round(m7b_aic, 3)))
+seq_plot("m7c_rate") + labs(title = paste("arr_t-h ~ EXP-EXP AIC = ", round(m7c_aic, 3)))
+seq_plot("m7d_rate") + labs(title = paste("arr_t-h ~ LINEAR-EXP AIC = ", round(m7d_aic, 3)))
+seq_plot("m7e_rate") + labs(title = paste("arr_t-h ~ EXP-LINEAR AIC = ", round(m7e_aic, 3)))
 ```
 
 # Interaction parameters

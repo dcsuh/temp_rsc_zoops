@@ -195,7 +195,7 @@ m5b_ll <- function(f, arr_t, h, p){
 }
 ```
 
-```{r, eval=F}
+```{r}
 start_time <- Sys.time()
 tmp <- data
 m5b_f_fit <- mle2(m5b_ll,
@@ -239,7 +239,7 @@ m5c_ll <- function(f, arr_t, h, p){
 }
 ```
 
-```{r, eval=F}
+```{r}
 start_time <- Sys.time()
 tmp <- data
 m5c_f_fit <- mle2(m5c_ll,
