@@ -301,23 +301,49 @@ m7e_w <- as.numeric(m7e_coef[5])
 
 
 ```{r}
-seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
-seq_plot("m5b_rate") + labs(title = paste("arr_t(resource) ~ LINEAR. AIC =", round(m5b_aic, 3)))
-seq_plot("m5c_rate") + labs(title = paste("arr_t(resource) ~ EXP. AIC =", round(m5c_aic, 3)))
+m4_plot <- seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
+m5b_plot <- seq_plot("m5b_rate") + labs(title = paste("arr_t(resource) ~ LINEAR. AIC =", round(m5b_aic, 3)))
+m5c_plot <- seq_plot("m5c_rate") + labs(title = paste("arr_t(resource) ~ EXP. AIC =", round(m5c_aic, 3)))
+m4_plot
+m5b_plot
+m5c_plot
+
+ggsave("m4_fit.png", m4_plot, path=here("mle/fit_plots"))
+ggsave("m5b_fit.png", m5b_plot, path=here("mle/fit_plots"))
+ggsave("m5c_fit.png", m5c_plot, path=here("mle/fit_plots"))
 ```
 
 ```{r}
-seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
-seq_plot("m6b_rate") + labs(title = paste("h(temp) ~ LINEAR. AIC =", round(m6b_aic, 3)))
-seq_plot("m6c_rate") + labs(title = paste("h(temp) ~ EXP. AIC =", round(m6c_aic, 3)))
+m6b_plot <- seq_plot("m6b_rate") + labs(title = paste("h(temp) ~ LINEAR. AIC =", round(m6b_aic, 3)))
+m6c_plot <- seq_plot("m6c_rate") + labs(title = paste("h(temp) ~ EXP. AIC =", round(m6c_aic, 3)))
+m4_plot
+m6b_plot
+m6c_plot
+
+
+ggsave("m6b_fit.png", m6b_plot, path=here("mle/fit_plots"))
+ggsave("m6c_fit.png", m6c_plot, path=here("mle/fit_plots"))
+
 ```
 
 ```{r}
-seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
-seq_plot("m7b_rate") + labs(title = paste("arr_t-h ~ LINEAR-LINEAR AIC =", round(m7b_aic, 3)))
-seq_plot("m7c_rate") + labs(title = paste("arr_t-h ~ EXP-EXP AIC =", round(m7c_aic, 3)))
-seq_plot("m7d_rate") + labs(title = paste("arr_t-h ~ LINEAR-EXP AIC =", round(m7d_aic, 3)))
-seq_plot("m7e_rate") + labs(title = paste("arr_t-h ~ EXP-LINEAR AIC =", round(m7e_aic, 3)))
+m7b_plot <- seq_plot("m7b_rate") + labs(title = paste("arr_t-h ~ LINEAR-LINEAR AIC =", round(m7b_aic, 3)))
+m7c_plot <- seq_plot("m7c_rate") + labs(title = paste("arr_t-h ~ EXP-EXP AIC =", round(m7c_aic, 3)))
+m7d_plot <- seq_plot("m7d_rate") + labs(title = paste("arr_t-h ~ LINEAR-EXP AIC =", round(m7d_aic, 3)))
+m7e_plot <- seq_plot("m7e_rate") + labs(title = paste("arr_t-h ~ EXP-LINEAR AIC =", round(m7e_aic, 3)))
+
+m4_plot
+m7b_plot
+m7c_plot
+m7d_plot
+m7e_plot
+
+
+ggsave("m7b_fit.png", m7b_plot, path=here("mle/fit_plots"))
+ggsave("m7c_fit.png", m7c_plot, path=here("mle/fit_plots"))
+ggsave("m7d_fit.png", m7d_plot, path=here("mle/fit_plots"))
+ggsave("m7e_fit.png", m7e_plot, path=here("mle/fit_plots"))
+
 ```
 
 # Interaction parameters
@@ -333,7 +359,20 @@ m5_range %<>% mutate(arr_t_b = resource*m5b_p + m5b_arr,
 
 m5_range %<>% pivot_longer(cols=c(arr_t_b, arr_t_c))
 
-m5_range %>% ggplot(., aes(x=resource, y=value, group=name, color=name)) + geom_point()
+arr_labels <- c(arr_t_b = "linear",
+                arr_t_c = "exp")
+
+m5_arr_plot <- m5_range %>% ggplot(., aes(x=resource, y=value, group=name, color=name)) + geom_line() + 
+  labs(x="Resource Concentration",
+       y=expression("Arrhenius Temp."(T[A])),
+       color="Interaction") + 
+  scale_color_discrete(labels = arr_labels)
+
+m5_arr_plot
+
+ggsave("m5_arr_plot.png", m5_arr_plot, path=here("mle/fit_plots"))
+
+
 ```
 
 ```{r}
@@ -344,27 +383,85 @@ m6_range %<>% mutate(h_b = (m6b_h + m6b_w*temp)*vol,
 
 m6_range %<>% pivot_longer(cols=c(h_b, h_c))
 
-m6_range %>% ggplot(., aes(x=temp, y=value, group=name, color=name)) + geom_point()
+h_labels <- c(h_b = "linear",
+              h_c = "exp")
+
+m6_h_plot <- m6_range %>% ggplot(., aes(x=temp, y=value, group=name, color=name)) + geom_line() + 
+  labs(x="Temperature",
+       y="Handling Time (h)",
+       color="Interaction") + 
+  scale_color_discrete(labels = h_labels)
+
+m6_h_plot
+
+
+ggsave("m6_h_plot.png", m6_h_plot, path=here("mle/fit_plots"))
+
 ```
 
 ```{r}
-m7_arr_t_range <- m7_range %>% mutate(arr_b = resource*m7b_p + m7b_arr,
+m7_arr_t_range <- m7_range %>% mutate(m4_arr = m4_arr,
+                                      arr_b = resource*m7b_p + m7b_arr,
                                arr_c = m7c_arr*exp(m7c_p*resource),
                                arr_d = resource*m7d_p + m7d_arr,
                                arr_e = m7e_arr*exp(m7e_p*resource))
-m7_h_range <- m7_range %>% mutate(h_b = (m7b_h + m7b_w*temp)*vol,
+m7_h_range <- m7_range %>% mutate(m4_h = m4_h,
+                                  h_b = (m7b_h + m7b_w*temp)*vol,
                                h_c = m7c_h*exp(m7c_w*temp)*vol,
                                h_d = m7d_h*exp(m7d_w*temp)*vol,
                                h_e = (m7e_h + m7e_w*temp)*vol)
 ```
 
 ```{r}
-m7_arr_t_range %<>% pivot_longer(cols=c(arr_b,arr_c,arr_d,arr_e))
-m7_h_range %<>% pivot_longer(cols=c(h_b,h_c,h_d,h_e))
+m7_arr_t_range %<>% pivot_longer(cols=c(m4_arr, arr_b,arr_c,arr_d,arr_e))
+
+m7_h_range %<>% pivot_longer(cols=c(m4_h, h_b,h_c,h_d,h_e))
+```
+
+
+```{r}
+m7_arr_labels <- c(m4_arr = "none",
+                   arr_b = paste("LINEAR-linear\np =", round(m7b_p, 2)),
+                   arr_c = paste("\nEXP-exp\np =", round(m7c_p, 2)),
+                   arr_d = paste("\nLINEAR-exp\np =", round(m7d_p, 2)),
+                   arr_e = paste("\nEXP-linear\np =", round(m7e_p, 2)))
+m7_h_labels <- c(m4_h = "none",
+                 h_b = paste("linear-LINEAR\nw =", round(m7b_w, 2)),
+                 h_c = paste("\nexp-EXP\nw =", round(m7c_w, 2)),
+                 h_d = paste("\nlinear-EXP\nw =", round(m7d_w, 2)),
+                 h_e = paste("\nexp-LINEAR\nw =", round(m7e_w, 2)))
 ```
 
 ```{r}
-m7_arr_t_range %>% ggplot(.,aes(x=resource, y=value, group=name, color=name)) + geom_point()
-m7_h_range %>% ggplot(.,aes(x=temp, y=value, group=name, color=name)) + geom_point()
+m7_arr_plot <- m7_arr_t_range %>% ggplot(.,aes(x=resource, y=value, group=name, color=name)) + geom_line() +
+  labs(x = "Resource concentration",
+       y = expression("Arrhenius Temp."(T[A])),
+       color = "Interaction",
+       title = "Interactions across Resource") + 
+  scale_color_manual(values = c("#004D40", "#1E88E5", "#D81B60", "#FFC107", "#B8C50C"),
+                     labels = m7_arr_labels)
+
+m7_arr_plot
+
+ggsave("m7_arr_plot.png", m7_arr_plot, path=here("mle/fit_plots"))
 ```
+
+
+```{r}
+m7_h_plot <- m7_h_range %>% ggplot(.,aes(x=temp, y=value, group=name, color=name)) + 
+  geom_line() +
+  labs(x = "Temperature",
+       y = "Handling Time (h)",
+       color = "Interaction",
+       title = "Interactions across Temperature") + 
+  scale_color_manual(values = c("#004D40", "#1E88E5", "#D81B60", "#FFC107", "#B8C50C"),
+                     labels = m7_h_labels)
+
+m7_h_plot
+
+ggsave("m7_h_plot.png", m7_h_plot, path=here("mle/fit_plots"))
+```
+
+
+
 
