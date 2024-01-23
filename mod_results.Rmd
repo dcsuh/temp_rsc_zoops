@@ -146,7 +146,7 @@ mod_names_descriptive <- c("base", "size", "temp", "rsc", "full", "arr(R)~LIN", 
 
 aic_table <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_descriptive)
 
-saveRDS(aic_table, file=here("aic_table.rds"))
+saveRDS(aic_table, file=here("mle/aic_table.rds"))
 ```
 
 
