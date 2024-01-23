@@ -39,6 +39,9 @@ Some work in progress:
 [model params visualized](/model_fits_viz.html)
 ([Rmd version](/model_fits_viz.Rmd))
 
+
+[interaction model params visualized](/model_fits_viz_interaction.html)
+
 <br/>
 <br/>
 <br/>
