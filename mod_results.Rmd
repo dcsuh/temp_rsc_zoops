@@ -14,20 +14,7 @@ source(here("base","src.R"))
 ```
 
 
-
-Model results
-```{r, results}
-# summary(readRDS(here("mle","m0_f_fit.rds"))) #no size correction
-# summary(readRDS(here("mle","m1_f_fit.rds"))) #with size correction
-# summary(readRDS(here("mle","m2_f_fit.rds"))) #temperature-dependent
-# summary(readRDS(here("mle","m3_f_fit.rds"))) #resource-dependent
-# summary(readRDS(here("mle","m4_f_fit.rds"))) #temperature and resource-dependent
-# summary(readRDS(here("mle","m5_f_fit.rds"))) #resource on temp effect
-# summary(readRDS(here("mle","m6_f_fit.rds"))) #temp on resource effect
-# summary(readRDS(here("mle","m7_f_fit.rds"))) #full interaction
-```
-
-
+# Models
 
 ```{r, AIC}
 m0 <- readRDS(here("mle","m0_f_fit.rds"))
@@ -56,6 +43,8 @@ m7c <- readRDS(here("mle","m7c_f_fit.rds"))
 m7d <- readRDS(here("mle","m7d_f_fit.rds"))
 m7e <- readRDS(here("mle","m7e_f_fit.rds"))
 ```
+
+# Coefficients
 
 ```{r}
 m0@coef
@@ -93,24 +82,13 @@ m7d@coef
 m7e@coef
 ```
 
-```{r}
-m0@min
-m1@min
-m2@min
-m3@min
-m3a@min
-m4@min
-# m4a@min
-m5@min
-m6@min
-m7@min
-```
 
-# Check this formula and the values from model output
+
+# get AIC
 
 ```{r}
 getAIC <- function(model){
-  return(2*length(summary(m4)@coef[,1])-(2*summary(model)@m2logL/-2))
+  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
 }
 ```
 
@@ -154,38 +132,13 @@ getAIC(m7c)
 getAIC(m7d)
 getAIC(m7e)
 ```
+# AIC table
 
 ```{r}
-m7@coef
-arr_t_vec <- c(146.6, 124.8, 118.4)
-resource <- c(0.1, 0.5, 1)
-arr_t_df <- tibble(arr_t=arr_t_vec,
-             resource=resource)
-
-ggplot(arr_t_df,aes(x=resource, y=arr_t_vec)) + geom_line()
-ggplot(arr_t_df,aes(x=log(resource), y=arr_t_vec)) + geom_line()
-ggplot(arr_t_df,aes(x=resource, y=arr_t_vec*exp(resource))) + geom_line()
-
-summary(lm(arr_t_vec ~ resource))
-summary(lm(arr_t_vec ~ log(resource)))
-summary(lm(arr_t_vec*exp(resource) ~ resource))
-
+model_list <- list(m0, m1, m2, m3, m4, m5b, m5c, m6b, m6c, m7b, m7c, m7d, m7e)
+AICtab(model_list, logLik=T, base=T)
 ```
 
-```{r}
-m7@coef
-h_vec <- c(4.57, 0.187, 0.0683)
-temp <- c(15,20,25)
-
-h_df <- tibble(h=h_vec,
-               temp=temp)
-
-ggplot(h_df, aes(x=temp, y=h)) + geom_line()
-ggplot(h_df, aes(x=log(temp), y=h)) + geom_line()
-ggplot(h_df, aes(x=temp, y=log(h))) + geom_line()
-
-
-```
 
 
 

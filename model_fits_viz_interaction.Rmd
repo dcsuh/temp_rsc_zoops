@@ -1,5 +1,5 @@
 ---
-title: "model parameters visualized"
+title: "interaction model parameters visualized"
 output: html_document
 date: "`r Sys.Date()`"
 ---
@@ -101,7 +101,7 @@ seq_data %<>% mutate(temp_factor = case_when(temp==15 ~ 15,
 
 ```{r}
 getAIC <- function(model){
-  return(2*length(summary(m4)@coef[,1])-(2*summary(model)@m2logL/-2))
+  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
 }
 ```
 
@@ -119,12 +119,12 @@ m6a_aic <- getAIC(m6a)
 m6b_aic <- getAIC(m6b)
 m6c_aic <- getAIC(m6c)
 
-m7a_aic <- getAIC(m5)
-m7b_aic <- getAIC(m7a)
-m7c_aic <- getAIC(m7b)
-m7d_aic <- getAIC(m7c)
-m7e_aic <- getAIC(m7d)
-m7f_aic <- getAIC(m7e)
+m7_aic <- getAIC(m7)
+m7a_aic <- getAIC(m7a)
+m7b_aic <- getAIC(m7b)
+m7c_aic <- getAIC(m7c)
+m7d_aic <- getAIC(m7d)
+m7e_aic <- getAIC(m7e)
 ```
 
 
@@ -301,23 +301,23 @@ m7e_w <- as.numeric(m7e_coef[5])
 
 
 ```{r}
-seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC = ", round(m4_aic, 3)))
-seq_plot("m5b_rate") + labs(title = paste("arr_t(resource) ~ LINEAR. AIC = ", round(m5b_aic, 3)))
-seq_plot("m5c_rate") + labs(title = paste("arr_t(resource) ~ EXP. AIC = ", round(m5c_aic, 3)))
+seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
+seq_plot("m5b_rate") + labs(title = paste("arr_t(resource) ~ LINEAR. AIC =", round(m5b_aic, 3)))
+seq_plot("m5c_rate") + labs(title = paste("arr_t(resource) ~ EXP. AIC =", round(m5c_aic, 3)))
 ```
 
 ```{r}
-seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC = ", round(m4_aic, 3)))
-seq_plot("m6b_rate") + labs(title = paste("h(temp) ~ LINEAR. AIC = ", round(m6b_aic, 3)))
-seq_plot("m6c_rate") + labs(title = paste("h(temp) ~ EXP. AIC = ", round(m6c_aic, 3)))
+seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
+seq_plot("m6b_rate") + labs(title = paste("h(temp) ~ LINEAR. AIC =", round(m6b_aic, 3)))
+seq_plot("m6c_rate") + labs(title = paste("h(temp) ~ EXP. AIC =", round(m6c_aic, 3)))
 ```
 
 ```{r}
-seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC = ", round(m4_aic, 3)))
-seq_plot("m7b_rate") + labs(title = paste("arr_t-h ~ LINEAR-LINEAR AIC = ", round(m7b_aic, 3)))
-seq_plot("m7c_rate") + labs(title = paste("arr_t-h ~ EXP-EXP AIC = ", round(m7c_aic, 3)))
-seq_plot("m7d_rate") + labs(title = paste("arr_t-h ~ LINEAR-EXP AIC = ", round(m7d_aic, 3)))
-seq_plot("m7e_rate") + labs(title = paste("arr_t-h ~ EXP-LINEAR AIC = ", round(m7e_aic, 3)))
+seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
+seq_plot("m7b_rate") + labs(title = paste("arr_t-h ~ LINEAR-LINEAR AIC =", round(m7b_aic, 3)))
+seq_plot("m7c_rate") + labs(title = paste("arr_t-h ~ EXP-EXP AIC =", round(m7c_aic, 3)))
+seq_plot("m7d_rate") + labs(title = paste("arr_t-h ~ LINEAR-EXP AIC =", round(m7d_aic, 3)))
+seq_plot("m7e_rate") + labs(title = paste("arr_t-h ~ EXP-LINEAR AIC =", round(m7e_aic, 3)))
 ```
 
 # Interaction parameters
