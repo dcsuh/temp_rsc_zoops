@@ -115,11 +115,12 @@ $$
 Finally, we can incorporate both of these interactions linearly...
 
 $$
-T\_{A} = {T\_{A}}' + {\rho}R \\\\
-
-h = h' + {\omega}T
+T_{A} = {T_{A}}' + {\rho}R \\
 $$
 
+$$
+h = h' + {\omega}T
+$$
 
 ![](mle/fit_plots/m7b_fit.png)
 
@@ -127,21 +128,37 @@ $$
 
 ... and exponentially.
 
+$$
+T_{A} = {T_{A}}'e^{{\rho}R}
+$$
 
-$$ 
-T\_{A} = {T\_{A}}'e^{{\rho}R} \\
-
-h = h'e^{{\omega}T} 
+$$
+h = h'e^{{\omega}T}
 $$
 
 ![](mle/fit_plots/m7c_fit.png)
 
 # Model 7d - Full Interaction Model - Linear-Exponential
 
+$$
+T_{A} = {T_{A}}' + {\rho}R \\
+$$
+$$
+h = h'e^{{\omega}T}
+$$
+
 ![](mle/fit_plots/m7d_fit.png)
 
 
 # Model 7e - Full Interaction Model - Exponential-Linear
+
+$$
+T_{A} = {T_{A}}'e^{{\rho}R}
+$$
+
+$$
+h = h' + {\omega}T
+$$
 
 ![](mle/fit_plots/m7e_fit.png)
 
