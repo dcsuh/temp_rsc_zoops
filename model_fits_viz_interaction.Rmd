@@ -92,9 +92,9 @@ m7_range <- seq_data
 ```
 
 ```{r, echo=F}
-seq_data %<>% mutate(temp_factor = case_when(temp==15 ~ 15,
+seq_data %<>% mutate(temp_factor = as.factor(case_when(temp==15 ~ 15,
                                              temp==20 ~ 20,
-                                             temp==25 ~ 25))
+                                             temp==25 ~ 25)))
 ```
 
 # AIC
@@ -346,6 +346,61 @@ ggsave("m7e_fit.png", m7e_plot, path=here("mle/fit_plots"))
 
 ```
 
+
+Make a plot that shows the 3 best models
+
+```{r}
+best_three_fit <- seq_data %>% dplyr::select(resource, temp_factor, m7c_rate, m6c_rate, m7d_rate) %>%
+  filter(temp_factor %in% c(15, 20, 25)) %>%
+  mutate("exp-exp" = m7c_rate, "h(T)~exp" = m6c_rate, "lin-exp" = m7d_rate) %>%
+  dplyr::select(-c(m7c_rate, m6c_rate, m7d_rate)) %>%
+  pivot_longer(cols=c('exp-exp', 'h(T)~exp', 'lin-exp')) %>%
+  ggplot(.,aes(x=resource, y=value, group = interaction(name, temp_factor),color=temp_factor)) +
+  geom_line(aes(linetype=name)) +
+  scale_linetype_manual(values = c(1, 3, 5)) +
+  geom_point(data=data_summ, aes(x=resource, 
+                            y=rate_len_mean, 
+                            group = as.factor(temp), 
+                            color = as.factor(temp),
+                            shape = as.factor(temp))) + 
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "3 Best Models", linetype="Model") 
+
+best_three_fit
+
+ggsave("best_three_fit.png", best_three_fit, path=here("mle/fit_plots"))
+```
+
+
+```{r}
+seq_data %>% na.omit() %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=m7c_rate,
+                group=temp_factor,
+                color="black")) +
+  new_scale_color() +
+  geom_line(aes(x=resource, 
+                y=m6c_rate,
+                group=temp_factor,
+                color="blue")) +
+  new_scale_color() +
+  geom_line(aes(x=resource, 
+                y=m7d_rate,
+                group=temp_factor,
+                color="purple")) +
+  geom_point(data=data_summ, aes(x=resource, 
+                            y=rate_len_mean, 
+                            group = as.factor(temp), 
+                            color = as.factor(temp),
+                            shape = as.factor(temp))) + 
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+
+```
+
+
+
+
+
 # Interaction parameters
 
 ## Resource on temp
@@ -354,12 +409,14 @@ How does arr_t vary over resources?
 
 ```{r}
 m5_range <- tibble(resource = resource_range)
-m5_range %<>% mutate(arr_t_b = resource*m5b_p + m5b_arr,
+m5_range %<>% mutate(arr_t = m4_arr,
+                     arr_t_b = resource*m5b_p + m5b_arr,
                      arr_t_c = m5c_arr*exp(m5c_p*resource))
 
-m5_range %<>% pivot_longer(cols=c(arr_t_b, arr_t_c))
+m5_range %<>% pivot_longer(cols=c(arr_t, arr_t_b, arr_t_c))
 
-arr_labels <- c(arr_t_b = "linear",
+arr_labels <- c(arr_t = "constant",
+                arr_t_b = "linear",
                 arr_t_c = "exp")
 
 m5_arr_plot <- m5_range %>% ggplot(., aes(x=resource, y=value, group=name, color=name)) + geom_line() + 
@@ -378,12 +435,14 @@ ggsave("m5_arr_plot.png", m5_arr_plot, path=here("mle/fit_plots"))
 ```{r}
 m6_range <- tibble(temp = temp_range)
 
-m6_range %<>% mutate(h_b = (m6b_h + m6b_w*temp)*vol,
+m6_range %<>% mutate(h = m4_h,
+                     h_b = (m6b_h + m6b_w*temp)*vol,
                      h_c = (m6c_h*exp(m6c_w*temp))*vol)
 
-m6_range %<>% pivot_longer(cols=c(h_b, h_c))
+m6_range %<>% pivot_longer(cols=c(h, h_b, h_c))
 
-h_labels <- c(h_b = "linear",
+h_labels <- c(h = "constant",
+              h_b = "linear",
               h_c = "exp")
 
 m6_h_plot <- m6_range %>% ggplot(., aes(x=temp, y=value, group=name, color=name)) + geom_line() + 

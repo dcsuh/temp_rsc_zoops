@@ -134,16 +134,16 @@ seq_data %<>% mutate(m1_rate = mean_length^gamma*m1_f)
 
 
 ```{r, echo=F}
-m1_plot <- seq_data %>% filter(resource %in% c(1)) %>%
+m1_plot <- seq_data %>% 
 ggplot(.) +
-geom_line(aes(x=temp, 
+geom_line(aes(x=resource, 
                y=m1_rate)) +
-geom_point(data=data_summ, aes(x=temp, 
+geom_point(data=data_summ, aes(x=resource, 
                           y=rate_len_mean, 
-                          group = as.factor(resource), 
-                          color = as.factor(resource),
-                          shape = as.factor(resource))) + 
-labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = "Size-dependent model") 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Size-dependent model") 
 ```
 
 
@@ -390,7 +390,7 @@ ggsave("m0_fit.png", m0_plot, path=here("mle/fit_plots"))
 ggsave("m1_fit.png", m1_plot, path=here("mle/fit_plots"))
 ggsave("m2_fit.png", m2_plot, path=here("mle/fit_plots"))
 ggsave("m3_fit.png", m3_plot, path=here("mle/fit_plots"))
-ggsave("m4_fit.png", m4_plot, path=here("mle/fit_plots"))
+#ggsave("m4_fit.png", m4_plot, path=here("mle/fit_plots"))
 ggsave("m5_fit.png", m5_plot, path=here("mle/fit_plots"))
 ggsave("m6_fit.png", m6_plot, path=here("mle/fit_plots"))
 ggsave("m7_fit.png", m7_plot, path=here("mle/fit_plots"))
