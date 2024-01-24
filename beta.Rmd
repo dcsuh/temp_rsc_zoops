@@ -1,0 +1,373 @@
+---
+title: "beta"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+```
+
+# Questions
+
+1. We measure beta at the scale of each treatment and we need beta to optimize our model. Does this mean our sample size is now the number of treatments (i.e., 9)?
+
+2. Or can we estimate Beta now using foraging rate? But how would we optimize per-spore susceptibility?
+
+
+
+
+We'll grab our estimates for Beta to use for our optimizer and we'll use the best fitting model to determine foraging rate at each temperature.
+```{r}
+beta_summ <- readRDS(here("processed_data", "beta_summary.rds"))
+beta_summ %<>% filter(temp %in% const_temp) %>% filter(species == "D") %>% mutate(temp = as.numeric(temp))
+
+aic_f <- readRDS(here("mle", "aic_table.rds"))
+aic_f
+f_coefs <- coef(readRDS(here("mle", "m7c_f_fit.rds")))
+f_coefs
+
+z <- 200 #200 spores/mL exposure and exposed for 24 or 48 hours... need to check notes. use 1 day for now to match beta
+exp_time <- 1 #1 day
+vol <- 15
+ref_t <- 15
+```
+
+
+We can now calculate the effective foraging rate for all of our treatments using these parameter values and this equation
+
+$$
+observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR} \\
+
+T_{A} = {T_{A}}'e^{{\rho}R} \\
+
+h = h'e^{{\omega}T} \\
+$$
+This formulation assumes the coefficients from model 7c (full interaction exp-exp)
+```{r}
+get_f <- function(temp, resource){
+  ref_t <- 15
+  f <- as.numeric(f_coefs[1])
+  arr_prime <- as.numeric(f_coefs[2])
+  h_prime <- as.numeric(f_coefs[3])
+  p <- as.numeric(f_coefs[4])
+  w <- as.numeric(f_coefs[5])
+    arr <- arr_prime*exp(p*resource)
+    h <- h_prime*exp(w*temp)
+    ((f*exp(arr*(1/ref_t - 1/temp)))/(1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
+}
+```
+
+```{r}
+beta_summ %<>% mutate(f = get_f(beta_summ$temp, beta_summ$resource))
+```
+
+
+We can use foraging rate to help us estimate beta and per-spore susceptibility. We now have estimates for foraging rate for all treatments and we can estimate beta using infection data. 
+
+$$
+\beta = f u Z S
+$$
+
+Beta is the rate at which individuals become infected which depends on the foraging rate, the concentration of spores, and the probability that an individual becomes infected when encountering a spore, i.e., u.
+
+$$
+u = \frac{fZS}{\beta}
+$$
+So rearranging this expression we can see that u is equivalent to the encounter rate divided by the transmission rate. 
+
+
+We want to incorporate the effects of temperature and resource conditions on this as well. We can do this by getting an estimate for Beta for each treatment and using that as the objective function for our optimizer. In other words, which value of u will generate the Beta observed from the experiment?
+
+# Model 1
+
+In our most basic iteration, we can use the equation from before.
+
+$$
+\beta = f u ZS
+$$
+
+```{r}
+m1_ll <- function(u){
+  
+  get_beta <- function(f, u){
+    f*u*z*vol*exp_time
+    }
+    beta_summ$beta_pred <- get_beta(f = beta_summ$f, u = u)
+    
+    resid <- log(beta_summ$beta.est) - log(beta_summ$beta_pred)
+    
+      nll <- dnorm(resid, 
+                   mean = 0, 
+                   sd = sd(resid, na.rm = T), 
+                   log = T)
+      -sum(nll, na.rm = T)
+}
+```
+
+```{r}
+start_time <- Sys.time()
+m1_beta_fit <- mle2(m1_ll,
+                skip.hessian = T,
+                start=list(u = 1*10^-10),
+                method = "L-BFGS-B",
+                lower = c(0),
+                upper = c(Inf),
+                control=list(parscale=c(u = 1*10^-10), maxit=10000))
+end_time <- Sys.time()
+m1_runtime <- end_time-start_time
+m1_runtime
+
+coef(m1_beta_fit)
+```
+
+
+There should be another way to do this using all the data rather than just the summarized data. The objective function should rely on the number of infected per treatment which relies on beta which relies on u.
+
+```{r}
+fitness <- read.csv(here("raw_data/main_fitness_edit.csv")) #must be read.csv
+fitness %<>% dplyr::select(tube, temp_id, REMOVED, KBP, final_date)
+mort <-  read_csv(here("raw_data/main_mort_edit.csv"))
+
+dataset <- left_join(mort,fitness)
+
+```
+
+
+```{r}
+dataset %<>% filter(species == "D") %>% #only daphnia for this analysis
+  filter(temp %in% const_temp) #only constant temp for this analysis
+
+dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22"), 
+                    lifespan = as.numeric(mdy(final_date) - mdy(birthdate)),
+                    temp = as.numeric(temp)) %>% filter(is.na(male))
+
+
+dataset %<>% mutate(inf_status = replace_na(inf, 0), dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0)) %>% mutate(ID = paste(species, temp_id, resource, inf_status, sep = "_")) #why is this removing rows?
+
+
+```
+
+```{r}
+dataset %<>% mutate(f = get_f(dataset$temp, dataset$resource))
+```
+
+```{r}
+dataset %<>% mutate(spore_exposure = 200, #spores/mL
+                    uninf = 1-inf,
+                    time = 1, #duration of exposure in days
+                    trt = paste(temp, resource, species, sep = "_")) %>% 
+  filter(!is.na(uninf))
+
+
+# will loop through all treatments:
+trts <- unique(dataset$trt)
+
+treatments <- unique(dataset$trt) 
+length(treatments) # how many unique? # this tells you how big to make the summary 
+
+```
+ 
+# Need to check units
+
+```{r}
+m1_ll <- function(u){
+    nll_vec <- c()
+
+  for (j in 1:length(treatments)){
+  
+    dsub <- dataset %>% filter(trt == treatments[j])
+  
+    successes <- sum(dsub$inf) # number of infections
+    failures <- sum(dsub$uninf) # number of uninfected
+    trials <- as.numeric(nrow(dsub)) # total number exposed per treatment
+    f <- unique(get_f(dsub$temp, dsub$resource))
+    spore_exposure <- unique(dsub$spore_exposure)
+    time <- unique(dsub$time)
+    
+    ll <- dbinom(x = successes, size = trials, 
+                 prob=f*u*spore_exposure*time*vol) #infection success per 1 individual per tube of spore water cleared per day
+    nll_vec[j] <- -ll
+  }
+    sum(nll_vec, na.rm=T)
+}
+```
+
+
+```{r}
+m1_u_fit <- mle2(m1_ll, start=list(u = 0.00001), 
+                     control=list(parscale = c(u = 0.00001)),
+                     skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
+      #this produces a warning: NaNs produced - not sure if this is an issue
+```
+
+
+
+
+
+
+
+
+# Model 2
+
+Then we can try to incorporate temperature using an Arrhenius coefficient
+
+$$
+\beta = f u e^{T_{A}(1/T_{R}-1/T)} ZS
+$$
+
+
+```{r}
+m2_ll <- function(u, arr_t){
+    nll_vec <- c()
+
+  for (j in 1:length(treatments)){
+  
+    dsub <- dataset %>% filter(trt == treatments[j])
+  
+    successes <- sum(dsub$inf) # number of infections
+    failures <- sum(dsub$uninf) # number of uninfected
+    trials <- as.numeric(nrow(dsub)) # total number exposed per treatment
+    f <- unique(get_f(dsub$temp, dsub$resource))
+    spore_exposure <- unique(dsub$spore_exposure)
+    time <- unique(dsub$time)
+    temp <- unique(dsub$temp)
+    
+    ll <- dbinom(x = successes, size = trials, 
+                 prob=f*u*spore_exposure*time*vol*exp(arr_t*(1/ref_t-1/temp))) #infection success per 1 individual per tube of spore water cleared per day
+    nll_vec[j] <- -ll
+  }
+    sum(nll_vec, na.rm=T)
+}
+```
+
+```{r}
+m2_u_fit <- mle2(m2_ll, start=list(u = 0.00001, arr_t = 10), 
+                     control=list(parscale = c(u = 0.00001, arr_t = 10)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = -Inf), upper=c(u = 1, arr_t = Inf))
+
+```
+
+
+
+# Model 3
+
+And try to incorporate resource using a half-saturation constant
+
+$$
+\beta = f(\frac{uR}{k + R})ZS
+$$
+
+```{r}
+m3_ll <- function(u, k){
+    nll_vec <- c()
+
+  for (j in 1:length(treatments)){
+  
+    dsub <- dataset %>% filter(trt == treatments[j])
+  
+    successes <- sum(dsub$inf) # number of infections
+    failures <- sum(dsub$uninf) # number of uninfected
+    trials <- as.numeric(nrow(dsub)) # total number exposed per treatment
+    f <- unique(get_f(dsub$temp, dsub$resource))
+    spore_exposure <- unique(dsub$spore_exposure)
+    time <- unique(dsub$time)
+    resource <- unique(dsub$resource)
+    
+    ll <- dbinom(x = successes, size = trials, 
+                 prob=f*(u*resource/(k + resource))*spore_exposure*time*vol) #infection success per 1 individual per tube of spore water cleared per day
+    nll_vec[j] <- -ll
+  }
+    sum(nll_vec, na.rm=T)
+}
+```
+
+
+```{r}
+m3_u_fit <- mle2(m3_ll, start=list(u = 0.00001, k = 1), 
+                     control=list(parscale = c(u = 0.00001, k = 1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, k = -Inf), upper=c(u = 1, k = Inf))
+```
+
+
+# Model 4
+
+And we can combine this to incorporate both temperature and resource-dependence
+
+
+$$
+\beta = f(\frac{u e^{T_{A}(1/T_{R}-1/T)} R}{k + R})ZS
+$$
+
+
+```{r}
+m4_ll <- function(u, arr_t, k){
+    nll_vec <- c()
+
+  for (j in 1:length(treatments)){
+  
+    dsub <- dataset %>% filter(trt == treatments[j])
+  
+    successes <- sum(dsub$inf) # number of infections
+    failures <- sum(dsub$uninf) # number of uninfected
+    trials <- as.numeric(nrow(dsub)) # total number exposed per treatment
+    f <- unique(get_f(dsub$temp, dsub$resource))
+    spore_exposure <- unique(dsub$spore_exposure)
+    time <- unique(dsub$time)
+    temp <- unique(dsub$temp)
+    resource <- unique(dsub$resource)
+    
+    ll <- dbinom(x = successes, size = trials, 
+                 prob=f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/(k + resource))*spore_exposure*time*vol) #infection success per 1 individual per tube of spore water cleared per day
+    nll_vec[j] <- -ll
+  }
+    sum(nll_vec, na.rm=T)
+}
+```
+
+
+```{r}
+m4_u_fit <- mle2(m4_ll, start=list(u = 0.00001, arr_t = 10, k = 1), 
+                     control=list(parscale = c(u = 0.00001, arr_t = 10, k = 1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = -Inf, k = -Inf), upper=c(u = 1, arr_t = Inf, k = Inf))
+```
+
+
+```{r}
+beta_summ$beta_pred <- get_beta(f = beta_summ$f, u=u)
+    
+ggplot(beta_summ,aes(x=prev, y=beta_pred)) + geom_point() #this won't look linear because foraging rate changes
+ggplot(beta_summ,aes(x=prev, y=beta.est)) + geom_point() #this should look linear
+
+```
+
+
+
+# Models 5-7
+
+Finally, we can also include interactions for our temperature and resource-dependent parameters so that they can interact with each other...
+
+linearly...
+$$
+T_{A} = {T_{A}}' + {\rho}R \\
+$$
+
+$$
+h = h' + {\omega}T
+$$
+and exponentially.
+$$
+T_{A} = {T_{A}}'e^{{\rho}R}
+$$
+
+$$
+h = h'e^{{\omega}T}
+$$
