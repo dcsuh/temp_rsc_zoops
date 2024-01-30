@@ -145,7 +145,7 @@ mod_names_descriptive <- c("base", "size", "temp", "rsc", "full", "arr(R)~LIN", 
 mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
 #tibble(mod_names, mod_names_descriptive) #check to make sure names line up
 
-aic_table <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full)
+aic_table <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
 
 saveRDS(aic_table, file=here("mle/aic_table.rds"))
 ```
