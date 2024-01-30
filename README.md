@@ -17,7 +17,7 @@ All scripts that generate figures can be found in the /scripts directory.
 "exploration.Rmd" in /workshop has some quick summary stats and visualizations of the data. Work in progress.
 
 
-[up-to-date summary](/summary.html) 
+[up-to-date summary](/summary_.html) 
 
 
 Some work in progress:
