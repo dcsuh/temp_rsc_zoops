@@ -28,6 +28,17 @@ data %<>% mutate(spore_conc = ((spore_RAW/8)*10000))
 data %<>% mutate(spore_yield = ifelse(spore_water_added==1,spore_conc*0.5,spore_conc*0.25))
 ```
 
+
+# Yield ~ Food consumed
+
+How is spore yield related to amount of food consumed in lifetime?
+
+```{r}
+
+```
+
+
+
 # Model 1
 
 Spore yield as a function of size alone

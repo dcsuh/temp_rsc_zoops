@@ -149,10 +149,12 @@ dataset %<>% filter(species == "D") %>% #only daphnia for this analysis
 
 dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22"), 
                     lifespan = as.numeric(mdy(final_date) - mdy(birthdate)),
-                    temp = as.numeric(temp)) %>% filter(is.na(male))
+                    temp = as.numeric(temp)) %>% 
+  filter(is.na(male)) %>% #remove males
+  filter(is.na(missing)) #remove missing
 
 
-dataset %<>% mutate(inf_status = replace_na(inf, 0), dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0)) %>% mutate(ID = paste(species, temp_id, resource, inf_status, sep = "_")) #why is this removing rows?
+dataset %<>% mutate(inf_status = replace_na(inf, 0), dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0))
 
 
 ```
@@ -163,10 +165,9 @@ dataset %<>% mutate(f = get_f(dataset$temp, dataset$resource))
 
 ```{r}
 dataset %<>% mutate(spore_exposure = 200, #spores/mL
-                    uninf = 1-inf,
+                    uninf = 1-inf_status,
                     time = 1, #duration of exposure in days
-                    trt = paste(temp, resource, species, sep = "_")) %>% 
-  filter(!is.na(uninf))
+                    trt = paste(temp, resource, species, sep = "_"))
 
 
 # will loop through all treatments:
@@ -183,7 +184,7 @@ $$
  
 # Need to check units
 
-```{r}
+```{r, eval=F}
 m1_ll <- function(u){
   tmp <- dataset
   
@@ -198,9 +199,9 @@ m1_ll <- function(u){
 ```
 
 
-```{r}
-m1_u_fit <- mle2(m1_ll, start=list(u = 0.001), 
-                     control=list(parscale = c(u = 0.001)),
+```{r, eval=F}
+m1_u_fit <- mle2(m1_ll, start=list(u = 0.0000001), 
+                     control=list(parscale = c(u = 0.0000001)),
                      skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
       #this produces a warning: NaNs produced - not sure if this is an issue
 ```
@@ -225,7 +226,7 @@ $$
 probability\ of\ infection = e^{-f u e^{T_{A}(1/T_{R}-1/T)} Zt}
 $$
 
-```{r}
+```{r, eval=F}
 m2_ll <- function(u, arr_t){
   tmp <- dataset
   
@@ -241,7 +242,7 @@ m2_ll <- function(u, arr_t){
 
 
 
-```{r}
+```{r, eval=F}
 m2_u_fit <- mle2(m2_ll, start=list(u = 0.0001, arr_t = 100), 
                      control=list(parscale = c(u = 0.0001, arr_t = 100)),
                      skip.hessian=F, method="L-BFGS-B", 
@@ -266,7 +267,7 @@ $$
 probability\ of\ infection = e^{-f(\frac{uR}{k + R})Zt}
 $$
 
-```{r}
+```{r, eval=F}
 m3_ll <- function(u, k){
   tmp <- dataset
   
@@ -282,7 +283,7 @@ m3_ll <- function(u, k){
 
 
 
-```{r}
+```{r, eval=F}
 m3_u_fit <- mle2(m3_ll, start=list(u = 0.01, k = 1), 
                      control=list(parscale = c(u = 0.01, k = 1)),
                      skip.hessian=F, method="L-BFGS-B", 
@@ -308,7 +309,7 @@ probability\ of\ infection = e^{-f(\frac{u e^{T_{A}(1/T_{R}-1/T)} R}{k + R})Zt}
 $$
 
 
-```{r}
+```{r, eval=F}
 m4_ll <- function(u, arr_t, k){
   tmp <- dataset
   
@@ -324,7 +325,7 @@ m4_ll <- function(u, arr_t, k){
 
 
 
-```{r}
+```{r, eval=F}
 m4_u_fit <- mle2(m4_ll, start=list(u = 0.001, arr_t = 10, k = 1), 
                      control=list(parscale = c(u = 0.001, arr_t = 10, k = 1)),
                      skip.hessian=F, method="L-BFGS-B", 
@@ -368,10 +369,10 @@ ggplot(beta_summ,aes(x=prev, y=beta.est)) + geom_point() #this should still look
 But can we get u to match up?
 
 ```{r}
-ggplot(beta_summ,aes(x=beta.est, y=beta_m1)) + geom_point() 
-ggplot(beta_summ,aes(x=beta.est, y=beta_m2)) + geom_point() 
-ggplot(beta_summ,aes(x=beta.est, y=beta_m3)) + geom_point() 
-ggplot(beta_summ,aes(x=beta.est, y=beta_m4)) + geom_point() 
+ggplot(beta_summ,aes(x=prev, y=beta_m1)) + geom_point() 
+ggplot(beta_summ,aes(x=prev, y=beta_m2)) + geom_point() 
+ggplot(beta_summ,aes(x=prev, y=beta_m3)) + geom_point() 
+ggplot(beta_summ,aes(x=prev, y=beta_m4)) + geom_point() 
 ```
 
 
@@ -379,6 +380,16 @@ ggplot(beta_summ,aes(x=beta.est, y=beta_m4)) + geom_point()
 beta_summ %>% ggplot(.,aes(x=resource, y=u_m4*f, group=temp, color=as.factor(temp))) + geom_point()
 ```
 
+
+```{r}
+prob_inf <- dataset %>% group_by(trt) %>% summarize(n = n(),
+                                                    n_inf = sum(inf_status),
+                                                    prob = n_inf/n)
+```
+
+```{r}
+beta_summ %<>% left_join(.,prob_inf, by="trt")
+```
 
 
 
