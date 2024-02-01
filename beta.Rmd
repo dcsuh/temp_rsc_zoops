@@ -32,22 +32,25 @@ aic_f
 f_coefs <- coef(readRDS(here("mle", "m7c_f_fit.rds")))
 f_coefs
 
-z <- 200 #200 spores/mL exposure and exposed for 24 or 48 hours... need to check notes. use 1 day for now to match beta
+z <- 200 #200 spores/mL exposure and exposed for 24 hours
 exp_time <- 1 #1 day
-vol <- 15
-ref_t <- 15
+vol <- 15 #mL
+ref_t <- 15 #degrees C
 ```
 
 
 We can now calculate the effective foraging rate for all of our treatments using these parameter values and this equation
 
 $$
-observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR} \\
 
-T_{A} = {T_{A}}'e^{{\rho}R} \\
+observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR}\\
 
-h = h'e^{{\omega}T} \\
+T_{A} = {T_{A}}'e^{{\rho}R}\\
+
+h = h'e^{{\omega}T}\\
+
 $$
+
 This formulation assumes the coefficients from model 7c (full interaction exp-exp)
 ```{r}
 get_f <- function(temp, resource){
@@ -93,39 +96,39 @@ $$
 \beta = f u 
 $$
 
-# ```{r}
-# m1_ll <- function(u){
-#   
-#   get_beta <- function(f, u){
-#     f*u
-#     }
-#     beta_summ$beta_pred <- get_beta(f = beta_summ$f, u = u)
-#     
-#     resid <- log(beta_summ$beta.est) - log(beta_summ$beta_pred)
-#     
-#       nll <- dnorm(resid, 
-#                    mean = 0, 
-#                    sd = sd(resid, na.rm = T), 
-#                    log = T)
-#       -sum(nll, na.rm = T)
-# }
-# ```
-# 
-# ```{r}
-# start_time <- Sys.time()
-# m1_beta_fit <- mle2(m1_ll,
-#                 skip.hessian = T,
-#                 start=list(u = 1*10^-10),
-#                 method = "L-BFGS-B",
-#                 lower = c(0),
-#                 upper = c(Inf),
-#                 control=list(parscale=c(u = 1*10^-10), maxit=10000))
-# end_time <- Sys.time()
-# m1_runtime <- end_time-start_time
-# m1_runtime
-# 
-# coef(m1_beta_fit)
-# ```
+```{r, include=F}
+m1_ll <- function(u){
+
+  get_beta <- function(f, u){
+    f*u
+    }
+    beta_summ$beta_pred <- get_beta(f = beta_summ$f, u = u)
+
+    resid <- log(beta_summ$beta.est) - log(beta_summ$beta_pred)
+
+      nll <- dnorm(resid,
+                   mean = 0,
+                   sd = sd(resid, na.rm = T),
+                   log = T)
+      -sum(nll, na.rm = T)
+}
+```
+
+```{r, include=F}
+start_time <- Sys.time()
+m1_beta_fit <- mle2(m1_ll,
+                skip.hessian = T,
+                start=list(u = 1*10^-10),
+                method = "L-BFGS-B",
+                lower = c(0),
+                upper = c(Inf),
+                control=list(parscale=c(u = 1*10^-10), maxit=10000))
+end_time <- Sys.time()
+m1_runtime <- end_time-start_time
+m1_runtime
+
+coef(m1_beta_fit)
+```
 
 
 There should be another way to do this using all the data rather than just the summarized data. The objective function should rely on the number of infected per treatment which relies on beta which relies on u.
@@ -338,23 +341,44 @@ m4_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/
 
 ```{r}
 mod_list <- list(m1_u_fit, m2_u_fit, m3_u_fit, m4_u_fit)
-AICtab(mod_list, logLik=T, base=T)
+AICtab(mod_list, logLik=T, base=T, weights=T)
 ```
 
 
 ```{r}
 
-beta_summ %<>% mutate(beta_m1 = f*coef(m1_u_fit)[1],
-                      beta_m2 = f*coef(m2_u_fit)[1]*exp(coef(m2_u_fit)[2]*(1/ref_t-1/temp)),
-                      beta_m3 = f*(coef(m3_u_fit)[1]*resource/(coef(m3_u_fit)[2] + resource)),
-                      beta_m4 = f*(coef(m4_u_fit)[1]*exp(coef(m4_u_fit)[2]*(1/ref_t-1/temp))*resource/(coef(m4_u_fit)[3] + resource)))
+beta_summ %<>% mutate(u_m1 = coef(m1_u_fit)[1],
+                      beta_m1 = f*coef(m1_u_fit)[1],
+                      u_m2 = coef(m2_u_fit)[1]*exp(coef(m2_u_fit)[2]*(1/ref_t-1/temp)),
+                      beta_m2 = f*u_m2,
+                      u_m3 = (coef(m3_u_fit)[1]*resource/(coef(m3_u_fit)[2] + resource)),
+                      beta_m3 = f*u_m3,
+                      u_m4 = (coef(m4_u_fit)[1]*exp(coef(m4_u_fit)[2]*(1/ref_t-1/temp))*resource/(coef(m4_u_fit)[3] + resource)),
+                      beta_m4 = f*u_m4)
 
-beta_summ %>% ggplot(.,aes(x=beta_m4, y=beta_m3)) + geom_point()
+beta_summ %>% ggplot(.,aes(x=beta_m1, y=beta_m2)) + geom_point()
+beta_summ %>% ggplot(.,aes(x=beta_m3, y=beta_m4)) + geom_point()
 
-# ggplot(beta_summ,aes(x=prev, y=beta_pred)) + geom_point() #this won't look linear because foraging rate changes
-# ggplot(beta_summ,aes(x=prev, y=beta.est)) + geom_point() #this should look linear
+
+ggplot(beta_summ,aes(x=prev, y=beta_m4)) + geom_point() #this won't look linear because foraging rate changes
+ggplot(beta_summ,aes(x=prev, y=beta.est)) + geom_point() #this should still look linear
 
 ```
+
+But can we get u to match up?
+
+```{r}
+ggplot(beta_summ,aes(x=beta.est, y=beta_m1)) + geom_point() 
+ggplot(beta_summ,aes(x=beta.est, y=beta_m2)) + geom_point() 
+ggplot(beta_summ,aes(x=beta.est, y=beta_m3)) + geom_point() 
+ggplot(beta_summ,aes(x=beta.est, y=beta_m4)) + geom_point() 
+```
+
+
+```{r}
+beta_summ %>% ggplot(.,aes(x=resource, y=u_m4*f, group=temp, color=as.factor(temp))) + geom_point()
+```
+
 
 
 
