@@ -391,6 +391,14 @@ prob_inf <- dataset %>% group_by(trt) %>% summarize(n = n(),
 beta_summ %<>% left_join(.,prob_inf, by="trt")
 ```
 
+fix this
+```{r, eval=F}
+beta_summ %<>% mutate(m1_prev = dnorm(n, size = 1, prob=exp(-beta_m1*z)),
+                      m2_prev = dnorm(n, size = 1, prob=exp(-beta_m2*z)),
+                      m3_prev = dnorm(n, size = 1, prob=exp(-beta_m3*z)),
+                      m4_prev = dnorm(n, size = 1, prob=exp(-beta_m4*z)))
+```
+
 
 
 # Models 5-7

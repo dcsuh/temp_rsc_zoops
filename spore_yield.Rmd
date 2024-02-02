@@ -18,6 +18,7 @@ Objective: Write functions for spore yield that incorporate resource and tempera
 
 ```{r}
 data <- read_csv(here("raw_data/main_mort_edit.csv"))
+births <- read_csv(here("raw_data/main_fitness_edit.csv"))
 ```
 ```{r}
 data %<>% filter(!is.na(spore_RAW)) %>% filter(!is.na(length)) %>% filter(inf==1) %>% filter(temp %in% const_temp) %>% mutate(temp = as.numeric(temp))
@@ -26,16 +27,128 @@ data %<>% mutate(spore_conc = ((spore_RAW/8)*10000))
 #this doubles the spore count if the water was added because that would make it twice as dilute
 #spore yield is calculated by dividing total counted spores by 8 (number of cells used in hemocytomer) and then multiplying by 10000 to get spores/mL
 data %<>% mutate(spore_yield = ifelse(spore_water_added==1,spore_conc*0.5,spore_conc*0.25))
+
+data %<>% mutate(birthdate = "4/5/22", 
+                 lifespan = as.numeric(mdy(mortality_day) - mdy(birthdate))) %>% 
+  filter(is.na(male)) %>% filter(is.na(removed))
+```
+
+
+```{r}
+births %<>% mutate(births = rowSums(.[13:56], na.rm=T)) 
+births %<>% dplyr::select(tube, births)
+```
+
+```{r}
+data %<>% left_join(., births)
+```
+
+
+
+```{r}
+aic_f <- readRDS(here("mle", "aic_table.rds"))
+aic_f
+f_coefs <- coef(readRDS(here("mle", "m7c_f_fit.rds")))
+f_coefs
+```
+
+```{r}
+get_f <- function(temp, resource, length){
+  ref_t <- 15
+  f <- as.numeric(f_coefs[1])
+  arr_prime <- as.numeric(f_coefs[2])
+  h_prime <- as.numeric(f_coefs[3])
+  p <- as.numeric(f_coefs[4])
+  w <- as.numeric(f_coefs[5])
+    arr <- arr_prime*exp(p*resource)
+    h <- h_prime*exp(w*temp)
+    ((f*exp(arr*(1/ref_t - 1/temp))*length^2)/(1+f*exp(arr*(1/ref_t - 1/temp))*length^2*h*resource))
+}
+```
+
+```{r}
+data %<>% mutate(foraging = mapply(get_f, data$temp, data$resource, data$length))
 ```
 
 
 # Yield ~ Food consumed
 
 How is spore yield related to amount of food consumed in lifetime?
+Total food consumed is rate (ml/day) * concentration (mgC/L) * time (days)
 
 ```{r}
+data %<>% mutate(consumed = foraging*resource*0.001*lifespan)
+```
+
+```{r}
+data %>% ggplot(.,aes(x=length, y=spore_yield)) + geom_point() + geom_smooth(method="lm")
+
+data %>% ggplot(.,aes(x=lifespan, y=spore_yield)) + geom_point() + geom_smooth(method="lm")
+
+data %>% ggplot(.,aes(x=consumed, y=spore_yield)) + geom_point() + geom_smooth(method="lm")
+
+data %>% ggplot(.,aes(x=consumed, y=length)) + geom_point() + geom_smooth(method="lm")
+
+
+data %>% ggplot(.,aes(x=length, y=spore_yield, color=as.factor(resource), shape=as.factor(temp))) + geom_point() 
+
+
+data %>% ggplot(.,aes(x=consumed, y=length)) + geom_point() + facet_grid(rows = vars(resource),
+                                                                              cols = vars(temp))
+
+data %>% ggplot(.,aes(x=lifespan, y=length)) + geom_point() + facet_grid(rows = vars(resource),
+                                                                              cols = vars(temp))
+
+
+data %>% ggplot(.,aes(x=consumed, y=spore_yield)) + geom_point() + facet_grid(rows = vars(resource),
+                                                                              cols = vars(temp))
+
+data %>% ggplot(.,aes(x=consumed, y=spore_yield)) + geom_point() + facet_grid(cols = vars(resource))
+
+data %>% ggplot(.,aes(x=consumed, y=spore_yield)) + geom_point() + facet_grid(cols = vars(temp))
+```
+
+
+```{r}
+summary(lm(spore_yield ~ consumed, data = data))
+summary(lm(spore_yield ~ length, data = data))
+summary(lm(spore_yield ~ lifespan, data = data))
+summary(lm(length ~ consumed, data = data))
+```
+
+
+At low temp, lifespan, and not amount consumed, appears to drive length. Otherwise length seems well predicted by amount consumed. Spore yield is best predicted by length and amount consumed and not as well by lifespan. Generally, length is well predicted by the amount consumed. 
+
+
+```{r}
+data %>% ggplot(.,aes(x=consumed, y=births)) + geom_point() + geom_smooth(method="lm")
+data %>% ggplot(.,aes(x=length, y=births)) + geom_point() + geom_smooth(method="lm")
+data %>% ggplot(.,aes(x=lifespan, y=births)) + geom_point() + geom_smooth(method="lm")
+
+
+data %>% ggplot(.,aes(x=consumed, y=births)) + geom_point() + facet_grid(rows = vars(resource),
+                                                                              cols = vars(temp))
+
+data %>% ggplot(.,aes(x=consumed, y=births, color=as.factor(temp))) + geom_point() 
+data %>% ggplot(.,aes(x=lifespan, y=births, color=as.factor(temp))) + geom_point() 
+data %>% ggplot(.,aes(x=length, y=births, color=as.factor(temp))) + geom_point() 
 
 ```
+
+
+```{r}
+summary(lm(births ~ consumed, data = data))
+summary(lm(births ~ length, data = data))
+summary(lm(births ~ lifespan, data = data))
+```
+
+```{r}
+data %<>% mutate(births_day = births/lifespan)
+data %>% ggplot(.,aes(x=spore_yield, y=births_day)) + geom_point() + geom_smooth(method="lm")
+data %>% ggplot(.,aes(x=spore_yield/length, y=births_day/length)) + geom_point() + geom_smooth(method="lm")
+```
+
+Births and spore yield seem to be a factor of body size. More spore yield does not seem to have any effect on births. Birth rate is only affected by whether you are infected or not (as seen in host net reproductive rate).
 
 
 
