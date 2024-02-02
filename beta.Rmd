@@ -333,7 +333,8 @@ m4_u_fit <- mle2(m4_ll, start=list(u = 0.001, arr_t = 10, k = 1),
 ```
 
 ```{r}
-m4_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/(k + resource))*spore_exposure*time)), 
+m4_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/
+                                                           (k + resource))*spore_exposure*time)), 
                  data=dataset, start=list(u = 0.001, arr_t = 10, k = 1), 
                      control=list(parscale = c(u = 0.001, arr_t = 10, k = 1)),
                      skip.hessian=F, method="L-BFGS-B", 
@@ -379,30 +380,47 @@ ggplot(beta_summ,aes(x=prev, y=beta_m4)) + geom_point()
 ```{r}
 beta_summ %>% ggplot(.,aes(x=resource, y=u_m4*f, group=temp, color=as.factor(temp))) + geom_point()
 ```
-From Alex's script
+From Alex's script for constant f and constant u
 ```{r}
 #1 - exp((cfcu$u[i])*z.seq*vol*(exp(-(cfcu$f.0.hat[i]/vol)*(cfcu$length[i]^2)*cfcu$time[i])-1))
 ```
 
 
 
+I don't think this is right
 ```{r}
-prob_inf <- dataset %>% group_by(trt) %>% summarize(n = n(),
-                                                    n_inf = sum(inf_status),
-                                                    prob = n_inf/n)
+beta_summ %<>% mutate(m1_prev = beta_m1*z,
+                      m2_prev = beta_m2*z,
+                      m3_prev = beta_m3*z,
+                      m4_prev = beta_m4*z)
 ```
 
 ```{r}
-beta_summ %<>% left_join(.,prob_inf, by="trt")
+beta_summ %>% ggplot(.,aes(x=m1_prev, y=prev)) + geom_point()
+beta_summ %>% ggplot(.,aes(x=m2_prev, y=prev)) + geom_point()
+beta_summ %>% ggplot(.,aes(x=m3_prev, y=prev)) + geom_point()
+beta_summ %>% ggplot(.,aes(x=m4_prev, y=prev)) + geom_point()
 ```
 
-fix this
-```{r, eval=F}
-beta_summ %<>% mutate(m1_prev = dnorm(n, size = 1, prob=exp(-beta_m1*z)),
-                      m2_prev = dnorm(n, size = 1, prob=exp(-beta_m2*z)),
-                      m3_prev = dnorm(n, size = 1, prob=exp(-beta_m3*z)),
-                      m4_prev = dnorm(n, size = 1, prob=exp(-beta_m4*z)))
+Not great but maybe because these aren't great fits?
+
+
+
+```{r}
+test <- tibble(resource = seq(0,1,length.out=11),
+               temp = seq(15,25,length.out=11))
+test %<>% mutate(f = get_f(test$temp, test$resource))
 ```
+
+
+```{r}
+u <- 1
+arr_t <- 25
+k <- 1500
+p <- -30
+test %<>% mutate(m5a = exp(-f*(u*exp((arr_t+p*resource)*(1/ref_t-1/temp))*resource/(k + resource))*z*1))
+```
+
 
 
 
@@ -410,19 +428,111 @@ beta_summ %<>% mutate(m1_prev = dnorm(n, size = 1, prob=exp(-beta_m1*z)),
 
 Finally, we can also include interactions for our temperature and resource-dependent parameters so that they can interact with each other...
 
+$$
+probability\ of\ infection = e^{-f(\frac{u e^{T_{A}(1/T_{R}-1/T)} R}{k + R})Zt}
+$$
+
 linearly...
 $$
 T_{A} = {T_{A}}' + {\rho}R \\
 $$
+```{r}
+m5a_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = 
+                                   exp(-f*((u*exp((arr_t+p*resource)*(1/ref_t-1/temp))*resource)/
+                                             (k + resource))*spore_exposure*time)), 
+                 data=dataset, start=list(u = 0.001, arr_t = 1, k = 10, p=1), 
+                     control=list(parscale = c(u = 0.001, arr_t = 1, k = 10, p=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = 0, k = 0, p=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf))
+```
 
-$$
-h = h' + {\omega}T
-$$
-and exponentially.
 $$
 T_{A} = {T_{A}}'e^{{\rho}R}
 $$
 
+```{r}
+m5b_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = 
+                                   exp(-f*(u*exp((arr_t*exp(p*resource))*(1/ref_t-1/temp))*resource/
+                                             (k + resource))*spore_exposure*time)), 
+                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=1), 
+                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = 0, k = 0, p=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf))
+```
+
+
 $$
-h = h'e^{{\omega}T}
+k = k' + {\omega}T
 $$
+```{r}
+m6a_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/((k + w*temp) + resource))*spore_exposure*time)), 
+                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, w=0.01), 
+                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, w=0.01)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = 0, k = 0, w=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, w=Inf))
+
+```
+
+
+
+$$
+k = k'e^{{\omega}T}
+$$
+
+```{r}
+m6b_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/((k*exp(w*temp)) + resource))*spore_exposure*time)), 
+                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, w=1), 
+                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, w=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = 0, k = 0, w=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, w=Inf))
+
+```
+
+
+```{r}
+m7a_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp((arr_t+p*resource)*(1/ref_t-1/temp))*resource/((k + w*temp) + resource))*spore_exposure*time)), 
+                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=1, w=0.1), 
+                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=1, w=0.1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = 0, k = 0, p=-Inf, w=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf, w=Inf))
+```
+
+```{r}
+m7b_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp((arr_t*exp(p*resource))*(1/ref_t-1/temp))*resource/((k*exp(w*temp)) + resource))*spore_exposure*time)), 
+                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=0.1, w=0.1), 
+                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=0.1, w=0.1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = 0, k = 0, p=-Inf, w=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf, w=Inf))
+```
+
+```{r}
+mod_list <- list(m1_u_fit, m2_u_fit, m3_u_fit, m4_u_fit,
+                 m5a_u_fit, m5b_u_fit, m6a_u_fit, m6b_u_fit,
+                 m7a_u_fit, m7b_u_fit)
+
+mod_names <- c("m1", "m2", "m3", "m4", 
+               "m5a", "m5b", "m6a", "m6b", 
+               "m7a", "m7b")
+mod_names_descriptive <- c("size", "temp", "rsc", "full", 
+                           "arr(R)~LIN", "arr(R)~EXP", "h(T)~LIN", "h(T)~EXP", 
+                           "LIN-LIN", "EXP_EXP")
+mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
+
+AICtab(mod_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
+```
+
+
+```{r}
+beta_summ %<>% mutate(u_m5a = (coef(m5a_u_fit)[1]*exp((coef(m5a_u_fit)[2]+coef(m5a_u_fit)[4]+resource))*(1/ref_t-1/temp))*resource/(coef(m5a_u_fit)[3] + resource),
+                      beta_m5a = f*u_m5a,
+                      m5a_prev = beta_m5a*z,
+                      u_m5b = (coef(m5b_u_fit)[1]*exp((coef(m5b_u_fit)[2]*exp(coef(m5b_u_fit)[4]+resource)))*(1/ref_t-1/temp))*resource/(coef(m5b_u_fit)[3] + resource),
+                      beta_m5b = f*u_m5b,
+                      m5b_prev = beta_m5b*z)
+```
+
+```{r}
+beta_summ %>% ggplot(.,aes(x=beta_m5b, y=beta.est)) + geom_point()
+```
+
+
