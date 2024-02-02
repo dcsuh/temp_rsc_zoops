@@ -189,19 +189,19 @@ m1_ll <- function(u){
   tmp <- dataset
   
     inf_out <- function(inf_status, f, u, spore_exposure, time){
-    dbinom(x = inf_status, size = 1, prob=exp(-f*u*spore_exposure*time))
+    dbinom(x = inf_status, size = 1, prob=1-exp(-f*u*spore_exposure*time))
   }
   
   tmp %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, spore_exposure = spore_exposure, time = time))
+    mutate(ll = mapply(inf_out, inf_status = inf_status, f = f, u = u, spore_exposure = spore_exposure, time = time))
   -sum(tmp$ll)
 }
 ```
 
 
 ```{r, eval=F}
-m1_u_fit <- mle2(m1_ll, start=list(u = 0.0000001), 
-                     control=list(parscale = c(u = 0.0000001)),
+m1_u_fita <- mle2(m1_ll, start=list(u = 0.00001), 
+                     control=list(parscale = c(u = 0.00001)),
                      skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
       #this produces a warning: NaNs produced - not sure if this is an issue
 ```
@@ -379,6 +379,11 @@ ggplot(beta_summ,aes(x=prev, y=beta_m4)) + geom_point()
 ```{r}
 beta_summ %>% ggplot(.,aes(x=resource, y=u_m4*f, group=temp, color=as.factor(temp))) + geom_point()
 ```
+From Alex's script
+```{r}
+#1 - exp((cfcu$u[i])*z.seq*vol*(exp(-(cfcu$f.0.hat[i]/vol)*(cfcu$length[i]^2)*cfcu$time[i])-1))
+```
+
 
 
 ```{r}
