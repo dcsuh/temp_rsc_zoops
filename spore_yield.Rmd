@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, message = F}
 library(here)
 source(here("base","src.R"))
+
+library(patchwork)
 ```
 
 
@@ -81,13 +83,18 @@ data %<>% mutate(consumed = foraging*resource*0.001*lifespan)
 ```
 
 ```{r}
-data %>% ggplot(.,aes(x=length, y=spore_yield)) + geom_point() + geom_smooth(method="lm")
+len_yield <- data %>% ggplot(.,aes(x=length, y=log(spore_yield))) + geom_point() + geom_smooth(method="lm")
 
-data %>% ggplot(.,aes(x=lifespan, y=spore_yield)) + geom_point() + geom_smooth(method="lm")
+span_yield <- data %>% ggplot(.,aes(x=lifespan, y=log(spore_yield))) + geom_point() + geom_smooth(method="lm") + theme(axis.text.y = element_blank(), axis.title.y = element_blank())
 
-data %>% ggplot(.,aes(x=consumed, y=spore_yield)) + geom_point() + geom_smooth(method="lm")
+cons_yield <- data %>% ggplot(.,aes(x=consumed, y=log(spore_yield))) + geom_point() + geom_smooth(method="lm") + theme(axis.text.y = element_blank(), axis.title.y = element_blank())
 
-data %>% ggplot(.,aes(x=consumed, y=length)) + geom_point() + geom_smooth(method="lm")
+len_yield | span_yield | cons_yield
+```
+
+
+```{r}
+data %>% ggplot(.,aes(x=consumed, y=length, color = as.factor(temp), shape = as.factor(resource))) + geom_point() + labs(color = "Temp", shape = "Rsc")
 
 
 data %>% ggplot(.,aes(x=length, y=spore_yield, color=as.factor(resource), shape=as.factor(temp))) + geom_point() 
