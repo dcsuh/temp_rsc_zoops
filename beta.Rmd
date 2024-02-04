@@ -143,18 +143,30 @@ dataset <- left_join(mort,fitness)
 ```
 
 
+This chunk removes individuals with NA for "inf". These ones we were unsure whether they were infected because they died too early to check for infection or went missing. 
 ```{r}
 dataset %<>% filter(species == "D") %>% #only daphnia for this analysis
   filter(temp %in% const_temp) #only constant temp for this analysis
 
 dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22"), 
                     lifespan = as.numeric(mdy(final_date) - mdy(birthdate)),
-                    temp = as.numeric(temp)) %>% 
+                    temp = as.numeric(temp),
+                    treatment = paste(temp, resource, sep = "_")) %>% 
   filter(is.na(male)) %>% #remove males
-  filter(is.na(missing)) #remove missing
+  filter(is.na(missing)) %>% #remove missing
+  filter(!is.na(inf)) #remove NAs for inf for estimating beta. sometimes they died too young to tell
+```
+
+We can measure prevalence AKA probability of infection again because the last time it was done was with the unknown infected individuals included
+```{r}
+prob_inf <- dataset %>% group_by(temp, resource) %>% summarize(prob_inf = sum(inf)/n())
+beta_summ %<>% left_join(., prob_inf)
+```
 
 
-dataset %<>% mutate(inf_status = replace_na(inf, 0), dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0))
+
+```{r}
+dataset %<>% mutate(inf_status = inf, dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0))
 
 
 ```
@@ -171,9 +183,9 @@ dataset %<>% mutate(spore_exposure = 200, #spores/mL
 
 
 # will loop through all treatments:
-trts <- unique(dataset$trt)
+trts <- unique(dataset$treatment)
 
-treatments <- unique(dataset$trt) 
+treatments <- unique(dataset$treatment) 
 length(treatments) # how many unique? # this tells you how big to make the summary 
 
 ```
@@ -212,6 +224,28 @@ m1_u_fit <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time)),
                      control=list(parscale = c(u = 0.0000001)),
                      skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
 ```
+
+Let's see if this is getting a decent estimate per treatment
+```{r}
+m1_fits <- beta_summ %>% dplyr::select(temp, resource)
+for (i in 1:length(treatments)){
+  dsub <- dataset %>% filter(treatment == treatments[i])
+  m1_fits$treatment[i] <- treatments[i]
+  m1_fits$u[i] <- coef(mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time)), 
+                 data=dsub, start=list(u = 0.0000001), 
+                 control=list(parscale = c(u = 0.0000001)),
+                 skip.hessian=F, method="L-BFGS-B", lower=0, upper=1))[1]
+}
+```
+
+```{r}
+beta_summ %<>% left_join(., m1_fits)
+```
+
+```{r}
+beta_summ %>% ggplot(.,aes(x=prev, y=1-exp(-f*u*z))) + geom_point()
+```
+
 
 
 
@@ -256,6 +290,31 @@ m2_u_fit <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time*exp(
                      control=list(parscale = c(u = 0.0001, arr_t = 100)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0), upper=c(u = 1, arr_t = Inf))
+```
+
+
+```{r}
+m2_fits <- beta_summ %>% dplyr::select(temp, resource)
+for (i in 1:length(treatments)){
+  dsub <- dataset %>% filter(treatment == treatments[i])
+  m2_fits$treatment[i] <- treatments[i]
+  model <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time*exp(arr_t*(1/ref_t-1/temp)))), 
+                 data=dsub, start=list(u = 0.00001, arr_t = 10), 
+                     control=list(parscale = c(u = 0.00001, arr_t = 10)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = 0), upper=c(u = 1, arr_t = Inf))
+  m2_fits$m2_u[i] <- coef(model)[1]
+  m2_fits$m2_arr[i] <- coef(model)[2]
+  
+}
+```
+
+```{r}
+beta_summ %<>% left_join(., m2_fits)
+```
+
+```{r}
+beta_summ %>% ggplot(.,aes(x=prev, y=1-exp(-f*m2_u*z*exp(m2_arr*(1/ref_t-1/temp))))) + geom_point()
 ```
 
 
@@ -370,10 +429,10 @@ ggplot(beta_summ,aes(x=prev, y=beta.est)) + geom_point() #this should still look
 But can we get u to match up?
 
 ```{r}
-ggplot(beta_summ,aes(x=prev, y=beta_m1)) + geom_point() 
-ggplot(beta_summ,aes(x=prev, y=beta_m2)) + geom_point() 
-ggplot(beta_summ,aes(x=prev, y=beta_m3)) + geom_point() 
-ggplot(beta_summ,aes(x=prev, y=beta_m4)) + geom_point() 
+ggplot(beta_summ,aes(x=prev, y=1-exp(-f*u_m1*z))) + geom_point() 
+ggplot(beta_summ,aes(x=prev, y=1-exp(-beta_m2*z))) + geom_point() 
+ggplot(beta_summ,aes(x=prev, y=1-exp(-beta_m3*z))) + geom_point() 
+ggplot(beta_summ,aes(x=prev, y=1-exp(-beta_m4*z))) + geom_point() 
 ```
 
 
@@ -454,8 +513,8 @@ $$
 m5b_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = 
                                    exp(-f*(u*exp((arr_t*exp(p*resource))*(1/ref_t-1/temp))*resource/
                                              (k + resource))*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=1), 
-                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=1)),
+                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=0.1), 
+                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=0.1)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0, k = 0, p=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf))
 ```
@@ -491,8 +550,8 @@ m6b_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1
 
 ```{r}
 m7a_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp((arr_t+p*resource)*(1/ref_t-1/temp))*resource/((k + w*temp) + resource))*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=1, w=0.1), 
-                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=1, w=0.1)),
+                 data=dataset, start=list(u = 0.0001, arr_t = 10, k = 1, p=0.1, w=0.01), 
+                     control=list(parscale = c(u = 0.0001, arr_t = 10, k = 1, p=0.1, w=0.01)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0, k = 0, p=-Inf, w=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf, w=Inf))
 ```
@@ -532,7 +591,7 @@ beta_summ %<>% mutate(u_m5a = (coef(m5a_u_fit)[1]*exp((coef(m5a_u_fit)[2]+coef(m
 ```
 
 ```{r}
-beta_summ %>% ggplot(.,aes(x=beta_m5b, y=beta.est)) + geom_point()
+beta_summ %>% ggplot(.,aes(x=prev, y=1-exp(-beta_m5b*z))) + geom_point()
 ```
 
 
