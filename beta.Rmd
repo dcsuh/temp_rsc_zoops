@@ -26,7 +26,18 @@ We'll grab our estimates for Beta to use for our optimizer and we'll use the bes
 ```{r}
 beta_summ <- readRDS(here("processed_data", "beta_summary.rds"))
 beta_summ %<>% filter(temp %in% const_temp) %>% filter(species == "D") %>% mutate(temp = as.numeric(temp))
+```
 
+```{r}
+beta_summ %>% ggplot(.,aes(x=as.factor(resource),y=beta.est, color=as.factor(temp))) + 
+  geom_point(aes(), position = position_dodge(width = 0.5)) + 
+  geom_linerange(aes(ymin=beta.025, ymax=beta.975), position = position_dodge(width = 0.5)) + 
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  labs(y = "Beta", x = "Resource Concentration mgC/L", color="Temp")
+```
+
+
+```{r}
 aic_f <- readRDS(here("mle", "aic_table.rds"))
 aic_f
 f_coefs <- coef(readRDS(here("mle", "m7c_f_fit.rds")))
@@ -37,6 +48,9 @@ exp_time <- 1 #1 day
 vol <- 15 #mL
 ref_t <- 15 #degrees C
 ```
+
+
+
 
 
 We can now calculate the effective foraging rate for all of our treatments using these parameter values and this equation
@@ -550,8 +564,8 @@ m6b_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1
 
 ```{r}
 m7a_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp((arr_t+p*resource)*(1/ref_t-1/temp))*resource/((k + w*temp) + resource))*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.0001, arr_t = 10, k = 1, p=0.1, w=0.01), 
-                     control=list(parscale = c(u = 0.0001, arr_t = 10, k = 1, p=0.1, w=0.01)),
+                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=0.01, w=0.01), 
+                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=0.01, w=0.01)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0, k = 0, p=-Inf, w=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf, w=Inf))
 ```
