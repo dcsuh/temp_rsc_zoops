@@ -1,0 +1,139 @@
+---
+title: "beta_components"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+
+```
+
+```{r}
+fitness <- read.csv(here("raw_data/main_fitness_edit.csv")) #must be read.csv
+fitness %<>% dplyr::select(tube, temp_id, REMOVED, KBP, final_date)
+mort <-  read_csv(here("raw_data/main_mort_edit.csv"))
+
+dataset <- left_join(mort,fitness)
+
+data <- readRDS(here("processed_data","foraging_raw.rds"))
+data_summ <- readRDS(here("processed_data", "foraging.rds"))
+
+data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
+
+data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube 
+
+treatment_IDs <- unique(data$treatment_ID)
+resource_IDs <- unique(data$resource)
+temp_IDs <- unique(data$temp)
+
+
+vol <- 15
+
+```
+
+```{r}
+dataset %<>% filter(species == "D") %>% #only daphnia for this analysis
+  filter(temp %in% const_temp) #only constant temp for this analysis
+
+dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22"), 
+                    lifespan = as.numeric(mdy(final_date) - mdy(birthdate)),
+                    temp = as.numeric(temp),
+                    treatment = paste(temp, resource, sep = "_")) %>% 
+  filter(is.na(male)) %>% #remove males
+  filter(is.na(missing)) %>% #remove missing
+  filter(!is.na(inf)) #remove NAs for inf for estimating beta. sometimes they died too young to tell
+
+dataset %<>% mutate(inf_status = inf, dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0))
+
+```
+
+
+```{r}
+mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)
+data %<>% left_join(., mean_length_summ)
+data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
+```
+
+```{r}
+m1_u_fit <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time)), 
+                 data=dataset, start=list(u = 0.0000001), 
+                     control=list(parscale = c(u = 0.0000001)),
+                     skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
+```
+
+
+```{r, m0_num_sol}
+m0_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -f*R
+    res <- c(dR)
+    list(res)}
+    )
+}
+
+```
+
+
+
+```{r, m0_sim}
+m0_sim <- function(R, time, f){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R)
+  params <- c(f=f)
+  output <- as.data.frame(lsoda(y=xstart, times, m0_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(r_end)
+}
+```
+
+
+```{r, m0_ll}
+m0_ll <- function(f){
+  data <- tmp
+  m0_end <- as.data.frame(mapply(m0_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol))
+  colnames(m0_end) <- "m0_end"
+  data$end <- m0_end$m0_end
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+}
+```
+
+
+
+```{r, m0_mle, eval = FALSE}
+start_time <- Sys.time()
+tmp <- data
+m0_f_fit <- mle2(minuslogl=m0_ll, skip.hessian=T,
+                start=list(f=10),
+                control=list(parscale=c(f=10), maxit=10000))
+end_time <- Sys.time()
+m0_runtime <- end_time - start_time
+m0_runtime
+
+coef(m0_f_fit)
+
+saveRDS(m0_f_fit, file = here("mle","m0_f_fit.rds"))
+
+```
+
+
+
+
+
+
