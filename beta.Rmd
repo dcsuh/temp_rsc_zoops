@@ -237,7 +237,6 @@ m1_ll <- function(u){
 m1_u_fita <- mle2(m1_ll, start=list(u = 0.00001), 
                      control=list(parscale = c(u = 0.00001)),
                      skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
-      #this produces a warning: NaNs produced - not sure if this is an issue
 ```
 
 ```{r}
