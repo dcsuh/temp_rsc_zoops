@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, message = F}
 library(here)
 source(here("base","src.R"))
+
+library(ggnewscale)
 ```
 
 # Questions
@@ -47,6 +49,8 @@ z <- 200 #200 spores/mL exposure and exposed for 24 hours
 exp_time <- 1 #1 day
 vol <- 15 #mL
 ref_t <- 15 #degrees C
+
+f_median <- 6.897
 ```
 
 
@@ -81,7 +85,9 @@ get_f <- function(temp, resource){
 ```
 
 ```{r}
-beta_summ %<>% mutate(f = get_f(beta_summ$temp, beta_summ$resource))
+beta_summ %<>% mutate(#f = f_median,
+                      f = get_f(beta_summ$temp, beta_summ$resource)
+                      )
 ```
 
 
@@ -186,7 +192,9 @@ dataset %<>% mutate(inf_status = inf, dead = ifelse(is.na(REMOVED) & is.na(KBP),
 ```
 
 ```{r}
-dataset %<>% mutate(f = get_f(dataset$temp, dataset$resource))
+dataset %<>% mutate(#f = f_median,
+                    f = get_f(dataset$temp, dataset$resource)
+                    )
 ```
 
 ```{r}
@@ -371,6 +379,29 @@ m3_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*resource/(k + resourc
                  lower=c(u = 0, k = 0), upper=c(u = 1, k = Inf))
 ```
 
+```{r}
+m3_fits <- beta_summ %>% dplyr::select(temp, resource)
+for (i in 1:length(treatments)){
+  dsub <- dataset %>% filter(treatment == treatments[i])
+  m3_fits$treatment[i] <- treatments[i]
+  model <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*(u*resource/(k + resource))*spore_exposure*time)), 
+                 data=dsub, start=list(u = 0.0001, k = 1), 
+                     control=list(parscale = c(u = 0.0001, k = 1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, k = 0), upper=c(u = 1, k = Inf))
+  m3_fits$m3_u[i] <- coef(model)[1]
+  m3_fits$m3_k[i] <- coef(model)[2]
+  
+}
+```
+
+```{r}
+beta_summ %<>% left_join(., m3_fits)
+```
+
+```{r}
+beta_summ %>% ggplot(.,aes(x=prev, y=1-exp(-f*(m3_u*resource/(m3_k + resource))*z))) + geom_point()
+```
 
 # Model 4
 
@@ -408,74 +439,80 @@ m4_u_fit <- mle2(m4_ll, start=list(u = 0.001, arr_t = 10, k = 1),
 ```{r}
 m4_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/
                                                            (k + resource))*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1), 
-                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1)),
+                 data=dataset, start=list(u = 0.00001, arr_t = 10, k = 1), 
+                     control=list(parscale = c(u = 0.00001, arr_t = 10, k = 1)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0, k = 0), upper=c(u = 1, arr_t = Inf, k = Inf))
 ```
+
+```{r}
+m4_fits <- beta_summ %>% dplyr::select(temp, resource)
+for (i in 1:length(treatments)){
+  dsub <- dataset %>% filter(treatment == treatments[i])
+  m4_fits$treatment[i] <- treatments[i]
+  model <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/
+                                                           (k + resource))*spore_exposure*time)), 
+                 data=dsub, start=list(u = 0.00001, arr_t = 10, k = 1), 
+                     control=list(parscale = c(u = 0.00001, arr_t = 10, k = 1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, arr_t = 0, k = 0), upper=c(u = 1, arr_t = Inf, k = Inf))
+  m4_fits$m4_u[i] <- coef(model)[1]
+  m4_fits$m4_arr[i] <- coef(model)[2]
+  m4_fits$m4_k[i] <- coef(model)[3]
+}
+```
+
+```{r}
+beta_summ %<>% left_join(., m4_fits)
+```
+
+```{r}
+beta_summ %>% ggplot(.,aes(x=prev, y=1-exp(-f*(m4_u*exp(m4_arr*(1/ref_t-1/temp))*resource/
+                                                           (m4_k + resource))*z))) + geom_point()
+```
+
+
+
 
 ```{r}
 mod_list <- list(m1_u_fit, m2_u_fit, m3_u_fit, m4_u_fit)
 AICtab(mod_list, logLik=T, base=T, weights=T)
 ```
 
-
 ```{r}
-
-beta_summ %<>% mutate(u_m1 = coef(m1_u_fit)[1],
-                      beta_m1 = f*coef(m1_u_fit)[1],
-                      u_m2 = coef(m2_u_fit)[1]*exp(coef(m2_u_fit)[2]*(1/ref_t-1/temp)),
-                      beta_m2 = f*u_m2,
-                      u_m3 = (coef(m3_u_fit)[1]*resource/(coef(m3_u_fit)[2] + resource)),
-                      beta_m3 = f*u_m3,
-                      u_m4 = (coef(m4_u_fit)[1]*exp(coef(m4_u_fit)[2]*(1/ref_t-1/temp))*resource/(coef(m4_u_fit)[3] + resource)),
-                      beta_m4 = f*u_m4)
-
-beta_summ %>% ggplot(.,aes(x=beta_m1, y=beta_m2)) + geom_point()
-beta_summ %>% ggplot(.,aes(x=beta_m3, y=beta_m4)) + geom_point()
-
-
-ggplot(beta_summ,aes(x=prev, y=beta_m4)) + geom_point() #this won't look linear because foraging rate changes
-ggplot(beta_summ,aes(x=prev, y=beta.est)) + geom_point() #this should still look linear
-
+mod_params <- beta_summ %>% dplyr::select(trt:treatment)
+mod_params %<>% mutate(m1_u = coef(m1_u_fit)[1],
+                       m2_u = coef(m2_u_fit)[1],
+                       m2_arr = coef(m2_u_fit)[2],
+                       m3_u = coef(m3_u_fit)[1],
+                       m3_k = coef(m3_u_fit)[2],
+                       m4_u = coef(m4_u_fit)[1],
+                       m4_arr = coef(m4_u_fit)[2],
+                       m4_k = coef(m4_u_fit)[3])
 ```
 
-But can we get u to match up?
-
 ```{r}
-ggplot(beta_summ,aes(x=prev, y=1-exp(-f*u_m1*z))) + geom_point() 
-ggplot(beta_summ,aes(x=prev, y=1-exp(-beta_m2*z))) + geom_point() 
-ggplot(beta_summ,aes(x=prev, y=1-exp(-beta_m3*z))) + geom_point() 
-ggplot(beta_summ,aes(x=prev, y=1-exp(-beta_m4*z))) + geom_point() 
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*m1_u*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point()
+
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*m2_u*z*exp(m2_arr*(1/ref_t-1/temp))), color = as.factor(temp), shape = as.factor(resource))) + geom_point()
+
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*(m3_u*resource/(m3_k + resource))*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point()
+
+mod_params %>% ggplot(.,aes(x = prev, y = 1-exp(-f*(m4_u*exp(m4_arr*(1/ref_t-1/temp))*resource/
+                                                           (m4_k + resource))*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point()
 ```
 
 
-```{r}
-beta_summ %>% ggplot(.,aes(x=resource, y=u_m4*f, group=temp, color=as.factor(temp))) + geom_point()
-```
+
+
+
+
 From Alex's script for constant f and constant u
 ```{r}
 #1 - exp((cfcu$u[i])*z.seq*vol*(exp(-(cfcu$f.0.hat[i]/vol)*(cfcu$length[i]^2)*cfcu$time[i])-1))
 ```
 
 
-
-I don't think this is right
-```{r}
-beta_summ %<>% mutate(m1_prev = beta_m1*z,
-                      m2_prev = beta_m2*z,
-                      m3_prev = beta_m3*z,
-                      m4_prev = beta_m4*z)
-```
-
-```{r}
-beta_summ %>% ggplot(.,aes(x=m1_prev, y=prev)) + geom_point()
-beta_summ %>% ggplot(.,aes(x=m2_prev, y=prev)) + geom_point()
-beta_summ %>% ggplot(.,aes(x=m3_prev, y=prev)) + geom_point()
-beta_summ %>% ggplot(.,aes(x=m4_prev, y=prev)) + geom_point()
-```
-
-Not great but maybe because these aren't great fits?
 
 
 
@@ -527,8 +564,8 @@ $$
 m5b_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = 
                                    exp(-f*(u*exp((arr_t*exp(p*resource))*(1/ref_t-1/temp))*resource/
                                              (k + resource))*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=0.1), 
-                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=0.1)),
+                 data=dataset, start=list(u = 0.00001, arr_t = 10, k = 1, p=0.1), 
+                     control=list(parscale = c(u = 0.00001, arr_t = 10, k = 1, p=0.1)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0, k = 0, p=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf))
 ```
@@ -539,8 +576,8 @@ k = k' + {\omega}T
 $$
 ```{r}
 m6a_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/((k + w*temp) + resource))*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, w=0.01), 
-                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, w=0.01)),
+                 data=dataset, start=list(u = 0.0001, arr_t = 10, k = 0.01, w=0.01), 
+                     control=list(parscale = c(u = 0.0001, arr_t = 10, k = 0.01, w=0.01)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0, k = 0, w=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, w=Inf))
 
@@ -564,8 +601,8 @@ m6b_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1
 
 ```{r}
 m7a_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp((arr_t+p*resource)*(1/ref_t-1/temp))*resource/((k + w*temp) + resource))*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 1, p=0.01, w=0.01), 
-                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1, p=0.01, w=0.01)),
+                 data=dataset, start=list(u = 0.001, arr_t = 10, k = 0.01, p=0.01, w=0.01), 
+                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 0.01, p=0.01, w=0.01)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0, k = 0, p=-Inf, w=-Inf), upper=c(u = 1, arr_t = Inf, k = Inf, p=Inf, w=Inf))
 ```
@@ -596,16 +633,311 @@ AICtab(mod_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
 
 
 ```{r}
-beta_summ %<>% mutate(u_m5a = (coef(m5a_u_fit)[1]*exp((coef(m5a_u_fit)[2]+coef(m5a_u_fit)[4]+resource))*(1/ref_t-1/temp))*resource/(coef(m5a_u_fit)[3] + resource),
-                      beta_m5a = f*u_m5a,
-                      m5a_prev = beta_m5a*z,
-                      u_m5b = (coef(m5b_u_fit)[1]*exp((coef(m5b_u_fit)[2]*exp(coef(m5b_u_fit)[4]+resource)))*(1/ref_t-1/temp))*resource/(coef(m5b_u_fit)[3] + resource),
-                      beta_m5b = f*u_m5b,
-                      m5b_prev = beta_m5b*z)
+mod_params %<>% mutate(m5a_u = coef(m5a_u_fit)[1],
+                       m5a_arr = coef(m5a_u_fit)[2],
+                       m5a_k = coef(m5a_u_fit)[3],
+                       m5a_p = coef(m5a_u_fit)[4],
+                       m5b_u = coef(m5b_u_fit)[1],
+                       m5b_arr = coef(m5b_u_fit)[2],
+                       m5b_k = coef(m5b_u_fit)[3],
+                       m5b_p = coef(m5b_u_fit)[4],
+                       m6a_u = coef(m6a_u_fit)[1],
+                       m6a_arr = coef(m6a_u_fit)[2],
+                       m6a_k = coef(m6a_u_fit)[3],
+                       m6a_w = coef(m6a_u_fit)[4],
+                       m6b_u = coef(m6b_u_fit)[1],
+                       m6b_arr = coef(m6b_u_fit)[2],
+                       m6b_k = coef(m6b_u_fit)[3],
+                       m6b_w = coef(m6b_u_fit)[4],
+                       m7a_u = coef(m7a_u_fit)[1],
+                       m7a_arr = coef(m7a_u_fit)[2],
+                       m7a_k = coef(m7a_u_fit)[3],
+                       m7a_p = coef(m7a_u_fit)[4],
+                       m7a_w = coef(m7a_u_fit)[5],
+                       m7b_u = coef(m7b_u_fit)[1],
+                       m7b_arr = coef(m7b_u_fit)[2],
+                       m7b_k = coef(m7b_u_fit)[3],
+                       m7b_p = coef(m7b_u_fit)[4],
+                       m7b_w = coef(m7b_u_fit)[5])
+```
+
+
+```{r}
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*((m5a_u*exp((m5a_arr+m5a_p*resource)*(1/ref_t-1/temp))*resource)/
+                                             (m5a_k + resource))*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point() + labs(y = "m5a_prev")
+
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*(m5b_u*exp((m5b_arr*exp(m5b_p*resource))*(1/ref_t-1/temp))*resource/
+                                             (m5b_k + resource))*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point() + labs(y = "m5b_prev")
+
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*((m6a_u*exp((m6a_arr)*(1/ref_t-1/temp))*resource)/
+                                             (m6a_k + m6a_w*resource))*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point() + labs(y = "m6a_prev")
+
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*(m6b_u*exp((m6b_arr)*(1/ref_t-1/temp))*resource/
+                                             (m6b_k*exp(m6b_w*resource)))*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point() + labs(y = "m6b_prev")
+
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*((m7a_u*exp((m7a_arr+m7a_p*resource)*(1/ref_t-1/temp))*resource)/
+                                             (m7a_k + m7a_w*resource))*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point() + labs(y = "m7a_prev")
+
+mod_params %>% ggplot(.,aes(x=prev, y=1-exp(-f*(m7b_u*exp((m7b_arr*exp(m7b_p*resource))*(1/ref_t-1/temp))*resource/
+                                             (m7b_k*exp(m7b_w*resource)))*z), color = as.factor(temp), shape = as.factor(resource))) + geom_point() + labs(y = "m7b_prev")
+
+
+```
+
+
+```{r}
+mod_list <- list(m1_u_fit, m2_u_fit, m3_u_fit, m4_u_fit,
+                 m5a_u_fit, m5b_u_fit, m6a_u_fit, m6b_u_fit,
+                 m7a_u_fit, m7b_u_fit)
+
+mod_names <- c("m1", "m2", "m3", "m4", 
+               "m5a", "m5b", "m6a", "m6b", 
+               "m7a", "m7b")
+mod_names_descriptive <- c("size", "temp", "rsc", "full", 
+                           "arr(R)~LIN", "arr(R)~EXP", "h(T)~LIN", "h(T)~EXP", 
+                           "LIN-LIN", "EXP_EXP")
+mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
+
+AICtab(mod_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
 ```
 
 ```{r}
-beta_summ %>% ggplot(.,aes(x=prev, y=1-exp(-beta_m5b*z))) + geom_point()
+temp_range <- seq(15,25,by=0.1)
+resource_range <- seq(0.1,1,by=0.01)
+
+seq_data <- tibble(temp=c(),
+                   resourece=c())
+
+for (i in 1:length(temp_range)){
+  tmp <- tibble(temp = temp_range[i],
+                resource = seq(0.1,1,by=0.01))
+  seq_data %<>% bind_rows(., tmp)
+}
+
+
+seq_data %<>% mutate(temp_factor = case_when(temp==15 ~ 15,
+                                             temp==20 ~ 20,
+                                             temp==25 ~ 25))
+```
+
+
+```{r}
+m1_u = coef(m1_u_fit)[1]
+m2_u = coef(m2_u_fit)[1]
+m2_arr = coef(m2_u_fit)[2]
+m3_u = coef(m3_u_fit)[1]
+m3_k = coef(m3_u_fit)[2]
+m4_u = coef(m4_u_fit)[1]
+m4_arr = coef(m4_u_fit)[2]
+m4_k = coef(m4_u_fit)[3]
+m5a_u = coef(m5a_u_fit)[1]
+m5a_arr = coef(m5a_u_fit)[2]
+m5a_k = coef(m5a_u_fit)[3]
+m5a_p = coef(m5a_u_fit)[4]
+m5b_u = coef(m5b_u_fit)[1]
+m5b_arr = coef(m5b_u_fit)[2]
+m5b_k = coef(m5b_u_fit)[3]
+m5b_p = coef(m5b_u_fit)[4]
+m6a_u = coef(m6a_u_fit)[1]
+m6a_arr = coef(m6a_u_fit)[2]
+m6a_k = coef(m6a_u_fit)[3]
+m6a_w = coef(m6a_u_fit)[4]
+m6b_u = coef(m6b_u_fit)[1]
+m6b_arr = coef(m6b_u_fit)[2]
+m6b_k = coef(m6b_u_fit)[3]
+m6b_w = coef(m6b_u_fit)[4]
+m7a_u = coef(m7a_u_fit)[1]
+m7a_arr = coef(m7a_u_fit)[2]
+m7a_k = coef(m7a_u_fit)[3]
+m7a_p = coef(m7a_u_fit)[4]
+m7a_w = coef(m7a_u_fit)[5]
+m7b_u = coef(m7b_u_fit)[1]
+m7b_arr = coef(m7b_u_fit)[2]
+m7b_k = coef(m7b_u_fit)[3]
+m7b_p = coef(m7b_u_fit)[4]
+m7b_w = coef(m7b_u_fit)[5]
+```
+
+```{r}
+seq_data %<>% mutate(#f = f_median,
+                     f = get_f(seq_data$temp, seq_data$resource),
+                     m1_prev = 1-exp(-f*m1_u*z),
+                     m2_prev = 1-exp(-f*m2_u*z*exp(m2_arr*(1/ref_t-1/temp))),
+                     m3_prev = 1-exp(-f*(m3_u*resource/(m3_k + resource))*z),
+                     m4_prev = 1-exp(-f*(m4_u*exp(m4_arr*(1/ref_t-1/temp))*resource/
+                                                           (m4_k + resource))*z),
+                     m5a_prev = 1-exp(-f*((m5a_u*exp((m5a_arr+m5a_p*resource)*(1/ref_t-1/temp))*resource)/
+                                             (m5a_k + resource))*z),
+                     m5b_prev = 1-exp(-f*(m5b_u*exp((m5b_arr*exp(m5b_p*resource))*(1/ref_t-1/temp))*resource/
+                                             (m5b_k + resource))*z),
+                     m6a_prev = 1-exp(-f*((m6a_u*exp((m6a_arr)*(1/ref_t-1/temp))*resource)/
+                                             (m6a_k + m6a_w*resource))*z),
+                     m6b_prev = 1-exp(-f*(m6b_u*exp((m6b_arr)*(1/ref_t-1/temp))*resource/
+                                             (m6b_k*exp(m6b_w*resource)))*z),
+                     m7a_prev = 1-exp(-f*((m7a_u*exp((m7a_arr+m7a_p*resource)*(1/ref_t-1/temp))*resource)/
+                                             (m7a_k + m7a_w*resource))*z),
+                     m7b_prev = 1-exp(-f*(m7b_u*exp((m7b_arr*exp(m7b_p*resource))*(1/ref_t-1/temp))*resource/
+                                             (m7b_k*exp(m7b_w*resource)))*z))
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m1_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m2_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m3_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m4_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m5a_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m5b_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m6a_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m6b_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m7a_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+```
+
+```{r}
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+ggplot(.) +
+geom_line(aes(x=resource, 
+              y=m7b_prev,
+              group=temp,
+              color=as.factor(temp))) +
+new_scale_color() +
+geom_point(data=beta_summ, aes(x=resource, 
+                          y=prev, 
+                          group = as.factor(temp), 
+                          color = as.factor(temp),
+                          shape = as.factor(temp))) + 
+labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
 ```
 
 
