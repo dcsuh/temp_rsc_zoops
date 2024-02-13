@@ -216,33 +216,36 @@ $$
 probability\ of\ infection = e^{-f u  Zt}
 $$
  
-# Need to check units
+Apparently, writing it out as the formula makes it automatically take the log-likelihood but if writing your own nll function, then you need to specify log=T
 
 ```{r, eval=F}
 m1_ll <- function(u){
   tmp <- dataset
   
     inf_out <- function(inf_status, f, u, spore_exposure, time){
-    dbinom(x = inf_status, size = 1, prob=1-exp(-f*u*spore_exposure*time))
+    dbinom(x = inf_status, size = 1, prob=1-exp(-f*u*spore_exposure*time), log=T)
   }
   
   tmp %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, f = f, u = u, spore_exposure = spore_exposure, time = time))
-  -sum(tmp$ll)
+  nll <- -sum(tmp$ll)
+#  print(c(u, nll))
+  return(nll)
 }
 ```
 
 
+
 ```{r, eval=F}
-m1_u_fita <- mle2(m1_ll, start=list(u = 0.00001), 
-                     control=list(parscale = c(u = 0.00001)),
+m1_u_fita <- mle2(m1_ll, start=list(u = 0.000001), 
+                     control=list(parscale = c(u = 0.000001)),
                      skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
 ```
 
 ```{r}
 m1_u_fit <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.0000001), 
-                     control=list(parscale = c(u = 0.0000001)),
+                 data=dataset, start=list(u = 0.000001), 
+                     control=list(parscale = c(u = 0.000001)),
                      skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
 ```
 
@@ -286,7 +289,7 @@ m2_ll <- function(u, arr_t){
   tmp <- dataset
   
     inf_out <- function(inf_status, f, u, arr_t, spore_exposure, time, temp){
-    dbinom(x = inf_status, size = 1, prob=exp(-f*u*spore_exposure*time*exp(arr_t*(1/ref_t-1/temp))))
+    dbinom(x = inf_status, size = 1, prob=exp(-f*u*spore_exposure*time*exp(arr_t*(1/ref_t-1/temp))), log = T)
   }
   
   tmp %<>% 
@@ -352,7 +355,7 @@ m3_ll <- function(u, k){
   tmp <- dataset
   
     inf_out <- function(inf_status, f, u, k, spore_exposure, time, resource){
-    dbinom(x = inf_status, size = 1, prob = exp(-f*(u*resource/(k + resource))*spore_exposure*time))
+    dbinom(x = inf_status, size = 1, prob = exp(-f*(u*resource/(k + resource))*spore_exposure*time), log = T)
   }
   
   tmp %<>% 
@@ -417,7 +420,7 @@ m4_ll <- function(u, arr_t, k){
   tmp <- dataset
   
     inf_out <- function(inf_status, f, u, arr_t, k, spore_exposure, time, temp, resource){
-    dbinom(x = inf_status, size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/(k + resource))*spore_exposure*time))
+    dbinom(x = inf_status, size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/(k + resource))*spore_exposure*time), log = T)
   }
   
   tmp %<>% 
