@@ -289,12 +289,14 @@ m2_ll <- function(u, arr_t){
   tmp <- dataset
   
     inf_out <- function(inf_status, f, u, arr_t, spore_exposure, time, temp){
-    dbinom(x = inf_status, size = 1, prob=exp(-f*u*spore_exposure*time*exp(arr_t*(1/ref_t-1/temp))), log = T)
+    dbinom(x = inf_status, size = 1, prob=1-exp(-f*u*spore_exposure*time*exp(arr_t*(1/ref_t-1/temp))), log = T)
   }
   
   tmp %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, arr_t=arr_t, spore_exposure = spore_exposure, time = time, temp = temp))
-  -sum(tmp$ll)
+  nll <- -sum(tmp$ll)
+  print(c(round(u, digits=4), round(arr_t, digits=4), round(nll, digits=4)))
+  return(nll)
 }
 ```
 
@@ -313,7 +315,7 @@ m2_u_fit <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time*exp(
                  data=dataset, start=list(u = 0.0001, arr_t = 100), 
                      control=list(parscale = c(u = 0.0001, arr_t = 100)),
                      skip.hessian=F, method="L-BFGS-B", 
-                 lower=c(u = 0, arr_t = 0), upper=c(u = 1, arr_t = Inf))
+                 lower=c(u = 0, arr_t = 0), upper=c(u = 1, arr_t = Inf), trace = T)
 ```
 
 
@@ -355,20 +357,22 @@ m3_ll <- function(u, k){
   tmp <- dataset
   
     inf_out <- function(inf_status, f, u, k, spore_exposure, time, resource){
-    dbinom(x = inf_status, size = 1, prob = exp(-f*(u*resource/(k + resource))*spore_exposure*time), log = T)
+    dbinom(x = inf_status, size = 1, prob = 1-exp(-f*(u*resource/(k + resource))*spore_exposure*time), log = T)
   }
   
   tmp %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, k=k, spore_exposure = spore_exposure, time = time, resource = resource))
-  -sum(tmp$ll)
+  nll <- -sum(tmp$ll)
+  print(c(round(u, digits=4), round(k, digits=4), round(nll, digits=4)))
+  return(nll)
 }
 ```
 
 
 
 ```{r, eval=F}
-m3_u_fit <- mle2(m3_ll, start=list(u = 0.01, k = 1), 
-                     control=list(parscale = c(u = 0.01, k = 1)),
+m3_u_fit <- mle2(m3_ll, start=list(u = 0.0001, k = 1), 
+                     control=list(parscale = c(u = 0.0001, k = 1)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, k = 0), upper=c(u = 1, k = Inf))
 ```
@@ -378,7 +382,7 @@ m3_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*resource/(k + resourc
                  data=dataset, start=list(u = 0.0001, k = 1), 
                      control=list(parscale = c(u = 0.0001, k = 1)),
                      skip.hessian=F, method="L-BFGS-B", 
-                 lower=c(u = 0, k = 0), upper=c(u = 1, k = Inf))
+                 lower=c(u = 0, k = 0), upper=c(u = 1, k = Inf), trace=T)
 ```
 
 ```{r}
@@ -420,20 +424,22 @@ m4_ll <- function(u, arr_t, k){
   tmp <- dataset
   
     inf_out <- function(inf_status, f, u, arr_t, k, spore_exposure, time, temp, resource){
-    dbinom(x = inf_status, size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/(k + resource))*spore_exposure*time), log = T)
+    dbinom(x = inf_status, size = 1, prob = 1-exp(-f*(u*exp(arr_t*(1/ref_t-1/temp))*resource/(k + resource))*spore_exposure*time), log = T)
   }
   
   tmp %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, arr_t=arr_t, k=k, spore_exposure = spore_exposure, time = time, temp=temp, resource = resource))
-  -sum(tmp$ll)
+  nll <- -sum(tmp$ll)
+  print(c(round(u, digits=4), round(arr_t, digits=4), round(k, digits=4), round(nll, digits=4)))
+  return(nll)
 }
 ```
 
 
 
 ```{r, eval=F}
-m4_u_fit <- mle2(m4_ll, start=list(u = 0.001, arr_t = 10, k = 1), 
-                     control=list(parscale = c(u = 0.001, arr_t = 10, k = 1)),
+m4_u_fita <- mle2(m4_ll, start=list(u = 0.00001, arr_t = 10, k = 1), 
+                     control=list(parscale = c(u = 0.00001, arr_t = 10, k = 1)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, arr_t = 0, k = 0), upper=c(u = 1, arr_t = Inf, k = Inf))
 ```
@@ -444,7 +450,7 @@ m4_u_fit <- mle2(uninf ~ dbinom(size = 1, prob = exp(-f*(u*exp(arr_t*(1/ref_t-1/
                  data=dataset, start=list(u = 0.00001, arr_t = 10, k = 1), 
                      control=list(parscale = c(u = 0.00001, arr_t = 10, k = 1)),
                      skip.hessian=F, method="L-BFGS-B", 
-                 lower=c(u = 0, arr_t = 0, k = 0), upper=c(u = 1, arr_t = Inf, k = Inf))
+                 lower=c(u = 0, arr_t = 0, k = 0), upper=c(u = 1, arr_t = Inf, k = Inf), trace=T)
 ```
 
 ```{r}
