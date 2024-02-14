@@ -34,6 +34,7 @@ temp_IDs <- unique(data$temp)
 
 
 vol <- 15
+ref_t <- 15
 
 ```
 
@@ -51,7 +52,15 @@ dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22")
 
 dataset %<>% mutate(inf_status = inf, dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0))
 
+
+dataset %<>% mutate(spore_exposure = 200, #spores/mL
+                    uninf = 1-inf_status,
+                    time = 1, #duration of exposure in days
+                    trt = paste(temp, resource, species, sep = "_"))
 ```
+
+
+
 
 
 ```{r}
@@ -59,44 +68,15 @@ mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)
 data %<>% left_join(., mean_length_summ)
 data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
 ```
+$$
+\frac{dR}{dt} = -L^{\gamma} fRS\\
+$$
 
-```{r, eval=F}
-m1_ll <- function(u){
-  tmp <- dataset
-  
-    inf_out <- function(inf_status, f, u, spore_exposure, time){
-    dbinom(x = inf_status, size = 1, prob=1-exp(-f*u*spore_exposure*time), log=T)
-  }
-  
-  tmp %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, f = f, u = u, spore_exposure = spore_exposure, time = time))
-  nll <- -sum(tmp$ll)
-#  print(c(u, nll))
-  return(nll)
-}
-```
-
-
-```{r, eval=F}
-m1_u_fita <- mle2(m1_ll, start=list(u = 0.000001), 
-                     control=list(parscale = c(u = 0.000001)),
-                     skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
-```
-
-
-```{r}
-m1_u_fit <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time)), 
-                 data=dataset, start=list(u = 0.0000001), 
-                     control=list(parscale = c(u = 0.0000001)),
-                     skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
-```
-
-
-```{r, m0_num_sol}
-m0_num_sol <- function(t, x, params){
+```{r, m1_num_sol}
+m1_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -f*R
+    dR <- -(length^gamma)*f*R
     res <- c(dR)
     list(res)}
     )
@@ -104,14 +84,98 @@ m0_num_sol <- function(t, x, params){
 
 ```
 
-
-
-```{r, m0_sim}
-m0_sim <- function(R, time, f){
+```{r, m1_sim}
+m1_sim <- function(R, time, f, length, gamma){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R)
-  params <- c(f=f)
-  output <- as.data.frame(lsoda(y=xstart, times, m0_num_sol, params))
+  params <- c(f=f,
+              length=length,
+              gamma=gamma)
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(r_end)
+}
+```
+
+```{r, m1_ll}
+m1_ll <- function(f, u){
+  data <- tmp
+  m1_end <- as.data.frame(mapply(m1_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2))
+  colnames(m1_end) <- "m1_end"
+  data$end <- m1_end$m1_end
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset
+  
+    inf_out <- function(inf_status, f, u, spore_exposure, time){
+    dbinom(x = inf_status, size = 1, prob=1-exp(-f*u*spore_exposure*time), log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, f = f, u = u, spore_exposure = spore_exposure, time = time))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+Now we use the optimizer
+```{r, m1_mle, eval = FALSE}
+start_time <- Sys.time()
+tmp <- data
+m1_u_f_fit <- mle2(m1_ll, start=list(u = 0.000001, f=10), 
+                     control=list(parscale = c(u = 0.000001, f=10)),
+                     skip.hessian=F, method="L-BFGS-B", lower=c(u = 0, f = 0), upper=c(u = 1, f = Inf))
+end_time <- Sys.time()
+m1_runtime <- end_time - start_time
+m1_runtime
+
+coef(m1_u_f_fit)
+
+saveRDS(m1_u_f_fit, file = here("mle","final","m1_u_f_fit.rds"))
+```
+
+
+# model 2 - temperature-dependent model
+
+$$
+\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\
+$$
+
+
+```{r, m2_num_sol}
+m2_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*R
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+```{r, m2_sim}
+m2_sim <- function(R, time, f, length, gamma, ref_t, arr_t, temp){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma,
+              arr_t=arr_t,
+              ref_t=ref_t,
+              temp=temp)
+  output <- as.data.frame(lsoda(y=xstart, times, m2_num_sol, params))
   
   r_end <- slice_max(output, time)[,2]
   
@@ -122,42 +186,300 @@ m0_sim <- function(R, time, f){
 ```
 
 
-```{r, m0_ll}
-m0_ll <- function(f){
+```{r, m2_ll}
+m2_ll <- function(f, arr_t, u, arr_t_u){
   data <- tmp
-  m0_end <- as.data.frame(mapply(m0_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol))
-  colnames(m0_end) <- "m0_end"
-  data$end <- m0_end$m0_end
+  m2_end <- as.data.frame(mapply(m2_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp))
+  colnames(m2_end) <- "m2_end"
+  data$end <- m2_end$m2_end
   data %<>% mutate(resid = log(end) - log(amt_rem))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
                  sd = sd(data$resid, na.rm = T), 
                  log = T)
-    -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll, na.rm = T)
+    
+  exp_data <- dataset
+  
+    inf_out <- function(inf_status, f, u, arr_t_u, spore_exposure, time, temp){
+    dbinom(x = inf_status, size = 1, prob=1-exp(-f*u*spore_exposure*time*exp(arr_t_u*(1/ref_t-1/temp))), log = T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, arr_t_u=arr_t_u, spore_exposure = spore_exposure, time = time, temp = temp))
+  
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
 }
 ```
 
 
 
-```{r, m0_mle, eval = FALSE}
+
+```{r, m2_mle, eval = FALSE}
 start_time <- Sys.time()
 tmp <- data
-m0_f_fit <- mle2(minuslogl=m0_ll, skip.hessian=T,
-                start=list(f=10),
-                control=list(parscale=c(f=10), maxit=10000))
+m2_u_f_fit <- mle2(m2_ll,
+                skip.hessian = T,
+                start=list(f=5,
+                           arr_t=50,
+                           u = 0.0001,
+                           arr_t_u = 100),
+                method = "L-BFGS-B",
+                lower = c(f = 0, arr_t = 0, u = 0, arr_t_u = 0),
+                upper = c(f = Inf, arr_t = Inf, u = 1, arr_t_u = Inf),
+                control=list(parscale=c(f=5, arr_t=50, u=0.0001, arr_t_u=100), maxit=10000))
+
 end_time <- Sys.time()
-m0_runtime <- end_time - start_time
-m0_runtime
+m2_runtime <- end_time - start_time
+m2_runtime
 
-coef(m0_f_fit)
+coef(m2_u_f_fit)
 
-saveRDS(m0_f_fit, file = here("mle","m0_f_fit.rds"))
+saveRDS(m2_u_f_fit, file = here("mle","final","m2_u_f_fit.rds"))
+```
 
+
+#model 3 - resource-dependent model
+
+```{r, m3_num_sol}
+m3_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -((f*length^gamma*R)/(1+f*(length^gamma)*h*R))
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+
+```{r, m3_sim}
+m3_sim <- function(R, time, f, length, gamma, h){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma,
+              h=h)
+  output <- as.data.frame(lsoda(y=xstart, times, m3_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(r_end)
+}
+```
+
+```{r, m3_ll}
+m3_ll <- function(f, h, u, k){
+  data <- tmp
+  output <- as.data.frame(mapply(m3_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, h=h*data$vol))
+  colnames(output) <- "end"
+  data$end <- output$end
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+    
+  exp_data <- dataset
+  
+    inf_out <- function(inf_status, f, u, k, spore_exposure, time, resource){
+    dbinom(x = inf_status, size = 1, prob = 1-exp(-f*(u*resource/(k + resource))*spore_exposure*time), log = T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, k=k, spore_exposure = spore_exposure, time = time, resource = resource))
+  
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
 ```
 
 
 
+```{r, m3_mle}
+start_time <- Sys.time()
+tmp <- data
+m3_u_f_fit <- mle2(m3_ll,
+                skip.hessian = T,
+                start=list(f=40,
+                           h=0.2, 
+                           u = 0.0001, 
+                           k = 1),
+                method = "L-BFGS-B",
+                lower = c(f = 0, h = 0, u = 0, k = 0),
+                upper = c(f = Inf, h = Inf, u = 1, k = Inf),
+                control=list(parscale=c(f=40, h=0.2, u = 0.0001, k = 1), maxit=10000))
+end_time <- Sys.time()
+m3_runtime <- end_time-start_time
+m3_runtime
 
+coef(m3_u_f_fit)
+
+saveRDS(m3_u_f_fit, file = here("mle","final","m3_u_f_fit.rds"))
+```
+
+# Model 4 - full model
+
+
+```{r, m4_num_sol}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+```{r, m4_sim}
+m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma,
+              arr_t=arr_t,
+              ref_t=ref_t,
+              temp=temp,
+              h=h)
+  output <- as.data.frame(lsoda(y=xstart, times, m4_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(r_end)
+}
+```
+
+```{r, m4_ll}
+m4_ll <- function(f, arr_t, h, u, arr_t_u, k){
+  data <- tmp
+  m4_end <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
+  colnames(m4_end) <- "m4_end"
+  data$end <- m4_end$m4_end
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+    
+  exp_data <- dataset
+  
+    inf_out <- function(inf_status, f, u, arr_t_u, k, spore_exposure, time, temp, resource){
+    dbinom(x = inf_status, size = 1, prob = 1-exp(-f*(u*exp(arr_t_u*(1/ref_t-1/temp))*resource/(k + resource))*spore_exposure*time), log = T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, arr_t_u=arr_t_u, k=k, spore_exposure = spore_exposure, time = time, temp=temp, resource = resource))
+  
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+```{r, m4_mle, eval = F}
+start_time <- Sys.time()
+tmp <- data
+m4_u_f_fit <- mle2(m4_ll,
+                skip.hessian = T,
+                start=list(f=5, arr_t=50, h=0.1, u = 0.00001, arr_t_u = 10, k = 1),
+                method = "L-BFGS-B",
+                lower = c(f = 0, arr_t = 0, h = 0, u = 0, arr_t_u = 0, k = 0),
+                upper = c(f = Inf, arr_t = Inf, h = Inf, u = 1, arr_t_u = Inf, k = Inf),
+                control=list(parscale=c(f=5, arr_t=50, h=0.1, u = 0.00001, arr_t_u = 10, k = 1), maxit=10000))
+end_time <- Sys.time()
+m4_runtime <- end_time-start_time
+m4_runtime
+
+coef(m4_u_f_fit)
+
+saveRDS(m4_u_f_fit, file = here("mle","m4_u_f_fit.rds"))
+```
+
+
+
+# model 6 - Temperature on resource interaction - exponential
+
+
+
+```{r}
+m6c_ll <- function(f, arr_t, h, u, arr_t_u, k, w, w_u){
+
+  data <- tmp 
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, 
+                                 h=h*data$vol*exp(w*data$temp)))
+  colnames(output) <- "endpoint"
+  data$end <- output$endpoint
+  data %<>% mutate(resid = log(end) - log(amt_rem))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+    
+  exp_data <- dataset
+  
+    inf_out <- function(inf_status, f, u, arr_t_u, k, spore_exposure, time, temp, resource){
+    dbinom(x = inf_status, size = 1, prob = 1-exp(-f*(u*exp(arr_t_u*(1/ref_t-1/temp))*resource/(k + resource))*spore_exposure*time), log = T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, arr_t_u=arr_t_u, k=k*exp(w_u*temp), spore_exposure = spore_exposure, time = time, temp=temp, resource = resource))
+  
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+```{r}
+start_time <- Sys.time()
+tmp <- data
+m6_u_f_fit <- mle2(m6c_ll,
+                skip.hessian = T,
+                start=list(f=10, arr_t=50, h=0.01, w=0.1, u = 0.00001, arr_t_u = 10, k = 1, w_u=0.1),
+                method = "L-BFGS-B",
+                lower = c(f=0, arr_t=0, h=0, w=-Inf, u=0, arr_t_u=0, k=0, w_u=-Inf),
+                upper = c(f=Inf, arr_t=Inf, h=Inf, w=Inf, u=1, arr_t_u=Inf, k=Inf, w_u=Inf),
+                control=list(parscale=c(f=10, arr_t=50, h=0.01, w=0.1, u = 0.00001, arr_t_u = 10, k = 1, w_u=1), maxit=10000))
+end_time <- Sys.time()
+m6c_runtime <- end_time-start_time
+m6c_runtime
+
+coef(m6_u_f_fit)
+
+saveRDS(m6_u_f_fit, file = here("mle","m6_u_f_fit.rds"))
+```
+
+
+```{r}
+getAIC <- function(model){
+  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
+}
+```
+
+```{r}
+getAIC(m1_u_f_fit)
+getAIC(m2_u_f_fit)
+getAIC(m3_u_f_fit)
+getAIC(m4_u_f_fit)
+getAIC(m6_f_u_fit)
+```
 
 
