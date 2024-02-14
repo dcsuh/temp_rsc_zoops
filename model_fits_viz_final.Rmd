@@ -1,0 +1,126 @@
+---
+title: "model_fits_viz_final"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+library(ggnewscale)
+```
+
+
+```{r, data}
+data <- readRDS(here("processed_data","foraging_raw.rds"))
+data_summ <- readRDS(here("processed_data", "foraging.rds"))
+m1 <- readRDS(here("mle", "final", "m1_u_f_fit.rds"))
+m2 <- readRDS(here("mle", "final", "m2_u_f_fit.rds"))
+m3 <- readRDS(here("mle", "final", "m3_u_f_fit.rds"))
+m4 <- readRDS(here("mle", "final", "m4_u_f_fit.rds"))
+m6 <- readRDS(here("mle", "final", "m6_u_f_fit.rds"))
+```
+
+```{r}
+gamma <- 2
+ref_t <- 15
+vol <- 15
+mean_time <- mean(data$time/60/24)
+mean_length <- mean(data$mm, na.rm=T)
+```
+
+```{r, units}
+data_summ %<>% mutate(rate_len_mean = rate_len_mean*60*24)
+```
+
+
+```{r}
+temp_range <- seq(15,25,by=0.1)
+resource_range <- seq(0.1,1,by=0.01)
+
+seq_data <- tibble(temp=c(),
+                   resourece=c())
+
+for (i in 1:length(temp_range)){
+  tmp <- tibble(temp = temp_range[i],
+                resource = seq(0.1,1,by=0.01))
+  seq_data %<>% bind_rows(., tmp)
+}
+
+m7_range <- seq_data
+```
+
+```{r, echo=F}
+seq_data %<>% mutate(temp_factor = as.factor(case_when(temp==15 ~ 15,
+                                             temp==20 ~ 20,
+                                             temp==25 ~ 25)))
+```
+
+```{r}
+seq_plot <- function(rate){
+  seq_data %>% na.omit() %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(rate),
+                group=temp_factor,
+                color=as.factor(temp_factor))) +
+  geom_point(data=data_summ, aes(x=resource, 
+                            y=rate_len_mean, 
+                            group = as.factor(temp), 
+                            color = as.factor(temp),
+                            shape = as.factor(temp))) + 
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+}
+
+seq_plot_temp <- function(rate){
+  seq_data %>% na.omit() %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
+  ggplot(.) +
+  geom_line(aes(x=temp, 
+                y=!!sym(rate),
+                group=resource,
+                color=as.factor(resource))) +
+  geom_point(data=data_summ, aes(x=temp, 
+                            y=rate_len_mean, 
+                            group = as.factor(resource), 
+                            color = as.factor(resource),
+                            shape = as.factor(resource))) + 
+  labs(x="Temperature", y="Foraging rate (mL/day)", color="", shape="", title = "") 
+}
+
+```
+
+```{r}
+m0_f <- as.numeric(m0_coef)
+data_summ %<>% mutate(m0_rate = m0_f)
+```
+
+```{r}
+get_rate <- function(f, arr, temp, h, resource){
+  ((f*exp(arr*(1/ref_t - 1/temp)))/(1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
+}
+```
+
+
+```{r}
+m4_coef
+m4_f <- as.numeric(m4_coef[1])
+m4_arr <- as.numeric(m4_coef[2])
+m4_h <- as.numeric(m4_coef[3])
+
+data_summ %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=data_summ$temp, h=m4_h, resource=data_summ$resource))
+
+seq_data %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=seq_data$temp, h=m4_h, resource=seq_data$resource))
+```
+
+```{r}
+m4_plot <- seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
+
+```
+
