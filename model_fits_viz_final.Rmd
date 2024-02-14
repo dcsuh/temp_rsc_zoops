@@ -21,6 +21,7 @@ library(ggnewscale)
 ```{r, data}
 data <- readRDS(here("processed_data","foraging_raw.rds"))
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
+m0 <- readRDS(here("mle", "m0_f_fit.rds"))
 m1 <- readRDS(here("mle", "final", "m1_u_f_fit.rds"))
 m2 <- readRDS(here("mle", "final", "m2_u_f_fit.rds"))
 m3 <- readRDS(here("mle", "final", "m3_u_f_fit.rds"))
@@ -29,6 +30,8 @@ m6 <- readRDS(here("mle", "final", "m6_u_f_fit.rds"))
 ```
 
 ```{r}
+m0_coef <- m0@coef
+
 gamma <- 2
 ref_t <- 15
 vol <- 15
@@ -109,7 +112,7 @@ get_rate <- function(f, arr, temp, h, resource){
 
 
 ```{r}
-m4_coef
+m4_coef <- coef(m4)
 m4_f <- as.numeric(m4_coef[1])
 m4_arr <- as.numeric(m4_coef[2])
 m4_h <- as.numeric(m4_coef[3])
@@ -120,7 +123,23 @@ seq_data %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=seq_dat
 ```
 
 ```{r}
-m4_plot <- seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
-
+m4_plot <- seq_plot("m4_rate")
 ```
+
+```{r}
+m6c_coef <- coef(m6)
+m6c_f <- as.numeric(m6c_coef[1])
+m6c_arr <- as.numeric(m6c_coef[2])
+m6c_h <- as.numeric(m6c_coef[3])
+m6c_w <- as.numeric(m6c_coef[7])
+
+  data_summ %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
+  seq_data %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+```
+
+```{r}
+m6_plot <- seq_plot("m6c_rate")
+```
+
+
 

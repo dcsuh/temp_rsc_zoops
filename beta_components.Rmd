@@ -408,7 +408,7 @@ m4_runtime
 
 coef(m4_u_f_fit)
 
-saveRDS(m4_u_f_fit, file = here("mle","m4_u_f_fit.rds"))
+saveRDS(m4_u_f_fit, file = here("mle", "final","m4_u_f_fit.rds"))
 ```
 
 
@@ -464,7 +464,7 @@ m6c_runtime
 
 coef(m6_u_f_fit)
 
-saveRDS(m6_u_f_fit, file = here("mle","m6_u_f_fit.rds"))
+saveRDS(m6_u_f_fit, file = here("mle", "final","m6_u_f_fit.rds"))
 ```
 
 
