@@ -115,6 +115,11 @@ data %>% ggplot(.,aes(x=consumed, y=spore_yield)) + geom_point() + facet_grid(co
 data %>% ggplot(.,aes(x=consumed, y=spore_yield)) + geom_point() + facet_grid(cols = vars(temp))
 ```
 
+```{r}
+data %>% ggplot(.,aes(x=resource, y=length, color=as.factor(temp))) + geom_point()
+```
+
+
 
 ```{r}
 summary(lm(spore_yield ~ consumed, data = data))
@@ -239,6 +244,127 @@ m2_runtime
 
 coef(m2_yield_fit)
 ```
+
+
+Resource-dependence
+
+```{r}
+m3_ll <- function(m, L, p){
+  
+  get_yield <- function(m, L, p, resource){
+    m*exp(resource*p)*L^2
+  }
+  
+  data$model_yield <- mapply(get_yield, m=m, L=data$length, p=p, resource=data$resource)
+  
+  resid <- log(data$spore_yield) - log(data$model_yield)
+  
+    nll <- dnorm(resid, 
+                 mean = 0, 
+                 sd = sd(resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+
+}
+```
+
+```{r}
+start_time <- Sys.time()
+m3_yield_fit <- mle2(m3_ll,
+                skip.hessian = T,
+                start=list(m=20000, p=1),
+                method = "L-BFGS-B",
+                lower = c(0, -Inf),
+                upper = c(Inf, Inf),
+                control=list(parscale=c(m=20000, p=1), maxit=10000))
+end_time <- Sys.time()
+m3_runtime <- end_time-start_time
+m3_runtime
+
+coef(m3_yield_fit)
+```
+
+
+Temperature and resource dependence
+
+```{r}
+m4_ll <- function(m, L, arr_t, p){
+  
+  get_yield <- function(m, L, arr_t, ref_t, temp, p, resource){
+    m*(exp(arr_t*(1/ref_t - 1/temp))*exp(resource*p)*L)^2
+  }
+  
+  data$model_yield <- mapply(get_yield, m=m, L=data$length, ref_t=15, arr_t=arr_t, temp=data$temp, p=p, resource=data$resource)
+  
+  resid <- log(data$spore_yield) - log(data$model_yield)
+  
+    nll <- dnorm(resid, 
+                 mean = 0, 
+                 sd = sd(resid, na.rm = T), 
+                 log = T)
+    -sum(nll, na.rm = T)
+
+}
+```
+
+```{r}
+start_time <- Sys.time()
+m4_yield_fit <- mle2(m4_ll,
+                skip.hessian = T,
+                start=list(m=20000, arr_t=10, p=1),
+                method = "L-BFGS-B",
+                lower = c(0, 0, -Inf),
+                upper = c(Inf, Inf, Inf),
+                control=list(parscale=c(m=20000, arr_t=10, p=1), maxit=10000))
+end_time <- Sys.time()
+m4_runtime <- end_time-start_time
+m4_runtime
+
+coef(m4_yield_fit)
+```
+
+```{r}
+getAIC <- function(model){
+  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
+}
+```
+
+```{r}
+getAIC(m1_yield_fit)
+getAIC(m2_yield_fit)
+getAIC(m3_yield_fit)
+getAIC(m4_yield_fit)
+```
+
+
+```{r}
+summary(lm(log(spore_yield) ~ resource, data = data))
+summary(lm(log(spore_yield) ~ temp, data = data))
+summary(lm(log(spore_yield) ~ length, data = data))
+summary(lm(log(spore_yield) ~ lifespan, data = data))
+summary(lm(log(spore_yield) ~ lifespan + length, data = data))
+```
+
+It would seem that spore yield is just a very strong function of length. How is length related to temperature and resource?
+
+Linear with temp and resource
+
+
+```{r}
+summary(lm(length ~ resource, data = data))
+summary(lm(length ~ temp, data = data))
+summary(lm(length ~ lifespan, data = data))
+summary(lm(length ~ lifespan + resource, data = data))
+```
+
+
+```{r}
+summary(lm(lifespan ~ resource, data = data))
+summary(lm(lifespan ~ temp, data = data))
+summary(lm(lifespan ~ resource + temp, data = data))
+```
+
+
 
 
 

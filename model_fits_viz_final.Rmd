@@ -21,12 +21,17 @@ library(ggnewscale)
 ```{r, data}
 data <- readRDS(here("processed_data","foraging_raw.rds"))
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
+
+beta_summ <- readRDS(here("processed_data", "beta_summary.rds"))
+beta_summ %<>% filter(temp %in% const_temp) %>% filter(species == "D") %>% mutate(temp = as.numeric(temp))
+
 m0 <- readRDS(here("mle", "m0_f_fit.rds"))
 m1 <- readRDS(here("mle", "final", "m1_u_f_fit.rds"))
 m2 <- readRDS(here("mle", "final", "m2_u_f_fit.rds"))
 m3 <- readRDS(here("mle", "final", "m3_u_f_fit.rds"))
 m4 <- readRDS(here("mle", "final", "m4_u_f_fit.rds"))
 m6 <- readRDS(here("mle", "final", "m6_u_f_fit.rds"))
+m8 <- readRDS(here("mle", "final", "m8_u_f_fit.rds"))
 ```
 
 ```{r}
@@ -35,6 +40,7 @@ m0_coef <- m0@coef
 gamma <- 2
 ref_t <- 15
 vol <- 15
+z <- 200
 mean_time <- mean(data$time/60/24)
 mean_length <- mean(data$mm, na.rm=T)
 ```
@@ -100,6 +106,41 @@ seq_plot_temp <- function(rate){
 ```
 
 ```{r}
+seq_plot_prev <- function(prev){
+  seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(prev),
+                group=temp,
+                color=as.factor(temp))) +
+  new_scale_color() +
+  geom_point(data=beta_summ, aes(x=resource, 
+                            y=prev, 
+                            group = as.factor(temp), 
+                            color = as.factor(temp),
+                            shape = as.factor(temp))) + 
+  labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
+}
+
+seq_plot_prev_temp <- function(prev){
+  seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
+  ggplot(.) +
+  geom_line(aes(x=temp, 
+                y=!!sym(prev),
+                group=resource,
+                color=as.factor(resource))) +
+  new_scale_color() +
+  geom_point(data=beta_summ, aes(x=temp, 
+                            y=prev, 
+                            group = as.factor(resource), 
+                            color = as.factor(resource),
+                            shape = as.factor(resource))) + 
+  labs(x="Temperature", y="Prevalence", color="", shape="", title = "") 
+}
+```
+
+
+```{r}
 m0_f <- as.numeric(m0_coef)
 data_summ %<>% mutate(m0_rate = m0_f)
 ```
@@ -107,6 +148,10 @@ data_summ %<>% mutate(m0_rate = m0_f)
 ```{r}
 get_rate <- function(f, arr, temp, h, resource){
   ((f*exp(arr*(1/ref_t - 1/temp)))/(1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
+}
+
+get_prev <- function(f, u, arr, temp, k, resource, z){
+  1-exp(-f*(u*exp(arr*(1/ref_t-1/temp))*resource/(k + resource))*z)
 }
 ```
 
@@ -116,29 +161,83 @@ m4_coef <- coef(m4)
 m4_f <- as.numeric(m4_coef[1])
 m4_arr <- as.numeric(m4_coef[2])
 m4_h <- as.numeric(m4_coef[3])
+m4_u <- as.numeric(m4_coef[4])
+m4_arr_u <- as.numeric(m4_coef[5])
+m4_k <- as.numeric(m4_coef[6])
 
 data_summ %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=data_summ$temp, h=m4_h, resource=data_summ$resource))
 
-seq_data %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=seq_data$temp, h=m4_h, resource=seq_data$resource))
+seq_data %<>% mutate(m4_rate = mapply(get_rate, f=m4_f, arr=m4_arr, temp=seq_data$temp, h=m4_h, resource=seq_data$resource),
+                     m4_prev = mapply(get_prev, f=m4_f, u=m4_u, arr=m4_arr_u, temp=seq_data$temp, k=m4_k, resource = seq_data$resource, z=z))
 ```
 
 ```{r}
-m4_plot <- seq_plot("m4_rate")
+m4_rate_plot <- seq_plot("m4_rate")
+m4_prev_plot <- seq_plot_prev("m4_prev")
 ```
+
+```{r}
+m4_rate_plot
+seq_plot_temp("m4_rate")
+m4_prev_plot
+seq_plot_prev_temp("m4_prev")
+```
+
 
 ```{r}
 m6c_coef <- coef(m6)
 m6c_f <- as.numeric(m6c_coef[1])
 m6c_arr <- as.numeric(m6c_coef[2])
 m6c_h <- as.numeric(m6c_coef[3])
+m6c_u <- as.numeric(m6c_coef[4])
+m6c_arr_u <- as.numeric(m6c_coef[5])
+m6c_k <- as.numeric(m6c_coef[6])
 m6c_w <- as.numeric(m6c_coef[7])
+m6c_w_u <- as.numeric(m6c_coef[8])
 
   data_summ %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+  
+  seq_data %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource),
+                       m6c_prev = mapply(get_prev, f=m6c_f, u=m6c_u, arr=m6c_arr_u, k=m6c_k*exp(m6c_w_u*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource, z=z))
 ```
 
 ```{r}
 m6_plot <- seq_plot("m6c_rate")
+m6_prev_plot <- seq_plot_prev("m6c_prev")
+```
+
+```{r}
+m6_plot
+m6_prev_plot
+seq_plot_prev_temp("m6c_prev")
+```
+
+```{r}
+m8_coef <- coef(m8)
+m8_f <- as.numeric(m8_coef[1])
+m8_arr <- as.numeric(m8_coef[2])
+m8_h <- as.numeric(m8_coef[3])
+m8_u <- as.numeric(m8_coef[4])
+m8_arr_u <- as.numeric(m8_coef[5])
+m8_w <- as.numeric(m8_coef[6])
+
+
+  seq_data %<>% mutate(m8_rate = mapply(get_rate, f=m8_f, arr=m8_arr, h=m8_h*exp(m8_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource),
+                       m8_prev = mapply(get_prev, f=m8_f, u=m8_u, arr=m8_arr_u, temp=seq_data$temp, k=0, resource=seq_data$resource, z=z),
+                       m8_u = m8_u*exp(m8_arr_u*(1/ref_t-1/temp)),
+                       m8_force = m8_rate*m8_u)
+```
+
+```{r}
+seq_plot("m8_rate")
+seq_plot_prev("m8_prev")
+seq_plot_prev_temp("m8_prev")
+```
+
+```{r}
+seq_data %>% ggplot(.,aes(x=resource, y=temp, fill=m8_rate)) + geom_tile() + scale_fill_viridis_c()
+seq_data %>% ggplot(.,aes(x=resource, y=temp, fill=m8_u)) + geom_tile() + scale_fill_viridis_c()
+seq_data %>% ggplot(.,aes(x=resource, y=temp, fill=log(m8_force))) + geom_tile() + scale_fill_viridis_c()
 ```
 
 
