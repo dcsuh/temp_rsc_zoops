@@ -60,6 +60,30 @@ data %<>% left_join(., mean_length_summ)
 data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
 ```
 
+```{r, eval=F}
+m1_ll <- function(u){
+  tmp <- dataset
+  
+    inf_out <- function(inf_status, f, u, spore_exposure, time){
+    dbinom(x = inf_status, size = 1, prob=1-exp(-f*u*spore_exposure*time), log=T)
+  }
+  
+  tmp %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, f = f, u = u, spore_exposure = spore_exposure, time = time))
+  nll <- -sum(tmp$ll)
+#  print(c(u, nll))
+  return(nll)
+}
+```
+
+
+```{r, eval=F}
+m1_u_fita <- mle2(m1_ll, start=list(u = 0.000001), 
+                     control=list(parscale = c(u = 0.000001)),
+                     skip.hessian=F, method="L-BFGS-B", lower=0, upper=1)
+```
+
+
 ```{r}
 m1_u_fit <- mle2(uninf ~ dbinom(size = 1, prob=exp(-f*u*spore_exposure*time)), 
                  data=dataset, start=list(u = 0.0000001), 
