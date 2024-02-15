@@ -22,6 +22,9 @@ data <- readRDS(here("processed_data","foraging_raw.rds"))
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
 m0 <- readRDS(here("mle", "m0_f_fit.rds"))
 
+m2 <- readRDS(here("mle", "m2_f_fit.rds"))
+m3 <- readRDS(here("mle", "m3_f_fit.rds"))
+
 m4 <- readRDS(here("mle", "m4_f_fit.rds"))
 
 m5 <- readRDS(here("mle", "m5_f_fit.rds"))
@@ -71,7 +74,8 @@ mean_length <- mean(data$mm, na.rm=T)
 ```
 
 ```{r, units}
-data_summ %<>% mutate(rate_len_mean = rate_len_mean*60*24)
+data_summ %<>% mutate(rate_len_mean = rate_len_mean*60*24,
+                      rate_len_mean_se = rate_len_mean_se*60*24)
 ```
 
 
@@ -92,10 +96,18 @@ m7_range <- seq_data
 ```
 
 ```{r, echo=F}
-seq_data %<>% mutate(temp_factor = as.factor(case_when(temp==15 ~ 15,
+seq_data %<>% mutate(temp_factor = as.factor(case_when(temp==25 ~ 25,
                                              temp==20 ~ 20,
-                                             temp==25 ~ 25)))
+                                             temp==15 ~ 15)))
 ```
+
+
+```{r}
+data_summ_se <- data_summ %>% dplyr::select(temp, resource, rate_len_mean, rate_len_mean_se)
+seq_data %<>% left_join(., data_summ_se)
+```
+
+
 
 # AIC
 
@@ -132,32 +144,43 @@ m7e_aic <- getAIC(m7e)
 
 ```{r}
 seq_plot <- function(rate){
-  seq_data %>% na.omit() %>%
+  seq_data %>% filter(temp %in% c(15,20,25)) %>%
   ggplot(.) +
   geom_line(aes(x=resource, 
                 y=!!sym(rate),
                 group=temp_factor,
                 color=as.factor(temp_factor))) +
-  geom_point(data=data_summ, aes(x=resource, 
-                            y=rate_len_mean, 
-                            group = as.factor(temp), 
-                            color = as.factor(temp),
-                            shape = as.factor(temp))) + 
+  geom_point(aes(x=resource, 
+                  y=rate_len_mean, 
+                  group = as.factor(temp), 
+                  color = as.factor(temp),
+                  shape = as.factor(temp)),
+             size=3) + 
+    geom_linerange(aes(x=resource, 
+                       ymin=rate_len_mean-rate_len_mean_se,
+                       ymax=rate_len_mean+rate_len_mean_se,
+                       color=as.factor(temp))) +
+    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
   labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
 }
 
 seq_plot_temp <- function(rate){
-  seq_data %>% na.omit() %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
+  seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
   ggplot(.) +
   geom_line(aes(x=temp, 
                 y=!!sym(rate),
                 group=resource,
                 color=as.factor(resource))) +
-  geom_point(data=data_summ, aes(x=temp, 
-                            y=rate_len_mean, 
-                            group = as.factor(resource), 
-                            color = as.factor(resource),
-                            shape = as.factor(resource))) + 
+  geom_point(aes(x=temp, 
+                  y=rate_len_mean, 
+                  group = as.factor(resource), 
+                  color = as.factor(resource),
+                  shape = as.factor(resource))) +
+        geom_linerange(aes(x=temp, 
+                       ymin=rate_len_mean-rate_len_mean_se,
+                       ymax=rate_len_mean+rate_len_mean_se,
+                       color=as.factor(resource))) + 
+    scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   labs(x="Temperature", y="Foraging rate (mL/day)", color="", shape="", title = "") 
 }
 
@@ -169,10 +192,10 @@ seq_plot_temp <- function(rate){
 # Fitting foraging rate
 
 ```{r}
-data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_mean, color=as.factor(temp))) +
-  geom_point() +
-  geom_linerange(aes(ymin=rate_mean-rate_se,
-                     ymax=rate_mean+rate_se)) +
+data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_len_mean, color=as.factor(temp))) +
+  geom_point(size=2) +
+  geom_linerange(aes(ymin=rate_len_mean-rate_len_mean_se,
+                     ymax=rate_len_mean+rate_len_mean_se)) +
   labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
 ```
 
@@ -192,10 +215,33 @@ observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR} \\
 $$
 
 ```{r}
+m2_coef <- coef(m2)
+m2_f <- as.numeric(m2_coef[1])
+m2_arr <- as.numeric(m2_coef[2])
+
+data_summ %<>% mutate(m2_rate = (mm_mean^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
+seq_data %<>% mutate(m2_rate = (mean_length^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)))
+```
+
+
+```{r}
+m3_coef <- coef(m3)
+m3_f <- as.numeric(m3_coef[1])
+m3_h <- as.numeric(m3_coef[2])
+
+data_summ %<>% mutate(m3_rate = ((m3_f)/(1+m3_f*m3_h*resource)))
+
+seq_data %<>% mutate(m3_rate=((m3_f)/(1+m3_f*m3_h*resource)))
+```
+
+
+
+```{r}
 get_rate <- function(f, arr, temp, h, resource){
   ((f*exp(arr*(1/ref_t - 1/temp)))/(1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
 }
 ```
+
 
 
 ```{r}
@@ -297,6 +343,11 @@ m7e_w <- as.numeric(m7e_coef[5])
   seq_data %<>% mutate(m7e_rate = mapply(get_rate, f=m7e_f, arr=m7e_arr*exp(seq_data$resource*m7e_p), h=m7e_h + m7e_w*seq_data$temp, temp=seq_data$temp, resource=seq_data$resource))
 
 ```
+
+```{r}
+saveRDS(seq_data, file=here("rate_fit.rds"))
+```
+
 
 
 
