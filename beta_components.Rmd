@@ -725,12 +725,18 @@ getAIC(m3_u_f_fit)
 getAIC(m3a_u_f_fit)
 getAIC(m3b_u_f_fit)
 getAIC(m4_u_f_fit)
+getAIC(m6_u_f_fit)
 getAIC(m8_u_f_fit)
 ```
 
 ```{r}
-getAIC(m8_u_f_fit)
+2*length(coef(m6_u_f_fit))
+2*length(coef(m8_u_f_fit))
+
+(2*summary(m6_u_f_fit)@m2logL/-2)
+(2*summary(m8_u_f_fit)@m2logL/-2)
 ```
+
 
 
 

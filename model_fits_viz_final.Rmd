@@ -113,7 +113,6 @@ seq_plot_prev <- function(prev){
                 y=!!sym(prev),
                 group=temp,
                 color=as.factor(temp))) +
-  new_scale_color() +
   geom_point(data=beta_summ, aes(x=resource, 
                             y=prev, 
                             group = as.factor(temp), 
@@ -129,13 +128,44 @@ seq_plot_prev_temp <- function(prev){
                 y=!!sym(prev),
                 group=resource,
                 color=as.factor(resource))) +
-  new_scale_color() +
   geom_point(data=beta_summ, aes(x=temp, 
                             y=prev, 
                             group = as.factor(resource), 
                             color = as.factor(resource),
                             shape = as.factor(resource))) + 
-  labs(x="Temperature", y="Prevalence", color="", shape="", title = "") 
+  labs(x="Temperature", y="Prevalence", color="Resource", shape="Resource", title = "") 
+}
+```
+
+```{r}
+seq_plot_beta <- function(beta){
+  seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(beta),
+                group=temp,
+                color=as.factor(temp))) +
+  geom_point(data=beta_summ, aes(x=resource, 
+                            y=beta.est, 
+                            group = as.factor(temp), 
+                            color = as.factor(temp),
+                            shape = as.factor(temp))) + 
+  labs(x="Resource", y="Beta", color="Temperature", shape="Temperature", title = "") 
+}
+
+seq_plot_beta_temp <- function(beta){
+  seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
+  ggplot(.) +
+  geom_line(aes(x=temp, 
+                y=!!sym(beta),
+                group=resource,
+                color=as.factor(resource))) +
+  geom_point(data=beta_summ, aes(x=temp, 
+                            y=beta.est, 
+                            group = as.factor(resource), 
+                            color = as.factor(resource),
+                            shape = as.factor(resource))) + 
+  labs(x="Temperature", y="Beta", color="Resource", shape="Resource", title = "") 
 }
 ```
 
@@ -224,14 +254,18 @@ m8_w <- as.numeric(m8_coef[6])
 
   seq_data %<>% mutate(m8_rate = mapply(get_rate, f=m8_f, arr=m8_arr, h=m8_h*exp(m8_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource),
                        m8_prev = mapply(get_prev, f=m8_f, u=m8_u, arr=m8_arr_u, temp=seq_data$temp, k=0, resource=seq_data$resource, z=z),
-                       m8_u = m8_u*exp(m8_arr_u*(1/ref_t-1/temp)),
-                       m8_force = m8_rate*m8_u)
+                       m8_u_full = m8_u*exp(m8_arr_u*(1/ref_t-1/temp)),
+                       m8_force = m8_rate*m8_u_full,
+                       m8_beta = m8_rate*m8_u_full)
 ```
 
 ```{r}
 seq_plot("m8_rate")
 seq_plot_prev("m8_prev")
 seq_plot_prev_temp("m8_prev")
+
+seq_plot_beta("m8_beta")
+seq_plot_beta_temp("m8_beta")
 ```
 
 ```{r}
@@ -250,13 +284,15 @@ fora_data %<>% mutate(u=beta.est/m8_rate)
 ```{r}
 library(patchwork)
 
+theme_set(theme_bw(base_size=8))
+
 symbol_size <- 4
 
 p1 <- fora_data %>% na.omit() %>% 
   ggplot(., aes(x=as.factor(resource), y=m8_rate, color=as.factor(temp))) +
   geom_point(size=symbol_size) +
   scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-  labs(x="Resource", y="f - clearance rate", color="Temperature") +
+  labs(x="Resource", y="f - clearance rate (mL/day)", color="Temperature") +
   theme(legend.position = "none") +
   guides(color = guide_legend(reverse=T))
 
@@ -264,7 +300,7 @@ p2 <- fora_data %>% na.omit() %>%
   ggplot(., aes(x=as.factor(resource), y=beta.est, color=as.factor(temp))) +
   geom_point(size=symbol_size) +
   scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-  labs(x="Resource", y="beta", color="Temperature") +
+  labs(x="Resource", y="beta (derived from infection assay)", color="Temperature") +
   theme(legend.position = "none") +
   guides(color = guide_legend(reverse=T))
 
@@ -282,7 +318,9 @@ fora_data %>% na.omit() %>%
   labs(x="Resource", y="per-spore susceptibility (beta/f)", color="Temperature") +
   guides(color = guide_legend(reverse=T))
 
-p1|p2|p3
+fig <- p1|p2|p3
+
+ggsave(here("f_beta_u.png"), plot = fig)
 
 ```
 
