@@ -14,6 +14,12 @@ source(here("base","src.R"))
 
 ```
 
+
+# Notes
+
+Need to change resource-dependent term so that u can increase with resources. Right now resources can only diminish u but it should enhance it.
+
+
 ```{r}
 fitness <- read.csv(here("raw_data/main_fitness_edit.csv")) #must be read.csv
 fitness %<>% dplyr::select(tube, temp_id, REMOVED, KBP, final_date)
