@@ -2,58 +2,27 @@
 library(tidyverse)
 library(magrittr)
 
-library(patchwork)
-
 seq_data <- readRDS("/Users/danielsuh/Documents/GitHub/temp_rsc_zoops/rate_fit.rds")
 
 prevalence <- readRDS("/Users/danielsuh/Documents/GitHub/temp_rsc_zoops/processed_data/prevalence.rds")
 
-beta_summ <- readRDS(here("processed_data", "beta_summary.rds"))
 
 theme_set(theme_bw(base_size=18))
 
 symbol_size <- 3
 
-beta_summ %<>% filter(temp %in% c(15,20,25)) %>% filter(species =="D")
-fora_data <- seq_data %>% filter(temp %in% c(15,20,25)) %>% filter(resource %in% c(0.1,0.5,1.0))
-beta_summ %<>% mutate(temp = as.numeric(temp))
-fora_data %<>% left_join(.,beta_summ)
-fora_data %<>% mutate(u=beta.est/m6c_rate)
-
-
-p2 <- fora_data %>% na.omit() %>% 
-  ggplot(., aes(x=as.factor(resource), y=beta.est, color=as.factor(temp))) +
-  geom_point(size=symbol_size) +
-  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-  labs(x="Resource", y="beta", color="Temperature") +
-  theme(legend.position = "none") +
-  guides(color = guide_legend(reverse=T))
-
-p3 <- fora_data %>% na.omit() %>% 
-  ggplot(., aes(x=as.factor(resource), y=u, color=as.factor(temp))) +
-  geom_point(size=symbol_size) +
-  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-  labs(x="Resource", y="per-spore susceptibility (beta/f)", color="Temperature") +
-  guides(color = guide_legend(reverse=T))
-
-p1 <- fora_data %>% na.omit() %>% 
-  ggplot(., aes(x=as.factor(resource), y=m6c_rate, color=as.factor(temp))) +
-  geom_point(size=symbol_size) +
-  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-  labs(x="Resource", y="f - clearance rate", color="Temperature") +
-  theme(legend.position = "none") +
-  guides(color = guide_legend(reverse=T))
-
 
 #size-adjusted foraging rate
-p1 <- seq_data %>% dplyr::select(resource, temp, rate_len_mean, rate_len_mean_se) %>% na.omit() %>% 
+seq_data %>% dplyr::select(resource, temp, rate_len_mean, rate_len_mean_se) %>% na.omit() %>% 
   ggplot(., aes(x=as.factor(resource), y=rate_len_mean, color=as.factor(temp))) +
   geom_point(size=symbol_size) +
   geom_linerange(aes(ymin=rate_len_mean-rate_len_mean_se,
                      ymax=rate_len_mean+rate_len_mean_se)) +
   scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
   labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature") +
-  guides(color = guide_legend(reverse=T))
+  guides(color = guide_legend(reverse=T)) +
+  theme(legend.position=c(0.8,0.8))
+
 
 #prevalence dot plots
 prevalence %>% filter(temp %in% c(15, 20, 25) & species =="D") %>%
@@ -61,8 +30,10 @@ prevalence %>% filter(temp %in% c(15, 20, 25) & species =="D") %>%
   geom_point(size=symbol_size) +
   geom_linerange(aes(ymax=conf$upper, ymin=conf$lower)) +
   scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) + 
-  labs(y = "Probability of Infection", x = "Resource Concentration (mgC/L)", fill = "Temperature") +
-  guides(color = guide_legend(reverse=T))
+  labs(y = "Probability of Infection", x = "Resource Concentration (mgC/L)", color = "Temperature") +
+  guides(color = guide_legend(reverse=T)) +
+  theme(legend.position = "bottom")
+
 
 #prevalence bar plots
 prevalence %>% filter(temp %in% c(15, 20, 25) & species =="D") %>%
@@ -71,7 +42,8 @@ prevalence %>% filter(temp %in% c(15, 20, 25) & species =="D") %>%
   geom_linerange(aes(ymax=conf$upper, ymin=conf$lower), position = position_dodge(width = 0.5), color = "black") +
   scale_fill_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) + 
   labs(y = "Probability of Infection", x = "Resource Concentration (mgC/L)", fill = "Temperature") +
-  guides(color = guide_legend(reverse=T))
+  guides(color = guide_legend(reverse=T)) +
+  theme(legend.position = "top")
 
 #generates plot with resource on x-axis
 seq_plot <- function(rate){
@@ -92,7 +64,8 @@ seq_plot <- function(rate){
                        color=as.factor(temp))) +
     scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
     labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") +
-    guides(color = guide_legend(reverse=T), shape = guide_legend(reverse=T))
+    guides(color = guide_legend(reverse=T), shape = guide_legend(reverse=T)) +
+    theme(legend.position=c(0.8,0.8))
 }
 
 #generates plot with temp on x-axis
@@ -113,7 +86,8 @@ seq_plot_temp <- function(rate){
                        ymax=rate_len_mean+rate_len_mean_se,
                        color=as.factor(resource))) + 
     scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
-    labs(x="Temperature", y="Foraging rate (mL/day)", color="", shape="", title = "")
+    labs(x="Temperature", y="Foraging rate (mL/day)", color="Resource", shape="Resource", title = "") +
+    theme(legend.position=c(0.2,0.8))
 }
 
 seq_plot("m2_rate") #temperature-dependent only

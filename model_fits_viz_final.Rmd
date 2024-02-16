@@ -241,4 +241,52 @@ seq_data %>% ggplot(.,aes(x=resource, y=temp, fill=log(m8_force))) + geom_tile()
 ```
 
 
+```{r}
+fora_data <- seq_data %>% filter(temp %in% c(15,20,25)) %>% filter(resource %in% c(0.1,0.5,1.0))
+fora_data %<>% left_join(.,beta_summ)
+fora_data %<>% mutate(u=beta.est/m8_rate)
+```
+
+```{r}
+library(patchwork)
+
+symbol_size <- 4
+
+p1 <- fora_data %>% na.omit() %>% 
+  ggplot(., aes(x=as.factor(resource), y=m8_rate, color=as.factor(temp))) +
+  geom_point(size=symbol_size) +
+  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+  labs(x="Resource", y="f - clearance rate", color="Temperature") +
+  theme(legend.position = "none") +
+  guides(color = guide_legend(reverse=T))
+
+p2 <- fora_data %>% na.omit() %>% 
+  ggplot(., aes(x=as.factor(resource), y=beta.est, color=as.factor(temp))) +
+  geom_point(size=symbol_size) +
+  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+  labs(x="Resource", y="beta", color="Temperature") +
+  theme(legend.position = "none") +
+  guides(color = guide_legend(reverse=T))
+
+p3 <- fora_data %>% na.omit() %>% 
+  ggplot(., aes(x=as.factor(resource), y=u, color=as.factor(temp))) +
+  geom_point(size=symbol_size) +
+  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+  labs(x="Resource", y="per-spore susceptibility (beta/f)", color="Temperature") +
+  guides(color = guide_legend(reverse=T))
+
+fora_data %>% na.omit() %>% 
+  ggplot(., aes(x=as.factor(resource), y=m8_u, color=as.factor(temp))) +
+  geom_point(size=symbol_size) +
+  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+  labs(x="Resource", y="per-spore susceptibility (beta/f)", color="Temperature") +
+  guides(color = guide_legend(reverse=T))
+
+p1|p2|p3
+
+```
+
+
+
+
 

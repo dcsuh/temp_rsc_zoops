@@ -100,7 +100,8 @@ lifespan %<>% mutate(span = deathday - birthday)
 
 lifespan %<>% group_by(ID) %>% summarize(mean_span = mean(span, na.rm=T),
                                                      var = var(span, na.rm = T),
-                                                     se = sqrt(var(span, na.rm = T)/n()))
+                                                     se = sqrt(var(span, na.rm = T)/n()),
+                                         count=n())
 
 lifespan %<>% left_join(.,treatment_factors)
 
