@@ -29,7 +29,9 @@ m0 <- readRDS(here("mle", "m0_f_fit.rds"))
 m1 <- readRDS(here("mle", "final", "m1_u_f_fit.rds"))
 m2 <- readRDS(here("mle", "final", "m2_u_f_fit.rds"))
 m3 <- readRDS(here("mle", "final", "m3_u_f_fit.rds"))
+m3b <- readRDS(here("mle", "final", "m3b_u_f_fit.rds"))
 m4 <- readRDS(here("mle", "final", "m4_u_f_fit.rds"))
+m4b <- readRDS(here("mle", "final", "m4b_u_f_fit.rds"))
 m6 <- readRDS(here("mle", "final", "m6_u_f_fit.rds"))
 m8 <- readRDS(here("mle", "final", "m8_u_f_fit.rds"))
 ```
@@ -175,6 +177,30 @@ m0_f <- as.numeric(m0_coef)
 data_summ %<>% mutate(m0_rate = m0_f)
 ```
 
+
+```{r}
+m3b_coef <- coef(m3b)
+m3b_f <- as.numeric(m3b_coef[1])
+m3b_h <- as.numeric(m3b_coef[2])
+m3b_u <- as.numeric(m3b_coef[3])
+m3b_k <- as.numeric(m3b_coef[4])*10000
+
+data_summ %<>% mutate(m3b_rate = ((m3b_f)/(1+m3b_f*m3b_h*resource)))
+
+seq_data %<>% mutate(m3b_rate = ((m3b_f)/(1+m3b_f*m3b_h*resource)),
+                     m3b_prev = 1-exp(-m3b_f*(m3b_u*exp(m3b_k*resource))*z),
+                     m3b_u_k = m3b_u*exp(m3b_k*resource))
+
+m3b_rate_plot <- seq_plot("m3b_rate")
+m3b_prev_plot <- seq_plot_prev("m3b_prev")
+
+m3b_rate_plot
+m3b_prev_plot
+
+seq_data %>% ggplot(.,aes(x=resource, y=m3b_u_k)) + geom_line()
+```
+
+
 ```{r}
 get_rate <- function(f, arr, temp, h, resource){
   ((f*exp(arr*(1/ref_t - 1/temp)))/(1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
@@ -212,6 +238,35 @@ seq_plot_temp("m4_rate")
 m4_prev_plot
 seq_plot_prev_temp("m4_prev")
 ```
+
+
+```{r}
+m4b_coef <- coef(m4b)
+m4b_f <- as.numeric(m4b_coef[1])
+m4b_arr <- as.numeric(m4b_coef[2])
+m4b_h <- as.numeric(m4b_coef[3])
+m4b_u <- as.numeric(m4b_coef[4])
+m4b_arr_u <- as.numeric(m4b_coef[5])
+m4b_k <- as.numeric(m4b_coef[6])*10
+
+data_summ %<>% mutate(m4b_rate = mapply(get_rate, f=m4b_f, arr=m4b_arr, temp=data_summ$temp, h=m4b_h, resource=data_summ$resource))
+
+seq_data %<>% mutate(m4b_rate = mapply(get_rate, f=m4b_f, arr=m4b_arr, temp=seq_data$temp, h=m4b_h, resource=seq_data$resource),
+                     m4b_prev = 1-exp(-m4b_f*(m4b_u*exp(m4b_arr*(1/ref_t-1/temp))*exp(m4b_k*resource)*z)),
+                     m4b_u_k = m4b_u*exp(m4b_arr*(1/ref_t-1/temp))*exp(m4b_k*resource))
+
+seq_plot("m4b_rate")
+seq_plot_prev("m4b_prev")
+
+seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=m4b_u_k,
+                group=temp,
+                color=as.factor(temp)))
+```
+
+
 
 
 ```{r}
