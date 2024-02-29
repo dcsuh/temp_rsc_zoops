@@ -588,8 +588,11 @@ saveRDS(m4b_u_f_fit, file = here("mle", "final","m4b_u_f_fit.rds"))
 # model 4 separated
 
 ```{r}
+temp_IDs <- c(15, 20, 25)
 m4_sep_ll <- function(f, arr_t, h, u, arr_t_u, k_15, k_20, k_25){
-  data <- tmp
+  k_vec <- c(k_15, k_20, k_25)
+  nll_vec <- c()
+  data <- tmp 
   m4_end <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
   colnames(m4_end) <- "m4_end"
@@ -602,17 +605,21 @@ m4_sep_ll <- function(f, arr_t, h, u, arr_t_u, k_15, k_20, k_25){
                  log = T)
     nll_sum <- -sum(nll, na.rm = T)
     
-  exp_data <- dataset
+    for(i in 1:length(k_vec)){
+  exp_data <- dataset %>% filter(temp == temp_IDs[i])
   
     inf_out <- function(inf_status, f, u, arr_t_u, k, spore_exposure, time, temp, resource){
     dbinom(x = inf_status, size = 1, prob = 1-exp(-f*(u*exp(arr_t_u*(1/ref_t-1/temp))*exp(k*resource)*spore_exposure*time)), log = T)
   }
   
   exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, arr_t_u=arr_t_u, k=k, spore_exposure = spore_exposure, time = time, temp=temp, resource = resource))
+    mutate(ll = mapply(inf_out, inf_status = inf, f = f, u = u, arr_t_u=arr_t_u, k=k_vec[i], spore_exposure = spore_exposure, time = time, temp=temp, resource = resource))
   
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
+  nll_vec[i]  <- -sum(exp_data$ll)
+  
+    }
+    nll_final <- nll_sum + sum(nll_vec)
+  return(nll_final)
 }
 ```
 
@@ -622,14 +629,14 @@ tmp <- data
 m4_sep_u_f_fit <- mle2(m4_sep_ll,
                 skip.hessian = T,
                 start=list(f=5, arr_t=50, h=0.1, u = 0.00001, arr_t_u = 10, 
-                           k_15 = 0.01, k_20 = 0.01, k_25 = 0.01),
+                           k_15 = 0.001, k_20 = 0.001, k_25 = 0.001),
                 method = "L-BFGS-B",
                 lower = c(f = 0, arr_t = 0, h = 0, u = 0, arr_t_u = 0, 
                           k_15 = -Inf, k_20 = -Inf, k_25 = -Inf),
                 upper = c(f = Inf, arr_t = Inf, h = Inf, u = 1, arr_t_u = Inf, 
                           k_15 = Inf, k_20 = Inf, k_25 = Inf),
                 control=list(parscale=c(f=5, arr_t=50, h=0.1, u = 0.00001, arr_t_u = 10, 
-                                        k_15 = 0.01, k_20 = 0.01, k_25 = 0.01), maxit=10000))
+                                        k_15 = 0.001, k_20 = 0.001, k_25 = 0.001), maxit=10000))
 end_time <- Sys.time()
 m4_sep_runtime <- end_time-start_time
 m4_sep_runtime
