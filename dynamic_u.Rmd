@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(here)
 source(here("base","src.R"))
 
+library(ggnewscale)
 ```
 
 
@@ -136,7 +137,7 @@ m1_sim <- function(R, time, f, u, length, gamma, Z){
   end_data <- slice_max(output, time)[,2]
   }
   else {
-  end_data <- slice_max(output, time)[,3]  
+  end_data <- slice_max(output, time)[,4]  
   }
   
   # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
@@ -268,11 +269,26 @@ data_summ %<>% mutate(model_prev = I_end)
 ```
 
 ```{r}
-data_summ %>% ggplot(.,aes(x=resource, y=f, group=temp, color=as.factor(temp))) + geom_point()
-data_summ %>% filter(temp %in% c(20,25)) %>% ggplot(.,aes(x=resource, y=u, group=temp, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=f*u, group=temp, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=model_prev, group=temp, color=as.factor(temp))) + geom_point()
+prevalence <- readRDS(here("processed_data", "prevalence.rds"))
+prevalence %<>% filter(temp %in% c(15, 20, 25)) %>% filter(species=="D") %>% mutate(ID = paste(temp, resource, sep="_")) %>% dplyr::select(-c(temp, resource, species))
+data_summ %<>% left_join(., prevalence, by="ID")
+```
 
+
+```{r}
+data_summ %>% ggplot(.,aes(x=resource, y=f, group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% filter(temp %in% c(20, 25))  %>% ggplot(.,aes(x=resource, y=u, group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=log(u), group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=f*u, group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=model_prev, color=as.factor(temp))) + geom_point()
+```
+```{r}
+data_summ %>% ggplot(.,aes(x=resource, y=f, group=temp, color=as.factor(temp))) + geom_point(size=4) + new_scale_color() + geom_point(aes(x=resource, y=rate_len_mean*60*24, group = temp)) + geom_linerange(aes(x=resource, ymin=(rate_len_mean-rate_len_mean_se)*60*24, ymax=(rate_len_mean+rate_len_mean_se)*60*24))
+```
+
+
+```{r}
+data_summ %>% ggplot(.,aes(x=resource, y=model_prev, color=as.factor(temp))) + geom_point(size=4, shape=2) + new_scale_color() + geom_point(size= 2,aes(x=resource, y=prev, group = temp, color = as.factor(temp))) + geom_linerange(aes(x=resource, ymin=conf$lower, ymax=conf$upper,color = as.factor(temp)))
 ```
 
 
