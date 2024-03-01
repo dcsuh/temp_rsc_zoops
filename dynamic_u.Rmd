@@ -209,5 +209,5 @@ m1_runtime
 
 coef(m1_u_f_fit)
 
-#saveRDS(m1_u_f_fit, file = here("mle","final","m1_u_f_fit.rds"))
+saveRDS(m1_u_f_fit, file = here("mle","update","m1_fit.rds"))
 ```
