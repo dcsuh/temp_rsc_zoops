@@ -26,7 +26,8 @@ beta_summ <- readRDS(here("processed_data", "beta_summary.rds"))
 beta_summ %<>% filter(temp %in% const_temp) %>% filter(species == "D") %>% mutate(temp = as.numeric(temp))
 
 m0 <- readRDS(here("mle", "m0_f_fit.rds"))
-m1 <- readRDS(here("mle", "final", "m1_u_f_fit.rds"))
+#m1 <- readRDS(here("mle", "final", "m1_u_f_fit.rds"))
+m1 <- readRDS(here("mle", "update", "m1_fit.rds")) #updated version from dynamic u method
 m2 <- readRDS(here("mle", "final", "m2_u_f_fit.rds"))
 m3 <- readRDS(here("mle", "final", "m3_u_f_fit.rds"))
 m3b <- readRDS(here("mle", "final", "m3b_u_f_fit.rds"))
@@ -177,6 +178,16 @@ seq_plot_beta_temp <- function(beta){
 m0_f <- as.numeric(m0_coef)
 data_summ %<>% mutate(m0_rate = m0_f)
 ```
+
+```{r}
+m1_coef <- coef(m1)
+m1_f <- as.numeric(m1_coef[1])
+m1_u <- as.numeric(m1_coef[2])
+
+
+
+```
+
 
 
 ```{r}

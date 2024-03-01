@@ -109,10 +109,10 @@ m1_num_sol <- function(t, x, params){
   I <- x[3]
   Z <- x[4]
   with(as.list(params),{
-    dR <- -(length^gamma)*f*R
-    dS <- -u*(length^gamma)*f*Z
-    dI <- u*(length^gamma)*f*Z
-    dZ <- -(length^gamma)*f*R*Z
+    dR <- -(length^gamma)*f*R*(S+I)
+    dS <- -u*(length^gamma)*f*Z*S
+    dI <- u*(length^gamma)*f*Z*S
+    dZ <- -(length^gamma)*f*R*Z*(S+I)
     res <- c(dR, dS, dI, dZ)
     list(res)}
     )
@@ -121,53 +121,38 @@ m1_num_sol <- function(t, x, params){
 ```
 
 ```{r, m1_sim}
-m1_sim <- function(R, time, f, u, length, gamma){
+m1_sim <- function(R, time, f, u, length, gamma, Z){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
               S=1,
               I=0,
-              Z=200)
+              Z=Z)
   params <- c(f=f,
               u=u,
               length=length,
               gamma=gamma)
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
-  r_end <- slice_max(output, time)[,2]
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,3]  
+  }
   
   # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
   #probably unnecessary
-  return(r_end)
-}
-```
-
-```{r, m1_sim_life}
-m1_life <- function(R, time, f, u, length, gamma){
-  times <- seq(0, time, by=0.01)
-  xstart <- c(R=R,
-              S=1,
-              I=0,
-              Z=200*50)
-  params <- c(f=f,
-              u=u,
-              length=length,
-              gamma=gamma)
-  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
-  Z_end <- slice_max(output, time)[,5]
-  
-  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
-  #probably unnecessary
-  return(Z_end)
+  return(end_data)
 }
 ```
 
 ```{r, m1_ll}
 m1_ll <- function(f, u){
   data <- tmp
-  m1_end <- as.data.frame(mapply(m1_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+  R_end <- as.data.frame(mapply(m1_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=2))
-  colnames(m1_end) <- "m1_end"
-  data$end <- m1_end$m1_end
+                                 length=data$mm, gamma=2, Z=0))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
   data %<>% mutate(resid = log(end) - log(amt_rem))
   
     nll <- dnorm(data$resid, 
@@ -177,19 +162,21 @@ m1_ll <- function(f, u){
     nll_sum <- -sum(nll, na.rm = T)
   
   exp_data <- dataset
+#  exp_data <- dataset_tmp
+
   
-  m1_spores <- as.data.frame(mapply(m1_life, R=exp_data$resource, time=exp_data$time, f=f/vol, u=u, length = exp_data$life_mm, gamma=2))
+  I_end <- as.data.frame(mapply(m1_sim, R=exp_data$resource, time=exp_data$time, f=f/50, u=u, length = exp_data$life_mm, gamma=2, Z=200*50))
+
+  colnames(I_end) <- "I_end"
   
-  colnames(m1_spores) <- "spores_left"
+  exp_data %<>% cbind(I_end)
   
-  exp_data %<>% cbind(m1_spores)
-  
-    inf_out <- function(inf_status, u, spores_left){
-    dbinom(x = inf_status, size = 1, prob=1-exp(-u*(200*50-spores_left)), log=T)
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
   }
   
   exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, u = u, spores_left = exp_data$spores_left))
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
   nll_sum <- nll_sum + -sum(exp_data$ll)
   return(nll_sum)
 }
@@ -197,11 +184,11 @@ m1_ll <- function(f, u){
 
 
 Now we use the optimizer
-```{r, m1_mle, eval = FALSE}
+```{r, m1_mle, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m1_u_f_fit <- mle2(m1_ll, start=list(u = 0.00001, f=10), 
-                     control=list(parscale = c(u = 0.00001, f=10)),
+m1_u_f_fit <- mle2(m1_ll, start=list(u = 0.0001, f=15), 
+                     control=list(parscale = c(u = 0.0001, f=15)),
                      skip.hessian=F, method="L-BFGS-B", lower=c(u = 0, f = 0), upper=c(u = 1, f = Inf))
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
@@ -211,3 +198,82 @@ coef(m1_u_f_fit)
 
 saveRDS(m1_u_f_fit, file = here("mle","update","m1_fit.rds"))
 ```
+
+```{r, m1_mle_fits}
+start_time <- Sys.time()
+data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
+dataset %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
+
+m1_fits <- list()
+
+
+for(i in 1:length(treatment_IDs)){
+
+tmp <- data %>% filter(treatment_ID == treatment_IDs[i])
+dataset_tmp <- dataset %>% filter(treatment_ID == treatment_IDs[i])
+
+u_vec <- c(0.0001,#pass
+           0.0001,#fail
+           0.0001,#
+           0.0001,#pass
+           0.0001,#
+           0.0001,#
+           0.0001,#
+           0.0001,#
+           0.0001)#
+
+f_vec <- c(15,
+           1,
+           1,
+           15,
+           1,
+           1,
+           15,
+           15,
+           1)
+
+m1_fits[i] <- mle2(m1_ll, start=list(u = u_vec[i], f=f_vec[i]), 
+                     control=list(parscale = c(u = u_vec[i], f=f_vec[i])),
+                     skip.hessian=F, method="L-BFGS-B", lower=c(u = 0, f = 0), upper=c(u = 1, f = Inf))
+print(i)
+}
+end_time <- Sys.time()
+m1_runtime <- end_time - start_time
+m1_runtime
+
+
+saveRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
+```
+
+```{r}
+fit_data <- tibble(ID = c(1:9),
+                   f = c(1:9),
+                   u = c(1:9))
+for(i in 1:nrow(data_summ)){
+  fit_data$ID[i] <- treatment_IDs[i]
+  fit_data$f[i] <- as.numeric(coef(m1_fits[[i]])[1])
+  fit_data$u[i] <- as.numeric(coef(m1_fits[[i]])[2])
+}
+
+```
+
+```{r}
+data_summ %<>% left_join(.,fit_data)
+length_summ %<>% mutate(temp=as.numeric(temp_id))
+data_summ %<>% left_join(length_summ)
+
+data_summ %<>% mutate(I_end = mapply(m1_sim, R=resource, time=1, f=f/50, u=u, length = life_mm, gamma=2, Z=200*50))
+
+data_summ %<>% mutate(model_prev = I_end)
+```
+
+```{r}
+data_summ %>% ggplot(.,aes(x=resource, y=f, group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% filter(temp %in% c(20,25)) %>% ggplot(.,aes(x=resource, y=u, group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=f*u, group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=model_prev, group=temp, color=as.factor(temp))) + geom_point()
+
+```
+
+
+
