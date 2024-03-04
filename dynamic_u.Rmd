@@ -149,12 +149,12 @@ m1_sim <- function(R, time, f, u, length, gamma, Z){
 ```{r, m1_ll}
 m1_ll <- function(f, u){
   data <- tmp
-  R_end <- as.data.frame(mapply(m1_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+  R_end <- as.data.frame(mapply(m1_sim, R=data$amt_init*15, time=data$time/60/24, f=f/data$vol,
                                  u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
                                  length=data$mm, gamma=2, Z=0))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*15))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -166,7 +166,7 @@ m1_ll <- function(f, u){
 #  exp_data <- dataset_tmp
 
   
-  I_end <- as.data.frame(mapply(m1_sim, R=exp_data$resource, time=exp_data$time, f=f/50, u=u, length = exp_data$life_mm, gamma=2, Z=200*50))
+  I_end <- as.data.frame(mapply(m1_sim, R=exp_data$resource*50, time=exp_data$time, f=f/50, u=u, length = exp_data$life_mm, gamma=2, Z=200*50))
 
   colnames(I_end) <- "I_end"
   
@@ -185,11 +185,11 @@ m1_ll <- function(f, u){
 
 
 Now we use the optimizer
-```{r, m1_mle, eval=F}
+```{r, m1_mle}
 start_time <- Sys.time()
 tmp <- data
-m1_u_f_fit <- mle2(m1_ll, start=list(u = 0.0001, f=15), 
-                     control=list(parscale = c(u = 0.0001, f=15)),
+m1_u_f_fit <- mle2(m1_ll, start=list(u = 0.0001, f=1), 
+                     control=list(parscale = c(u = 0.0001, f=1)),
                      skip.hessian=F, method="L-BFGS-B", lower=c(u = 0, f = 0), upper=c(u = 1, f = Inf))
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
@@ -200,7 +200,7 @@ coef(m1_u_f_fit)
 saveRDS(m1_u_f_fit, file = here("mle","update","m1_fit.rds"))
 ```
 
-```{r, m1_mle_fits}
+```{r, m1_mle_fits, eval=FALSE}
 start_time <- Sys.time()
 data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
 dataset %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
@@ -214,26 +214,26 @@ tmp <- data %>% filter(treatment_ID == treatment_IDs[i])
 dataset_tmp <- dataset %>% filter(treatment_ID == treatment_IDs[i])
 
 u_vec <- c(0.0001,#pass
-           0.0001,#fail
-           0.0001,#
            0.0001,#pass
+           0.0001,#pass
+           0.0001,#
            0.0001,#
            0.0001,#
            0.0001,#
            0.0001,#
            0.0001)#
 
-f_vec <- c(15,
+f_vec <- c(1,
            1,
            1,
-           15,
            1,
            1,
-           15,
-           15,
+           1,
+           1,
+           1,
            1)
 
-m1_fits[i] <- mle2(m1_ll, start=list(u = u_vec[i], f=f_vec[i]), 
+m1_fits[i] <- mle2(m1_ll, start=list(u = u_vec[i], f=f_vec[i]),
                      control=list(parscale = c(u = u_vec[i], f=f_vec[i])),
                      skip.hessian=F, method="L-BFGS-B", lower=c(u = 0, f = 0), upper=c(u = 1, f = Inf))
 print(i)
@@ -247,6 +247,9 @@ saveRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
 ```
 
 ```{r}
+m1_fits <- readRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
+
+
 fit_data <- tibble(ID = c(1:9),
                    f = c(1:9),
                    u = c(1:9))
@@ -267,6 +270,8 @@ data_summ %<>% mutate(I_end = mapply(m1_sim, R=resource, time=1, f=f/50, u=u, le
 
 data_summ %<>% mutate(model_prev = I_end)
 ```
+
+
 
 ```{r}
 prevalence <- readRDS(here("processed_data", "prevalence.rds"))
