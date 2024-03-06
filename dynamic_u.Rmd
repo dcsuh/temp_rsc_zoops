@@ -113,7 +113,7 @@ m1_num_sol <- function(t, x, params){
     dR <- -(length^gamma)*f*R*(S+I)
     dS <- -u*(length^gamma)*f*Z*S
     dI <- u*(length^gamma)*f*Z*S
-    dZ <- -(length^gamma)*f*R*Z*(S+I)
+    dZ <- -(length^gamma)*f*Z*(S+I)
     res <- c(dR, dS, dI, dZ)
     list(res)}
     )
@@ -216,12 +216,12 @@ dataset_tmp <- dataset %>% filter(treatment_ID == treatment_IDs[i])
 u_vec <- c(0.0001,#pass
            0.0001,#pass
            0.0001,#pass
-           0.0001,#
-           0.0001,#
-           0.0001,#
-           0.0001,#
-           0.0001,#
-           0.0001)#
+           0.0001,#pass
+           0.0001,#pass
+           0.0001,#pass
+           0.0001,#pass
+           0.0001,#pass
+           0.0001)#pass
 
 f_vec <- c(1,
            1,
@@ -229,8 +229,8 @@ f_vec <- c(1,
            1,
            1,
            1,
-           1,
-           1,
+           10,
+           10,
            1)
 
 m1_fits[i] <- mle2(m1_ll, start=list(u = u_vec[i], f=f_vec[i]),
@@ -243,11 +243,11 @@ m1_runtime <- end_time - start_time
 m1_runtime
 
 
-saveRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
+#saveRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
 ```
 
 ```{r}
-m1_fits <- readRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
+#m1_fits <- readRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
 
 
 fit_data <- tibble(ID = c(1:9),
@@ -282,9 +282,10 @@ data_summ %<>% left_join(., prevalence, by="ID")
 
 ```{r}
 data_summ %>% ggplot(.,aes(x=resource, y=f, group=temp, color=as.factor(temp))) + geom_point()
-data_summ %>% filter(temp %in% c(20, 25))  %>% ggplot(.,aes(x=resource, y=u, group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=u, group=temp, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=log(u), group=temp, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=f*u, group=temp, color=as.factor(temp))) + geom_point()
+data_summ %>% filter(temp %in% c(20, 25))  %>% ggplot(.,aes(x=resource, y=u, group=temp, color=as.factor(temp))) + geom_point()
+#data_summ %>% ggplot(.,aes(x=resource, y=f*u, group=temp, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=model_prev, color=as.factor(temp))) + geom_point()
 ```
 ```{r}
