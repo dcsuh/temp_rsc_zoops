@@ -43,8 +43,11 @@ resource_IDs <- unique(data$resource)
 temp_IDs <- unique(data$temp)
 
 
-vol <- 15
-ref_t <- 15
+fora_vol <- 15 #mL
+life_vol <- 50 #mL
+spore_conc <- 200 #spores/mL
+gamma <- 2 
+ref_t <- 15 #celsius
 
 ```
 
@@ -149,12 +152,12 @@ m1_sim <- function(R, time, f, u, length, gamma, Z){
 ```{r, m1_ll}
 m1_ll <- function(f, u){
   data <- tmp
-  R_end <- as.data.frame(mapply(m1_sim, R=data$amt_init*0.015, time=data$time/60/24, f=f/data$vol,
+  R_end <- as.data.frame(mapply(m1_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
                                  u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=2, Z=0))
+                                 length=data$mm, gamma=gamma, Z=0))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*0.015))
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -166,7 +169,7 @@ m1_ll <- function(f, u){
 #  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
 
   
-  I_end <- as.data.frame(mapply(m1_sim, R=exp_data$resource*0.05, time=exp_data$time, f=f/50, u=u, length = exp_data$life_mm, gamma=2, Z=200*50))
+  I_end <- as.data.frame(mapply(m1_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol))
 
   colnames(I_end) <- "I_end"
   
