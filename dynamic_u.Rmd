@@ -162,8 +162,8 @@ m1_ll <- function(f, u){
                  log = T)
     nll_sum <- -sum(nll, na.rm = T)
   
-#  exp_data <- dataset %>% filter(exposed==TRUE)
-  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
 
   
   I_end <- as.data.frame(mapply(m1_sim, R=exp_data$resource*0.05, time=exp_data$time, f=f/50, u=u, length = exp_data$life_mm, gamma=2, Z=200*50))
@@ -243,7 +243,7 @@ m1_runtime <- end_time - start_time
 m1_runtime
 
 
-#saveRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
+saveRDS(m1_fits, file = here("mle","update","m1_fits.rds"))
 ```
 
 ```{r}
