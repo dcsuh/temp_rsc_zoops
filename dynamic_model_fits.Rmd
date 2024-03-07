@@ -311,23 +311,6 @@ $$
 \frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR}S \\
 $$
 
-```{r, m1_num_sol}
-m1_num_sol <- function(t, x, params){
-  R <- x[1]
-  S <- x[2]
-  I <- x[3]
-  Z <- x[4]
-  with(as.list(params),{
-    dR <- -f*R*(S+I)
-    dS <- -u*f*Z*S
-    dI <- u*f*Z*S
-    dZ <- -f*Z*(S+I)
-    res <- c(dR, dS, dI, dZ)
-    list(res)}
-    )
-}
-
-```
 
 ```{r, m3_sim}
 m3_sim <- function(R, time, f, u, length, gamma, Z, h){
@@ -337,7 +320,7 @@ m3_sim <- function(R, time, f, u, length, gamma, Z, h){
               I=0,
               Z=Z)
   params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
-              u=1/(1+exp(-u*R)))
+              u=u)
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   if(Z == 0) {
   end_data <- slice_max(output, time)[,2]
@@ -353,7 +336,7 @@ m3_sim <- function(R, time, f, u, length, gamma, Z, h){
 ```
 
 ```{r, m3_ll}
-m3_ll <- function(f, u, h){
+m3_ll <- function(f, u, h, k){
   data <- tmp
   R_end <- as.data.frame(mapply(m3_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
                                  u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
@@ -394,12 +377,14 @@ m3_ll <- function(f, u, h){
 
 
 Now we use the optimizer
-```{r, m1_mle}
+```{r, m3_mle}
 start_time <- Sys.time()
 tmp <- data
-m3_u_f_fit <- mle2(m3_ll, start=list(u = 0.0001, f=1), 
-                     control=list(parscale = c(u = 0.0001, f=1)),
-                     skip.hessian=F, method="L-BFGS-B", lower=c(u = 0, f = 0), upper=c(u = 1, f = Inf))
+m3_u_f_fit <- mle2(m3_ll, start=list(u = 0.000001, f=1, h=1), 
+                     control=list(parscale = c(u = 0.000001, f=1, h=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, h=0), 
+                   upper=c(u = 1, f = Inf, h=Inf))
 end_time <- Sys.time()
 m3_runtime <- end_time - start_time
 m3_runtime
@@ -410,45 +395,108 @@ saveRDS(m3_u_f_fit, file = here("mle","update","m3_fit.rds"))
 ```
 
 
-
-# Full Model
-
-# Independent Model
-
-
-$$
-\frac{dR}{dt} = -L^{\gamma} fRS\\
-$$
-
-```{r, m1_num_sol}
-m1_num_sol <- function(t, x, params){
-  R <- x[1]
-  S <- x[2]
-  I <- x[3]
-  Z <- x[4]
-  with(as.list(params),{
-    dR <- -(length^gamma)*f*R*(S+I)
-    dS <- -u*(length^gamma)*f*Z*S
-    dI <- u*(length^gamma)*f*Z*S
-    dZ <- -(length^gamma)*f*Z*(S+I)
-    res <- c(dR, dS, dI, dZ)
-    list(res)}
-    )
-}
-
-```
-
-```{r, m1_sim}
-m1_sim <- function(R, time, f, u, length, gamma, Z){
+```{r, m3_sim}
+m3a_sim <- function(R, time, f, u, length, gamma, Z, h, resource){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=f,
-              u=u,
-              length=length,
-              gamma=gamma)
+  params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
+              u=1/(1+exp(-u*exp(k*resource))))
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(end_data)
+}
+```
+
+```{r, m3_ll}
+m3_ll <- function(f, u, h, k){
+  data <- tmp
+  R_end <- as.data.frame(mapply(m3a_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                h=h,
+                                k=k,
+                                resource = data$resource))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m3a_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                h=h,
+                                k=k,
+                                resource = exp_data$resource))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+Now we use the optimizer
+```{r, m3a_mle}
+start_time <- Sys.time()
+tmp <- data
+m3a_u_f_fit <- mle2(m3a_ll, start=list(u = 0.0001, f=1, h=1, k=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, h=1, k=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, h=0, k=-Inf), 
+                   upper=c(u = 1, f = Inf, h=Inf, k=Inf))
+end_time <- Sys.time()
+m3a_runtime <- end_time - start_time
+m3a_runtime
+
+coef(m3a_u_f_fit)
+
+saveRDS(m3a_u_f_fit, file = here("mle","update","m3a_fit.rds"))
+```
+
+
+# Full Model
+
+$$
+\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} S \\
+$$
+
+```{r, m4_sim}
+m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/(1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+              u=u*exp(arr_t_u*(1/ref_t - 1/temp)))
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   if(Z == 0) {
   end_data <- slice_max(output, time)[,2]
