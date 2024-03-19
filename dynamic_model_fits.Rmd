@@ -399,14 +399,14 @@ saveRDS(m3_u_f_fit, file = here("mle","update","m3_fit.rds"))
 
 
 ```{r, m3a_sim}
-m3a_sim <- function(R, time, f, u, length, gamma, Z, h, k, resource){
+m3a_sim <- function(R, time, f, u, length, gamma, Z, h, resource){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
               S=0.999,
               I=0,
               Z=Z)
   params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
-              u=1/(1+exp(-(u + k*resource))))
+              u=1/(1+exp(-(u*R))))
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   if(Z == 0) {
   end_data <- slice_max(output, time)[,2]
@@ -426,7 +426,7 @@ m3a_sim <- function(R, time, f, u, length, gamma, Z, h, k, resource){
 m3b_sim <- function(R, time, f, u, length, gamma, Z, h, k, resource){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
-              S=1,
+              S=0.999,
               I=0,
               Z=Z)
   params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
@@ -446,13 +446,13 @@ m3b_sim <- function(R, time, f, u, length, gamma, Z, h, k, resource){
 ```
 
 ```{r, m3a_ll}
-m3a_ll <- function(f, u, h, k){
+m3a_ll <- function(f, u, h){
   data <- tmp
-  R_end <- as.data.frame(mapply(m3b_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
+  R_end <- as.data.frame(mapply(m3a_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
                                  u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
                                  length=data$mm, gamma=gamma, Z=0,
                                 h=h*fora_vol,
-                                k=k,
+                                #k=k,
                                 resource = data$resource))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
@@ -468,10 +468,10 @@ m3a_ll <- function(f, u, h, k){
 #  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
 
   
-  I_end <- as.data.frame(mapply(m3b_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+  I_end <- as.data.frame(mapply(m3a_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
                                 u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
                                 h=h,
-                                k=k,
+                                #k=k,
                                 resource = exp_data$resource))
 
   colnames(I_end) <- "I_end"
@@ -494,18 +494,18 @@ Now we use the optimizer
 ```{r, m3a_mle, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m3a_u_f_fit <- mle2(m3a_ll, start=list(u = 0.01, f=1, h=1, k=-10), 
-                     control=list(parscale = c(u = 0.01, f=1, h=1, k=-10)),
+m3a_u_f_fit <- mle2(m3a_ll, start=list(u = 0.0001, f=1, h=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, h=1)),
                      skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, h=0, k=-Inf), 
-                   upper=c(u = 1, f = Inf, h=Inf, k=Inf))
+                   lower=c(u = -Inf, f = 0, h=0), 
+                   upper=c(u = Inf, f = Inf, h=Inf))
 end_time <- Sys.time()
 m3a_runtime <- end_time - start_time
 m3a_runtime
 
 coef(m3a_u_f_fit)
 
-saveRDS(m3a_u_f_fit, file = here("mle","update","m3a_fit.rds"))
+#saveRDS(m3a_u_f_fit, file = here("mle","update","m3a_fit.rds"))
 ```
 
 
@@ -604,6 +604,14 @@ coef(m4_u_f_fit)
 
 saveRDS(m4_u_f_fit, file = here("mle","update","m4_fit.rds"))
 ```
+
+```{r}
+m1_u_f_fit <- readRDS(file = here("mle", "update", "m1_fit.rds"))
+m2_u_f_fit <- readRDS(file = here("mle", "update", "m2_fit.rds"))
+m3_u_f_fit <- readRDS(file = here("mle", "update", "m3_fit.rds"))
+m4_u_f_fit <- readRDS(file = here("mle", "update", "m4_fit.rds"))
+```
+
 
 ```{r}
 getAIC <- function(model){
@@ -785,7 +793,7 @@ data_summ %>% ggplot(.,aes(x=resource, y=m4_rate, color=as.factor(temp))) + geom
   new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="full model")
 
 ```
-```{r}
+```{r, eval=F}
 data_summ %>% ggplot(.,aes(x=resource, y=m1_u, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=m2_u, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_point()
@@ -794,7 +802,7 @@ data_summ %>% ggplot(.,aes(x=resource, y=m4_u, color=as.factor(temp))) + geom_po
 
 
 
-```{r}
+```{r, eval=F}
 data_summ %>% ggplot(.,aes(x=resource, y=m1_beta, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=m2_beta, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=m3_beta, color=as.factor(temp))) + geom_point()
