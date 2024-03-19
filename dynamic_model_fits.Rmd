@@ -361,7 +361,7 @@ m3_ll <- function(f, u, h, k){
   
   I_end <- as.data.frame(mapply(m3_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
                                 u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                h=h))
+                                h=h*life_vol))
 
   colnames(I_end) <- "I_end"
   
@@ -470,7 +470,7 @@ m3a_ll <- function(f, u, h){
   
   I_end <- as.data.frame(mapply(m3a_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
                                 u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                h=h,
+                                h=h*life_vol,
                                 #k=k,
                                 resource = exp_data$resource))
 
@@ -568,7 +568,7 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h){
                                 ref_t=ref_t,
                                 arr_t_f=arr_t_f,
                                 arr_t_u=arr_t_u,
-                                h=h,
+                                h=h*life_vol,
                                 temp=exp_data$temp))
 
   colnames(I_end) <- "I_end"
@@ -605,11 +605,437 @@ coef(m4_u_f_fit)
 saveRDS(m4_u_f_fit, file = here("mle","update","m4_fit.rds"))
 ```
 
+# Model 5 - Resource on temperature interaction
+
+```{r, m5a_ll}
+m5a_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u){
+  data <- tmp
+  
+  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
+                                f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f + data$resource*p_f,
+                                arr_t_u=arr_t_u + data$resource*p_u,
+                                h=h*fora_vol,
+                                temp = data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f + exp_data$resource*p_f,
+                                arr_t_u=arr_t_u + exp_data$resource*p_u,
+                                h=h*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+Need to rerun
+```{r, m5a_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m5a_u_f_fit <- mle2(m5a_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf), 
+                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf))
+end_time <- Sys.time()
+m5a_runtime <- end_time - start_time
+m5a_runtime
+
+coef(m5a_u_f_fit)
+
+saveRDS(m5a_u_f_fit, file = here("mle","update","m5a_fit.rds"))
+```
+
+
+```{r, m5b_ll}
+m5b_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u){
+  data <- tmp
+  
+  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
+                                f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f*exp(data$resource*p_f),
+                                arr_t_u=arr_t_u*exp(data$resource*p_u),
+                                h=h*fora_vol,
+                                temp = data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f*(exp_data$resource*p_f),
+                                arr_t_u=arr_t_u*(exp_data$resource*p_u),
+                                h=h*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+```{r, m5b_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m5b_u_f_fit <- mle2(m5b_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf), 
+                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf))
+end_time <- Sys.time()
+m5b_runtime <- end_time - start_time
+m5b_runtime
+
+coef(m5b_u_f_fit)
+
+saveRDS(m5b_u_f_fit, file = here("mle","update","m5b_fit.rds"))
+```
+
+# Model 6 - Temperature on Resource interaction
+
+```{r, m6a_ll}
+m6a_ll <- function(f, u, arr_t_f, arr_t_u, h, w){
+  data <- tmp
+  
+  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
+                                f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=(h + data$temp*w)*fora_vol,
+                                temp = data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=(h + exp_data$temp*w)*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+```{r, m6a_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m6a_u_f_fit <- mle2(m6a_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, w=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, w=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, w=-Inf), 
+                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, w=Inf))
+end_time <- Sys.time()
+m6a_runtime <- end_time - start_time
+m6a_runtime
+
+coef(m6a_u_f_fit)
+
+saveRDS(m6a_u_f_fit, file = here("mle","update","m6a_fit.rds"))
+```
+
+
+```{r, m6b_ll}
+m6b_ll <- function(f, u, arr_t_f, arr_t_u, h, w){
+  data <- tmp
+  
+  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
+                                f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=(h + data$temp*w)*fora_vol,
+                                temp = data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h*exp(exp_data$temp*w)*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+```{r, m6b_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m6b_u_f_fit <- mle2(m6b_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, w=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, w=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, w=-Inf), 
+                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, w=Inf))
+end_time <- Sys.time()
+m6b_runtime <- end_time - start_time
+m6b_runtime
+
+coef(m6b_u_f_fit)
+
+saveRDS(m6b_u_f_fit, file = here("mle","update","m6b_fit.rds"))
+```
+
+# Model 7 - Full interaction
+
+```{r, m7a_ll}
+m7a_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u, w){
+  data <- tmp
+  
+  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
+                                f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f + data$resource*p_f,
+                                arr_t_u=arr_t_u + data$resource*p_u,
+                                h=(h + data$temp*w)*fora_vol,
+                                temp = data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f + exp_data$resource*p_f,
+                                arr_t_u=arr_t_u + exp_data$resource*p_u,
+                                h=(h + exp_data$temp*w)*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+```{r, m7a_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m7a_u_f_fit <- mle2(m7a_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf, w=-Inf), 
+                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf, w=Inf))
+end_time <- Sys.time()
+m7a_runtime <- end_time - start_time
+m7a_runtime
+
+coef(m7a_u_f_fit)
+
+saveRDS(m7a_u_f_fit, file = here("mle","update","m7a_fit.rds"))
+```
+
+
+```{r, m7a_ll}
+m7b_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u, w){
+  data <- tmp
+  
+  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
+                                f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f + data$resource*p_f,
+                                arr_t_u=arr_t_u + data$resource*p_u,
+                                h=h*exp(data$temp*w)*fora_vol,
+                                temp = data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f + exp_data$resource*p_f,
+                                arr_t_u=arr_t_u + exp_data$resource*p_u,
+                                h=h*exp(exp_data$temp*w)*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+```{r, m7b_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m7b_u_f_fit <- mle2(m7a_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf, w=-Inf), 
+                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf, w=Inf))
+end_time <- Sys.time()
+m7b_runtime <- end_time - start_time
+m7b_runtime
+
+coef(m7b_u_f_fit)
+
+saveRDS(m7b_u_f_fit, file = here("mle","update","m7b_fit.rds"))
+```
+
+
 ```{r}
 m1_u_f_fit <- readRDS(file = here("mle", "update", "m1_fit.rds"))
 m2_u_f_fit <- readRDS(file = here("mle", "update", "m2_fit.rds"))
 m3_u_f_fit <- readRDS(file = here("mle", "update", "m3_fit.rds"))
 m4_u_f_fit <- readRDS(file = here("mle", "update", "m4_fit.rds"))
+m5a_u_f_fit <- readRDS(file = here("mle", "update", "m5a_fit.rds"))
+m5b_u_f_fit <- readRDS(file = here("mle", "update", "m5b_fit.rds"))
+m6a_u_f_fit <- readRDS(file = here("mle", "update", "m6a_fit.rds"))
+m6b_u_f_fit <- readRDS(file = here("mle", "update", "m6b_fit.rds"))
+m7a_u_f_fit <- readRDS(file = here("mle", "update", "m7a_fit.rds"))
+m7b_u_f_fit <- readRDS(file = here("mle", "update", "m7b_fit.rds"))
+
 ```
 
 
