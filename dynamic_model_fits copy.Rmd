@@ -779,10 +779,17 @@ viz_summ %<>% mutate(m4_I_end = mapply(m4_sim,
 ```
 
 ```{r}
+viz_summ %>% ggplot(.,aes(x=resource, y=prev, color=as.factor(temp)))  +
+  geom_point(size=4) + 
+  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper)) +
+  labs(title="experimental data")
+
+
 viz_summ %>% ggplot(.,aes(x=resource, y=m1_I_end, color=as.factor(temp))) + 
-  geom_point(size = 3, shape=2) +
+  geom_point(size = 4, shape=2) +
   new_scale_color() + 
   geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
+  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
   labs(title="independent model")
 
 # viz_summ %>% ggplot(.,aes(x=resource, y=m2_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
@@ -792,9 +799,10 @@ viz_summ %>% ggplot(.,aes(x=resource, y=m1_I_end, color=as.factor(temp))) +
 #   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
 
 viz_summ %>% ggplot(.,aes(x=resource, y=m4_I_end, color=as.factor(temp))) + 
-  geom_point(size = 3, shape=2) +
+  geom_point(size = 4, shape=2) +
   new_scale_color() + 
   geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
+  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
   labs(title="full model")
 
 
