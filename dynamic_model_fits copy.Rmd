@@ -1,0 +1,838 @@
+---
+title: "u_f_fits"
+output: html_document
+date: "`r Sys.Date()`"
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+
+library(ggnewscale)
+```
+
+
+# Notes
+
+
+
+
+```{r}
+fitness <- read.csv(here("raw_data/main_fitness_edit.csv")) #must be read.csv
+fitness %<>% dplyr::select(tube, temp_id, REMOVED, KBP, final_date)
+mort <-  read_csv(here("raw_data/main_mort_edit.csv"))
+lengths <- read_csv(here("raw_data", "day5_length.csv"))
+lengths %<>% filter(temp_id %in% c(15,20,25))
+
+
+dataset <- left_join(mort,fitness)
+
+data <- readRDS(here("processed_data","foraging_raw.rds"))
+data_summ <- readRDS(here("processed_data", "foraging.rds"))
+
+data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
+
+data %<>% mutate(resource_tot = resource*vol) #resource_tot is the total amount of resources in our tube. resource concentration * total volume of tube 
+
+treatment_IDs <- unique(data$treatment_ID)
+resource_IDs <- unique(data$resource)
+temp_IDs <- unique(data$temp)
+
+
+fora_vol <- 15 #mL
+life_vol <- 50 #mL
+spore_conc <- 200 #spores/mL
+gamma <- 2 
+ref_t <- 15 #celsius
+
+```
+
+```{r}
+dataset %<>% filter(species == "D") %>% #only daphnia for this analysis
+  filter(temp %in% const_temp) #only constant temp for this analysis
+
+dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22"), 
+                    lifespan = as.numeric(mdy(final_date) - mdy(birthdate)),
+                    temp = as.numeric(temp),
+                    treatment = paste(temp, resource, sep = "_")) %>% 
+  filter(is.na(male)) %>% #remove males
+  filter(is.na(missing)) %>% #remove missing
+  filter(!is.na(inf)) #remove NAs for inf for estimating beta. sometimes they died too young to tell
+
+dataset %<>% mutate(inf_status = inf, dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0))
+
+
+dataset %<>% mutate(spore_exposure = 200, #spores/mL
+                    uninf = 1-inf_status,
+                    time = 1, #duration of exposure in days
+                    trt = paste(temp, resource, species, sep = "_"))
+```
+
+```{r}
+lengths %<>% mutate(mm = raw_meas*17.86/1000)
+#at default magnification (5.6x), 1 unit is equal to 17.86 micron
+
+length_summ <- lengths %>% 
+  group_by(temp_id, resource) %>% 
+  summarize(life_mm = mean(mm),
+            var = var(mm),
+            sd = sd(mm),
+            se = sd(mm)/sqrt(n())) %>%
+  ungroup() %>%
+  dplyr::select(temp_id, resource, life_mm)
+
+length_summ %<>% add_row(temp_id=as.character(25), resource=as.numeric(0.5), life_mm=1.16) #midpoint between 1.0 and 0.1
+
+dataset %<>% left_join(length_summ)
+
+length_summ %<>% mutate(ID = paste(temp_id, resource, sep="_")) %>% dplyr::select(-c(temp_id, resource))
+
+```
+
+
+
+
+```{r}
+mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)
+data %<>% left_join(., mean_length_summ)
+data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
+
+mean_length_summ %<>% rename(fora_mm = "mm_mean")
+dataset %<>% left_join(., mean_length_summ)
+```
+
+# Independent Model
+
+
+$$
+\frac{dR}{dt} = -L^{\gamma} fRS\\
+$$
+
+```{r, m1_num_sol}
+m1_num_sol <- function(t, x, params){
+  R <- x[1]
+  S <- x[2]
+  I <- x[3]
+  Z <- x[4]
+  with(as.list(params),{
+    dR <- -f*R*(S+I)
+    dS <- -u*f*Z*S
+    dI <- u*f*Z*S
+    dZ <- -f*Z*(S+I)
+    res <- c(dR, dS, dI, dZ)
+    list(res)}
+    )
+}
+```
+
+```{r, m1_sim}
+m1_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, h, temp){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/(1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+              u=u)
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(end_data)
+}
+```
+
+```{r, m1_ll}
+m1_ll <- function(f, u, arr_t_f, h){
+  data <- tmp
+  R_end <- as.data.frame(mapply(m1_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                h=h*fora_vol,
+                                temp=data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m1_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                h=h*life_vol,
+                                temp=exp_data$temp))
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+Now we use the optimizer
+```{r, m1_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m1_u_f_fit <- mle2(m1_ll, start=list(u = 0.0001, f=1, arr_t_f=100, h=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=100, h=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f=0, h=0), 
+                   upper=c(u = 1, f = Inf, arr_t_f=Inf, h=Inf))
+end_time <- Sys.time()
+m1_runtime <- end_time - start_time
+m1_runtime
+
+coef(m1_u_f_fit)
+
+#saveRDS(m1_u_f_fit, file = here("mle","update","m1_fit.rds"))
+```
+
+
+# Temperature-Dependent Model
+
+
+$$
+\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\  
+$$
+
+
+```{r, m2_sim}
+m2_sim <-  function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/(1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+              u=u*exp(arr_t_u*(1/ref_t - 1/temp)))
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(end_data)
+}
+```
+
+```{r, m2_ll}
+m2_ll <- function(f, u, arr_t_f, arr_t_u, h){
+  data <- tmp
+  R_end <- as.data.frame(mapply(m2_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                ref_t=ref_t,
+                                h=h*fora_vol,
+                                temp=data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m2_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, u=u, 
+                                length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                ref_t=ref_t,
+                                h=h*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+Now we use the optimizer
+```{r, m2_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m2_u_f_fit <- mle2(m2_ll, start=list(u = 0.00001, f=1,
+                                     arr_t_f = 100,
+                                     arr_t_u = 10,
+                                     h=1), 
+                     control=list(parscale = c(u = 0.00001, f=1,
+                                               arr_t_f = 100,
+                                               arr_t_u = 10,
+                                               h=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f=0, arr_t_u=0, h=0), 
+                   upper=c(u = 1, f = Inf, arr_t_f=Inf, arr_t_u=Inf, h=Inf))
+end_time <- Sys.time()
+m2_runtime <- end_time - start_time
+m2_runtime
+
+coef(m2_u_f_fit)
+
+#saveRDS(m2_u_f_fit, file = here("mle","update","m2_fit.rds"))
+```
+
+
+# Resource-depdendent Model
+
+
+$$
+\frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR}S \\
+$$
+
+
+```{r, m3_sim}
+m3_sim <- function(R, time, f, u, length, gamma, Z, h){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
+              u=u)
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(end_data)
+}
+```
+
+```{r, m3_ll}
+m3_ll <- function(f, u, h, k){
+  data <- tmp
+  R_end <- as.data.frame(mapply(m3_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                h=h*fora_vol))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m3_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                h=h*life_vol))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+Now we use the optimizer
+```{r, m3_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m3_u_f_fit <- mle2(m3_ll, start=list(u = 0.000001, f=1, h=1), 
+                     control=list(parscale = c(u = 0.000001, f=1, h=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, h=0), 
+                   upper=c(u = 1, f = Inf, h=Inf))
+end_time <- Sys.time()
+m3_runtime <- end_time - start_time
+m3_runtime
+
+coef(m3_u_f_fit)
+
+saveRDS(m3_u_f_fit, file = here("mle","update","m3_fit.rds"))
+```
+
+
+```{r, m3a_sim}
+m3a_sim <- function(R, time, f, u, length, gamma, Z, h, resource){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=0.999,
+              I=0,
+              Z=Z)
+  params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
+              u=1/(1+exp(-(u*R))))
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(end_data)
+}
+```
+
+
+```{r, m3b_sim}
+m3b_sim <- function(R, time, f, u, length, gamma, Z, h, k, resource){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=0.999,
+              I=0,
+              Z=Z)
+  params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
+              u=1/(1+exp(-u*exp(k*resource))))
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(end_data)
+}
+```
+
+```{r, m3a_ll}
+m3a_ll <- function(f, u, h){
+  data <- tmp
+  R_end <- as.data.frame(mapply(m3a_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                h=h*fora_vol,
+                                #k=k,
+                                resource = data$resource))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m3a_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                h=h*life_vol,
+                                #k=k,
+                                resource = exp_data$resource))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+Now we use the optimizer
+```{r, m3a_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m3a_u_f_fit <- mle2(m3a_ll, start=list(u = 0.0001, f=1, h=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, h=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = -Inf, f = 0, h=0), 
+                   upper=c(u = Inf, f = Inf, h=Inf))
+end_time <- Sys.time()
+m3a_runtime <- end_time - start_time
+m3a_runtime
+
+coef(m3a_u_f_fit)
+
+#saveRDS(m3a_u_f_fit, file = here("mle","update","m3a_fit.rds"))
+```
+
+
+# Full Model
+
+$$
+\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} S \\
+$$
+
+```{r, m4_sim}
+m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/(1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+              u=u*exp(arr_t_u*(1/ref_t - 1/temp)))
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(end_data)
+}
+```
+
+```{r, m4_ll}
+m4_ll <- function(f, u, arr_t_f, arr_t_u, h){
+  data <- tmp
+  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
+                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
+                                 length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h*fora_vol,
+                                temp = data$temp))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum <- -sum(nll, na.rm = T)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
+                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+}
+```
+
+
+Now we use the optimizer
+```{r, m4_mle, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m4_u_f_fit <- mle2(m4_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1), 
+                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0), 
+                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf))
+end_time <- Sys.time()
+m4_runtime <- end_time - start_time
+m4_runtime
+
+coef(m4_u_f_fit)
+
+saveRDS(m4_u_f_fit, file = here("mle","update","m4_fit.rds"))
+```
+
+
+
+```{r}
+# m1_u_f_fit <- readRDS(file = here("mle", "update", "m1_fit.rds"))
+# m2_u_f_fit <- readRDS(file = here("mle", "update", "m2_fit.rds"))
+# m3_u_f_fit <- readRDS(file = here("mle", "update", "m3_fit.rds"))
+ m4_u_f_fit <- readRDS(file = here("mle", "update", "m4_fit.rds"))
+
+```
+
+
+```{r}
+getAIC <- function(model){
+  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
+}
+```
+
+```{r}
+getAIC(m1_u_f_fit)
+#getAIC(m2_u_f_fit)
+#getAIC(m3_u_f_fit)
+getAIC(m4_u_f_fit)
+```
+
+
+
+
+```{r}
+fora_summ <- data %>% 
+  mutate(ID = treatment_ID) %>%
+  group_by(ID) %>% 
+  summarize(end_r_mean = mean(amt_rem)*fora_vol/1000,
+            end_r_se = (sd(amt_rem)/sqrt(n()))*fora_vol/1000)
+
+prevalence <- readRDS(here("processed_data", "prevalence.rds"))
+prevalence %<>% filter(temp %in% c(15, 20, 25)) %>% filter(species=="D") %>% mutate(ID = paste(temp, resource, sep="_")) %>% dplyr::select(-c(temp, resource, species))
+
+
+viz_summ <- left_join(fora_summ, prevalence)
+viz_summ %<>% left_join(., data_summ)
+viz_summ %<>% left_join(., length_summ)
+```
+
+```{r}
+m1_coef <- coef(m1_u_f_fit)
+m1_f <- as.numeric(m1_coef[1])
+m1_u <- as.numeric(m1_coef[2])
+m1_arr <- as.numeric(m1_coef[3])
+m1_h <- as.numeric(m1_coef[4])
+
+data_summ %<>% mutate(m1_rate = (m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/(1+m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m1_h*resource*fora_vol/1000),
+                      m1_u = m1_u,
+                      m1_beta = m1_rate*m1_u)
+```
+
+
+```{r}
+m2_coef <- coef(m2_u_f_fit)
+m2_f <- as.numeric(m2_coef[1])
+m2_u <- as.numeric(m2_coef[2])
+m2_arr <- as.numeric(m2_coef[3])
+m2_arr_u <- as.numeric(m2_coef[4])
+
+data_summ %<>% mutate(m2_rate = (mm_mean^gamma)*m2_f*exp(m2_arr*(1/ref_t - 1/temp)),
+                      m2_u = m2_u*exp(m2_arr_u*(1/ref_t - 1/temp)),
+                      m2_beta = m2_rate*m2_u)
+```
+
+
+```{r}
+m3_coef <- coef(m3_u_f_fit)
+m3_f <- as.numeric(m3_coef[1])
+m3_u <- as.numeric(m3_coef[2])
+m3_h <- as.numeric(m3_coef[3])
+
+data_summ %<>% mutate(m3_rate = m3_f*(mm_mean^gamma)/(1+m3_f*(mm_mean^gamma)*m3_h*resource*fora_vol/1000),
+                      m3_u = m3_u,
+                      m3_beta = m3_rate*m3_u)
+```
+
+
+```{r}
+m4_coef <- coef(m4_u_f_fit)
+m4_f <- as.numeric(m4_coef[1])
+m4_u <- as.numeric(m4_coef[2])
+m4_arr <- as.numeric(m4_coef[3])
+m4_arr_u <- as.numeric(m4_coef[4])
+m4_h <- as.numeric(m4_coef[5])
+
+data_summ %<>% mutate(m4_rate = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/(1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m4_h*resource*fora_vol/1000),
+                      m4_u = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp)),
+                      m4_beta = m4_rate*m4_u)
+```
+
+
+```{r}
+data_summ %<>% mutate(rate_mean_ml_day=rate_len_mean*60*24,
+                      rate_se_ml_day=rate_len_mean_se*60*24)
+```
+
+
+
+
+```{r}
+viz_summ %<>% mutate(m1_I_end = mapply(m1_sim, 
+                                       R=resource*fora_vol/1000, 
+                                       time=1, 
+                                       f=m1_f/life_vol, 
+                                       u = m1_u, 
+                                       length=life_mm, 
+                                       gamma=gamma, 
+                                       Z=200*life_vol,
+                                       ref_t = ref_t,
+                                       arr_t_f = m1_arr,
+                                       h = m1_h,
+                                       temp = temp))
+
+```
+
+# ```{r}
+# viz_summ %<>% mutate(m2_I_end = mapply(m2_sim, R=resource*fora_vol/1000, 
+#                                        time=1, f=m1_f/life_vol,
+#                                        u = m2_u, 
+#                                        length=life_mm, gamma=gamma, Z=200*life_vol,
+#                                        arr_t_f = m2_arr, 
+#                                        arr_t_u = m2_arr_u,
+#                                        ref_t = ref_t,
+#                                        temp = temp))
+# 
+# ```
+# 
+# 
+# ```{r}
+# viz_summ %<>% mutate(m3_I_end = mapply(m3_sim, 
+#                                        R=resource*fora_vol/1000, 
+#                                        time=1, 
+#                                        f=m3_f/life_vol, 
+#                                        u = m3_u, 
+#                                        length=life_mm, 
+#                                        gamma=gamma, 
+#                                        Z=200*life_vol,
+#                                        h = m3_h))
+# ```
+
+```{r}
+viz_summ %<>% mutate(m4_I_end = mapply(m4_sim, 
+                                       R=resource*fora_vol/1000, 
+                                       time=1, 
+                                       f=m4_f/life_vol, 
+                                       u = m4_u, 
+                                       length=life_mm, 
+                                       gamma=gamma, 
+                                       Z=200*life_vol,
+                                       ref_t = ref_t,
+                                       arr_t_f = m4_arr,
+                                       arr_t_u = m4_arr_u,
+                                       h = m4_h,
+                                       temp = temp))
+```
+
+```{r}
+viz_summ %>% ggplot(.,aes(x=resource, y=m1_I_end, color=as.factor(temp))) + 
+  geom_point(size = 3, shape=2) +
+  new_scale_color() + 
+  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
+  labs(title="independent model")
+
+# viz_summ %>% ggplot(.,aes(x=resource, y=m2_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+#   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="temperature-dependent model")
+# 
+# viz_summ %>% ggplot(.,aes(x=resource, y=m3_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+#   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
+
+viz_summ %>% ggplot(.,aes(x=resource, y=m4_I_end, color=as.factor(temp))) + 
+  geom_point(size = 3, shape=2) +
+  new_scale_color() + 
+  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
+  labs(title="full model")
+
+
+```
+
+```{r}
+data_summ %>% ggplot(.,aes(x=resource, y=m1_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="independent model")
+
+# data_summ %>% ggplot(.,aes(x=resource, y=m2_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+#   new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="temperature-dependent model")
+# 
+# data_summ %>% ggplot(.,aes(x=resource, y=m3_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+#   new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="resource_dependent model")
+
+data_summ %>% ggplot(.,aes(x=resource, y=m4_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="full model")
+
+```
+
+
+```{r, eval=F}
+data_summ %>% ggplot(.,aes(x=resource, y=m1_u, color=as.factor(temp))) + geom_point()
+# data_summ %>% ggplot(.,aes(x=resource, y=m2_u, color=as.factor(temp))) + geom_point()
+# data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=m4_u, color=as.factor(temp))) + geom_point()
+```
+
+
+
+```{r, eval=F}
+data_summ %>% ggplot(.,aes(x=resource, y=m1_beta, color=as.factor(temp))) + geom_point()
+# data_summ %>% ggplot(.,aes(x=resource, y=m2_beta, color=as.factor(temp))) + geom_point()
+# data_summ %>% ggplot(.,aes(x=resource, y=m3_beta, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=m4_beta, color=as.factor(temp))) + geom_point()
+
+```
+
+
+
+
