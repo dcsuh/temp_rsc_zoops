@@ -636,10 +636,10 @@ getAIC <- function(model){
 ```
 
 ```{r}
-getAIC(m1_u_f_fit)
+getAIC(m1_u_f_fit) #constant u
 #getAIC(m2_u_f_fit)
 #getAIC(m3_u_f_fit)
-getAIC(m4_u_f_fit)
+getAIC(m4_u_f_fit) #temperature-dependent u
 ```
 
 
