@@ -143,36 +143,104 @@ m6c_ll <- function(f, arr_t, h, w){
 Finally, we use our optimizer to get the maximum likelihood estimate for all parameters
 We'll include the bootstrapping here
 ```{r}
-iterations <- 1
-
-m6c_f_boot <- list()
-
-start_time <- Sys.time()
-for(i in 1:iterations){
-    boot_data <- data %>% 
-      group_by(treatment_ID) %>%
-      slice_sample(., prop=1, replace=T) %>%
-      ungroup()
+get_fits <- function(iters){
+  
+  iterations <- iters
+  
+  m6c_f_boot <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
       
-    tmp <- boot_data
-    
-    m6c_f_boot[i] <- mle2(m6c_ll,
-                          skip.hessian = T,
-                          start=list(f=10, arr_t=50, h=0.01, w=0.1),
-                          method = "L-BFGS-B",
-                          lower = c(f=0, arr_t=0, h=0, w=-Inf),
-                          upper = c(Inf, Inf, Inf, Inf),
-                          control=list(parscale=c(f=10, arr_t=50, h=0.01, w=0.1), maxit=10000))
-    print(i)
+      m6c_f_boot[[i]] <- mle2(m6c_ll,
+                            skip.hessian = T,
+                            start=list(f=18, arr_t=33, h=17, w=0.1),
+                            method = "L-BFGS-B",
+                            lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                            upper = c(Inf, Inf, Inf, Inf),
+                            control=list(parscale=c(f=18, arr_t=33, h=17, w=0.1), maxit=10000))
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+  
+  return(m6c_f_boot)
 }
-end_time <- Sys.time()
+```
 
-end_time-start_time
-#42 minutes to run about 4 iterations. need to parallelize 
+```{r}
+m6c_fits_a <- get_fits(50)
+saveRDS(m6c_fits_a, file = here("mle", "m6c_fits_a.rds"))
+
+m6c_fits_b <- get_fits(50)
+saveRDS(m6c_fits_b, file = here("mle", "m6c_fits_b.rds"))
+
+m6c_fits_c <- get_fits(50)
+saveRDS(m6c_fits_c, file = here("mle", "m6c_fits_c.rds"))
+
+m6c_fits_d <- get_fits(50)
+saveRDS(m6c_fits_d, file = here("mle", "m6c_fits_d.rds"))
+
+m6c_fits_e <- get_fits(50)
+saveRDS(m6c_fits_e, file = here("mle", "m6c_fits_e.rds"))
+
+m6c_fits_f <- get_fits(50)
+saveRDS(m6c_fits_f, file = here("mle", "m6c_fits_f.rds"))
+
+m6c_fits_g <- get_fits(50)
+saveRDS(m6c_fits_g, file = here("mle", "m6c_fits_g.rds"))
+
+m6c_fits_h <- get_fits(50)
+saveRDS(m6c_fits_h, file = here("mle", "m6c_fits_h.rds"))
+
+m6c_fits_i <- get_fits(50)
+saveRDS(m6c_fits_i, file = here("mle", "m6c_fits_i.rds"))
+
+m6c_fits_j <- get_fits(50)
+saveRDS(m6c_fits_j, file = here("mle", "m6c_fits_j.rds"))
+
+```
+
+```{r}
+m6c_fits_1 <- get_fits(100)
+saveRDS(m6c_fits_1, file = here("mle", "m6c_fits_1.rds"))
+
+m6c_fits_2 <- get_fits(100)
+saveRDS(m6c_fits_2, file = here("mle", "m6c_fits_2.rds"))
+
+m6c_fits_3 <- get_fits(100)
+saveRDS(m6c_fits_3, file = here("mle", "m6c_fits_3.rds"))
+
+m6c_fits_4 <- get_fits(100)
+saveRDS(m6c_fits_4, file = here("mle", "m6c_fits_4.rds"))
+
+m6c_fits_5 <- get_fits(100)
+saveRDS(m6c_fits_5, file = here("mle", "m6c_fits_5.rds"))
+
+```
 
 
+
+
+
+```{r}
 saveRDS(m6c_f_boot, file = here("mle","m6c_f_boot.rds"))
 ```
+
+```{r}
+saveRDS(m6c_fits_a, file = here("mle", "m6c_fits_a.rds"))
+```
+
+
 
 
 
@@ -187,7 +255,7 @@ start_time <- Sys.time()
 
 tmp <- data
 
-m6c_f_boot_par <- foreach(1:iterations, .combine = "rbind", .packages = c("deSolve", "bbmle")) %dopar% {
+m6c_f_boot_par <- foreach(1:iterations) %dopar% {
 
     tmp <- data %>% 
       group_by(treatment_ID) %>%
@@ -303,8 +371,6 @@ getDoParWorkers()
 iterations <- 10
 
 start_time <- Sys.time()
-
-tmp <- data
 
 m0_f_boot_par_ <- foreach(1:iterations) %dopar% {
     
