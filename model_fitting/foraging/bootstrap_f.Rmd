@@ -142,6 +142,318 @@ m6c_ll <- function(f, arr_t, h, w){
 
 Finally, we use our optimizer to get the maximum likelihood estimate for all parameters
 We'll include the bootstrapping here
+
+```{r, 00}
+
+  iterations <- 2
+  
+  m6c_f_boot_00 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      m6c_f_boot_00[[i]] <- mle2(m6c_ll,
+                            skip.hessian = T,
+                            start=list(f=20, arr_t=30, h=15, w=0.1),
+                            method = "L-BFGS-B",
+                            lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                            upper = c(Inf, Inf, Inf, Inf),
+                            control=list(parscale=c(f=10, arr_t=30, h=15, w=0.1), maxit=10000))
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+```{r, 01}
+
+  iterations <- 100
+  
+  m6c_f_boot_01 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      m6c_f_boot_01[[i]] <- mle2(m6c_ll,
+                            skip.hessian = T,
+                            start=list(f=20, arr_t=30, h=15, w=0.1),
+                            method = "L-BFGS-B",
+                            lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                            upper = c(Inf, Inf, Inf, Inf),
+                            control=list(parscale=c(f=20, arr_t=30, h=15, w=0.1), maxit=10000))
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+```{r, 02}
+
+  iterations <- 100
+  
+  m6c_f_boot_02 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      m6c_f_boot_02[[i]] <- mle2(m6c_ll,
+                            skip.hessian = T,
+                            start=list(f=20, arr_t=30, h=15, w=0.1),
+                            method = "L-BFGS-B",
+                            lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                            upper = c(Inf, Inf, Inf, Inf),
+                            control=list(parscale=c(f=20, arr_t=30, h=15, w=0.1), maxit=10000))
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+```{r, 03}
+
+  iterations <- 100
+  
+  m6c_f_boot_03 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      m6c_f_boot_03[[i]] <- mle2(m6c_ll,
+                            skip.hessian = T,
+                            start=list(f=20, arr_t=30, h=15, w=0.1),
+                            method = "L-BFGS-B",
+                            lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                            upper = c(Inf, Inf, Inf, Inf),
+                            control=list(parscale=c(f=20, arr_t=30, h=15, w=0.1), maxit=10000))
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+```{r, 04}
+
+  iterations <- 10
+  
+  m6c_f_boot_04 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      m6c_f_boot_04[[i]] <- mle2(m6c_ll,
+                            skip.hessian = T,
+                            start=list(f=20, arr_t=30, h=15, w=0.1),
+                            method = "L-BFGS-B",
+                            lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                            upper = c(Inf, Inf, Inf, Inf),
+                            control=list(parscale=c(f=20, arr_t=30, h=15, w=0.1), maxit=10000))
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+```{r, 05}
+
+  iterations <- 10
+  
+  m6c_f_boot_05 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      m6c_f_boot_05[[i]] <- mle2(m6c_ll,
+                            skip.hessian = T,
+                            start=list(f=20, arr_t=30, h=15, w=0.1),
+                            method = "L-BFGS-B",
+                            lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                            upper = c(Inf, Inf, Inf, Inf),
+                            control=list(parscale=c(f=20, arr_t=30, h=15, w=0.1), maxit=10000))
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+
+262 iterations run by 4/8/24
+
+bind lists
+```{r}
+length(m6c_f_boot_00)
+length(m6c_f_boot_01)
+length(m6c_f_boot_02)
+length(m6c_f_boot_03)
+length(m6c_f_boot_04)
+length(m6c_f_boot_05)
+
+m6c_f_boot <- c(m6c_f_boot_00,
+                m6c_f_boot_01,
+                m6c_f_boot_02,
+                m6c_f_boot_03,
+                m6c_f_boot_04,
+                m6c_f_boot_05)
+
+saveRDS(m6c_f_boot, file = here("mle", "m6c_f_boot_full.rds"))
+```
+
+Add to older iterations
+```{r}
+#m6c_f_boot_read <- readRDS(file = here("mle", "m6c_f_boot_full.rds"))
+#m6c_f_boot <- c(m6c_f_boot, m6c_f_boot_read)
+```
+
+
+```{r}
+tib_length <- length(m6c_f_boot)
+
+m6c_boot_coefs <- tibble(f = rep_len(0, tib_length),
+                         arr = rep_len(0, tib_length),
+                         h = rep_len(0, tib_length),
+                         w = rep_len(0, tib_length))
+
+
+for(i in 1:length(m6c_f_boot)){
+  if(m6c_f_boot[[i]]@details[4] == 52){
+    print(paste(i, "convergence_failure", sep="_"))
+    m6c_boot_coefs$f[i] <- NA
+    m6c_boot_coefs$arr[i] <- NA
+    m6c_boot_coefs$h[i] <- NA
+    m6c_boot_coefs$w[i] <- NA
+  }
+  else if(m6c_f_boot[[i]]@min == 0){
+    print(paste(i, "zero_ll", sep="_"))
+    m6c_boot_coefs$f[i] <- NA
+    m6c_boot_coefs$arr[i] <- NA
+    m6c_boot_coefs$h[i] <- NA
+    m6c_boot_coefs$w[i] <- NA
+  }
+  else{
+  boot_coef <- coef(m6c_f_boot[[i]])
+  m6c_boot_coefs$f[i] <- as.numeric(boot_coef[1])
+  m6c_boot_coefs$arr[i] <- as.numeric(boot_coef[2])
+  m6c_boot_coefs$h[i] <- as.numeric(boot_coef[3])
+  m6c_boot_coefs$w[i] <- as.numeric(boot_coef[4])
+  }
+}
+```
+
+```{r}
+m6c_boot_coefs %<>% drop_na()
+
+m6c_boot_coefs %>% ggplot(., aes(x = f)) + geom_histogram()
+m6c_boot_coefs %>% ggplot(., aes(x = arr)) + geom_histogram()
+m6c_boot_coefs %>% ggplot(., aes(x = h)) + geom_histogram()
+m6c_boot_coefs %>% ggplot(., aes(x = w)) + geom_histogram()
+
+m6c_boot_coefs %<>% mutate()
+```
+
+quantiles
+```{r}
+m6c_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
+                        f = NA,
+                        arr = NA,
+                        h = NA,
+                        w = NA)
+
+m6c_quantiles$f[1] <- coef(m6c)[1]
+m6c_quantiles$f[2] <- mean(m6c_boot_coefs$f)
+m6c_quantiles$f[3] <- quantile(m6c_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[1]
+m6c_quantiles$f[4] <- quantile(m6c_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[2]
+
+m6c_quantiles$arr[1] <- coef(m6c)[2]
+m6c_quantiles$arr[2] <- mean(m6c_boot_coefs$arr)
+m6c_quantiles$arr[3] <- quantile(m6c_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[1]
+m6c_quantiles$arr[4] <- quantile(m6c_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[2]
+
+m6c_quantiles$h[1] <- coef(m6c)[3]
+m6c_quantiles$h[2] <- mean(m6c_boot_coefs$h)
+m6c_quantiles$h[3] <- quantile(m6c_boot_coefs$h, probs=seq(0.025, 0.975, 0.95))[1]
+m6c_quantiles$h[4] <- quantile(m6c_boot_coefs$h, probs=seq(0.025, 0.975, 0.95))[2]
+
+m6c_quantiles$w[1] <- coef(m6c)[4]
+m6c_quantiles$w[2] <- mean(m6c_boot_coefs$w)
+m6c_quantiles$w[3] <- quantile(m6c_boot_coefs$w, probs=seq(0.025, 0.975, 0.95))[1]
+m6c_quantiles$w[4] <- quantile(m6c_boot_coefs$w, probs=seq(0.025, 0.975, 0.95))[2]
+```
+
+```{r}
+saveRDS(m6c_quantiles, file = here("mle", "m6c_quantiles.rds"))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 ```{r}
 get_fits <- function(iters){
   
@@ -157,14 +469,14 @@ get_fits <- function(iters){
         ungroup()
         
       tmp <- boot_data
-      
+
       m6c_f_boot[[i]] <- mle2(m6c_ll,
                             skip.hessian = T,
-                            start=list(f=18, arr_t=33, h=17, w=0.1),
+                            start=list(f=10, arr_t=50, h=1, w=0.1),
                             method = "L-BFGS-B",
                             lower = c(f=0, arr_t=0, h=0, w=-Inf),
                             upper = c(Inf, Inf, Inf, Inf),
-                            control=list(parscale=c(f=18, arr_t=33, h=17, w=0.1), maxit=10000))
+                            control=list(parscale=c(f=10, arr_t=50, h=1, w=0.1), maxit=10000))
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -176,6 +488,13 @@ get_fits <- function(iters){
   return(m6c_f_boot)
 }
 ```
+
+
+```{r}
+asdf <- get_fits(3)
+```
+
+
 
 ```{r}
 m6c_fits_a <- get_fits(50)
@@ -228,6 +547,10 @@ saveRDS(m6c_fits_5, file = here("mle", "m6c_fits_5.rds"))
 
 ```
 
+
+```{r}
+head(m6c_fits_b)
+```
 
 
 
@@ -336,7 +659,9 @@ m0_ll <- function(f){
 
 
 ```{r}
-iterations <- 10
+get_m0_fits <- function(iters){
+
+iterations <- iters
 
 m0_f_fit_boot <- list()
 
@@ -358,11 +683,19 @@ for(i in 1:iterations){
 end_time <- Sys.time()
 
 end_time-start_time
-
+return(m0_f_fit_boot)
+}
 
 
 #saveRDS(m7c_f_fit, file = here("mle","m7c_f_boot.rds"))
 ```
+
+```{r}
+jkl <- get_m0_fits(5)
+```
+
+
+
 
 ```{r}
 registerDoParallel()
