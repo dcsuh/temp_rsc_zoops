@@ -145,7 +145,7 @@ We'll include the bootstrapping here
 
 ```{r, 00}
 
-  iterations <- 2
+  iterations <- 10
   
   m6c_f_boot_00 <- list()
   
@@ -177,7 +177,7 @@ We'll include the bootstrapping here
 
 ```{r, 01}
 
-  iterations <- 100
+  iterations <- 10
   
   m6c_f_boot_01 <- list()
   
@@ -209,7 +209,7 @@ We'll include the bootstrapping here
 
 ```{r, 02}
 
-  iterations <- 100
+  iterations <- 10
   
   m6c_f_boot_02 <- list()
   
@@ -241,7 +241,7 @@ We'll include the bootstrapping here
 
 ```{r, 03}
 
-  iterations <- 100
+  iterations <- 10
   
   m6c_f_boot_03 <- list()
   
@@ -353,14 +353,14 @@ m6c_f_boot <- c(m6c_f_boot_00,
                 m6c_f_boot_03,
                 m6c_f_boot_04,
                 m6c_f_boot_05)
-
-saveRDS(m6c_f_boot, file = here("mle", "m6c_f_boot_full.rds"))
 ```
 
 Add to older iterations
 ```{r}
 #m6c_f_boot_read <- readRDS(file = here("mle", "m6c_f_boot_full.rds"))
 #m6c_f_boot <- c(m6c_f_boot, m6c_f_boot_read)
+
+#saveRDS(m6c_f_boot, file = here("mle", "m6c_f_boot_full.rds"))
 ```
 
 
@@ -406,7 +406,6 @@ m6c_boot_coefs %>% ggplot(., aes(x = arr)) + geom_histogram()
 m6c_boot_coefs %>% ggplot(., aes(x = h)) + geom_histogram()
 m6c_boot_coefs %>% ggplot(., aes(x = w)) + geom_histogram()
 
-m6c_boot_coefs %<>% mutate()
 ```
 
 quantiles
@@ -444,7 +443,7 @@ saveRDS(m6c_quantiles, file = here("mle", "m6c_quantiles.rds"))
 
 
 
-
+Everything below here is still being workshopped
 
 
 
