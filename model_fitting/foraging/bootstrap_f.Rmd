@@ -338,6 +338,8 @@ We'll include the bootstrapping here
 
 262 iterations run by 4/8/24
 
+60 iterations run later on 4/8/24
+
 bind lists
 ```{r}
 length(m6c_f_boot_00)
@@ -357,11 +359,17 @@ m6c_f_boot <- c(m6c_f_boot_00,
 
 Add to older iterations
 ```{r}
-#m6c_f_boot_read <- readRDS(file = here("mle", "m6c_f_boot_full.rds"))
-#m6c_f_boot <- c(m6c_f_boot, m6c_f_boot_read)
-
-#saveRDS(m6c_f_boot, file = here("mle", "m6c_f_boot_full.rds"))
+# m6c_f_boot_read <- readRDS(file = here("mle", "m6c_f_boot_full.rds"))
+# m6c_f_boot <- c(m6c_f_boot, m6c_f_boot_read)
+# 
+# saveRDS(m6c_f_boot, file = here("mle", "m6c_f_boot_full.rds"))
 ```
+
+
+```{r}
+m6c_f_boot <- readRDS(file = here("mle", "m6c_f_boot_full.rds"))
+```
+
 
 
 ```{r}

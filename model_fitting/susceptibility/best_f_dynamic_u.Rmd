@@ -115,6 +115,28 @@ dataset %<>% left_join(., mean_length_summ)
 ```
 
 
+```{r}
+m6c_quantiles <- readRDS(file = here("mle", "m6c_quantiles.rds"))
+
+f_est <- m6c_quantiles$f[1]
+f_lower <- m6c_quantiles$f[3]
+f_upper <- m6c_quantiles$f[4]
+
+arr_f_est <- m6c_quantiles$arr[1]
+arr_f_lower <- m6c_quantiles$arr[3]
+arr_f_upper <- m6c_quantiles$arr[4]
+
+h_est <- m6c_quantiles$h[1]
+h_lower <- m6c_quantiles$h[3]
+h_upper <- m6c_quantiles$h[4]
+
+w_est <- m6c_quantiles$w[1]
+w_lower <- m6c_quantiles$w[3]
+w_upper <- m6c_quantiles$w[4]
+```
+
+
+
 # Independent Model
 
 This model assumes constant f and constant u for all treatments
@@ -125,7 +147,7 @@ $$
 
 We end up using this system of equations for everything and modify it by modifying how parameters are written out in the solver chunk.
 
-```{r, m1_num_sol}
+```{r}
 m1_num_sol <- function(t, x, params){
   R <- x[1]
   S <- x[2]
@@ -142,15 +164,18 @@ m1_num_sol <- function(t, x, params){
 }
 ```
 
-```{r, m1_sim}
-m1_sim <- function(R, time, f, u, length, gamma, Z){
+```{r}
+m1_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=f*(length^gamma),
+  
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
               u=u)
+  
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   if(Z == 0) {
   end_data <- slice_max(output, time)[,2]
@@ -166,13 +191,23 @@ m1_sim <- function(R, time, f, u, length, gamma, Z){
 ```
 
 ```{r, m1_ll}
-m1_ll <- function(f, u){
+m1_ll <- function(f, u, arr_t_f, h, w){
 
   exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
 
   
-  I_end <- as.data.frame(mapply(m1_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol))
+  I_end <- as.data.frame(mapply(m1_sim, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f/life_vol, 
+                                u=u, 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t = ref_t,
+                                arr_t_f = arr_t_f,
+                                h = (h + exp_data$temp*w)*life_vol,
+                                temp=exp_data$temp))
 
   colnames(I_end) <- "I_end"
   
@@ -185,25 +220,106 @@ m1_ll <- function(f, u){
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
   nll_sum <- -sum(exp_data$ll)
+  
+  print(f)
+  print(u)
+  
   return(nll_sum)
 }
 ```
 
 
-```{r, m1_mle, eval=F}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m1_u_f_fit <- mle2(m1_ll, start=list(u = 0.0001, f=1), 
-                     control=list(parscale = c(u = 0.0001, f=1)),
-                     skip.hessian=F, method="L-BFGS-B", lower=c(u = 0, f = 0), upper=c(u = 1, f = Inf))
+m1_u_fit <- mle2(m1_ll, start=list(u = 0.001, 
+                                   f=f_est, 
+                                   arr_t_f=arr_f_est,
+                                   h=h_est,
+                                   w=w_est), 
+                     control=list(parscale = c(u = 0.001, 
+                                               f=f_est, 
+                                               arr_t_f=arr_f_est,
+                                               h=h_est,
+                                               w=w_est)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, 
+                         f = f_lower,
+                         arr_t_f = arr_f_lower,
+                         h = h_lower,
+                         w = w_lower), 
+                 upper=c(u = 1, 
+                         f = f_upper,
+                         arr_t_f = arr_f_upper,
+                         h = h_upper,
+                         w = w_upper))
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
 m1_runtime
 
-coef(m1_u_f_fit)
+coef(m1_u_fit)
 
-saveRDS(m1_u_f_fit, file = here("mle","update","m1_fit.rds"))
+saveRDS(m1_u_fit, file = here("mle","susc","m1_u_fit.rds"))
 ```
+
+Always results in convergence failure
+
+```{r, m1_ll}
+m1_ll <- function(u){
+
+  exp_data <- dataset %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m1_sim, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f_est/life_vol, 
+                                u=u, 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t = ref_t,
+                                arr_t_f = arr_f_est,
+                                h = (h_est + exp_data$temp*w_est)*life_vol,
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- -sum(exp_data$ll)
+  
+  # print(u)
+  
+  return(nll_sum)
+}
+```
+
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m1_u_fit <- mle2(m1_ll, start=list(u = 0.0001), 
+                     control=list(parscale = c(u = 0.0001)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0), 
+                 upper=c(u = 1))
+end_time <- Sys.time()
+m1_runtime <- end_time - start_time
+m1_runtime
+
+coef(m1_u_fit)
+
+saveRDS(m1_u_fit, file = here("mle","susc","m1_u_fit.rds"))
+```
+
+
 
 
 # Temperature-Dependent Model
@@ -216,14 +332,15 @@ $$
 $$
 
 
-```{r, m2_sim}
-m2_sim <- function(R, time, f, u, length, gamma, Z, arr_t_f, arr_t_u, ref_t, temp){
+```{r}
+m2_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=f*(length^gamma)*exp(arr_t_f*(1/ref_t - 1/temp)),
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
               u=u*exp(arr_t_u*(1/ref_t - 1/temp)))
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   if(Z == 0) {
@@ -239,18 +356,24 @@ m2_sim <- function(R, time, f, u, length, gamma, Z, arr_t_f, arr_t_u, ref_t, tem
 }
 ```
 
-```{r, m2_ll}
-m2_ll <- function(f, u, arr_t_f, arr_t_u){
-  
+```{r}
+m2_ll <- function(u, arr_t_u){
+
   exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
 
   
-  I_end <- as.data.frame(mapply(m2_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, u=u, 
-                                length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                ref_t=ref_t,
+  I_end <- as.data.frame(mapply(m2_sim, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f_est/life_vol, 
+                                u=u, 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t = ref_t,
+                                arr_t_f = arr_f_est,
+                                arr_t_u = arr_t_u,
+                                h = (h_est + exp_data$temp*w_est)*life_vol,
                                 temp=exp_data$temp))
 
   colnames(I_end) <- "I_end"
@@ -264,52 +387,50 @@ m2_ll <- function(f, u, arr_t_f, arr_t_u){
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
   nll_sum <- -sum(exp_data$ll)
+  
+  # print(u)
+  # print(arr_t_u)
+  
   return(nll_sum)
 }
 ```
 
 
-Now we use the optimizer
-```{r, m2_mle, eval=F}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m2_u_f_fit <- mle2(m2_ll, start=list(u = 0.00001, f=1,
-                                     arr_t_f = 10,
-                                     arr_t_u = 10), 
-                     control=list(parscale = c(u = 0.00001, f=1,
-                                               arr_t_f = 10,
-                                               arr_t_u = 10)),
+m2_u_fit <- mle2(m2_ll, start=list(u = 0.0001,
+                                   arr_t_u = 10), 
+                     control=list(parscale = c(u = 0.0001,
+                                   arr_t_u = 10)),
                      skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f=0, arr_t_u=0), 
-                   upper=c(u = 1, f = Inf, arr_t_f=Inf, arr_t_u=Inf))
+                 lower=c(u = 0, arr_t_u = 0), 
+                 upper=c(u = 1, arr_t_u = Inf))
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
 m2_runtime
 
-coef(m2_u_f_fit)
+coef(m2_u_fit)
 
-saveRDS(m2_u_f_fit, file = here("mle","update","m2_fit.rds"))
+saveRDS(m2_u_fit, file = here("mle","susc","m2_u_fit.rds"))
 ```
 
 
-# Resource-depdendent Model
+# Resource-dependent Model
 
-This model includes a handling time function for f but no modification to u.
+u per resource and u with exponential function for resource
 
+u per resource treatment
 
-$$
-\frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR}S \\
-$$
-
-
-```{r, m3_sim}
-m3_sim <- function(R, time, f, u, length, gamma, Z, h){
+```{r}
+m3_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, h, temp){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
               u=u)
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   if(Z == 0) {
@@ -325,76 +446,31 @@ m3_sim <- function(R, time, f, u, length, gamma, Z, h){
 }
 ```
 
-```{r, m3_ll}
-m3_ll <- function(f, u, h, k){
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+```{r}
+m3u_ll <- function(u_low, u_med, u_high){
 
   
-  I_end <- as.data.frame(mapply(m3_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                h=h*life_vol))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-Now we use the optimizer
-```{r, m3_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m3_u_f_fit <- mle2(m3_ll, start=list(u = 0.000001, f=1, h=1), 
-                     control=list(parscale = c(u = 0.000001, f=1, h=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, h=0), 
-                   upper=c(u = 1, f = Inf, h=Inf))
-end_time <- Sys.time()
-m3_runtime <- end_time - start_time
-m3_runtime
-
-coef(m3_u_f_fit)
-
-saveRDS(m3_u_f_fit, file = here("mle","update","m3_fit.rds"))
-```
-
-
-Redo model 3 with u per resource treatment
-
-```{r, m3u_ll}
-m3u_ll <- function(f, u_low, u_med, u_high, h, k){
-
-  
-  u_nll <- 0  
-  u_vec <- c(f, u_low, u_med, u_high, h, k)
+  nll_sum <- 0  
+  u_nll <- 0
+  u_vec <- c(f, u_low, u_med, u_high)
   for(j in 1:length(resource_IDs)){  
     
       exp_data <- dataset %>% filter(exposed==TRUE)
       exp_data %<>% filter(treatment == treatment_IDs[j])
       
       
-      
       I_end <- as.data.frame(mapply(m3_sim, 
                                     R=exp_data$resource*life_vol/1000, 
                                     time=exp_data$time, 
-                                    f=f/life_vol, 
+                                    f=f_est/life_vol, 
                                     u=u_vec[j], 
                                     length = exp_data$life_mm, 
                                     gamma=gamma, 
                                     Z=spore_conc*life_vol,
-                                    h=h*life_vol))
+                                    ref_t = ref_t,
+                                    arr_t_f = arr_f_est,
+                                    h = (h_est + exp_data$temp*w_est)*life_vol,
+                                    temp=exp_data$temp))
     
       colnames(I_end) <- "I_end"
       
@@ -409,7 +485,7 @@ m3u_ll <- function(f, u_low, u_med, u_high, h, k){
       u_nll <- u_nll + -sum(exp_data$ll)
   }
   
-    
+  print(paste(u_low, u_med, u_high, sep ="_"))  
 
   nll_sum <- nll_sum + u_nll
   return(nll_sum)
@@ -418,96 +494,57 @@ m3u_ll <- function(f, u_low, u_med, u_high, h, k){
 
 
 Now we use the optimizer
-```{r, m3u_mle, eval=F}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 
-u_vec <- c(0.001,#pass
-           0.001,#
-           0.001)#
+u_vec <- c(0.0001,#pass
+           0.0001,#pass
+           0.0001)#not working
 
 m3_u_per_fit <- mle2(m3u_ll, start=list(u_low = u_vec[1],
                                        u_med = u_vec[2],
-                                       u_high = u_vec[3],
-                                       f=36, h=6), 
+                                       u_high = u_vec[3]), 
                      control=list(parscale = c(u_low = u_vec[1],
                                        u_med = u_vec[2],
-                                       u_high = u_vec[3], 
-                                       f=36, h=6)),
+                                       u_high = u_vec[3])),
                      skip.hessian=F, method="L-BFGS-B", 
                    lower=c(u_low = 0,
                            u_med = 0,
-                           u_high = 0,
-                           f = 0, h=0), 
+                           u_high = 0), 
                    upper=c(u_low = 1,
                            u_med = 1,
-                           u_high = 1,
-                           f = Inf, h=Inf))
+                           u_high = 1))
 end_time <- Sys.time()
 m3u_runtime <- end_time - start_time
 m3u_runtime
 
 coef(m3_u_per_fit)
 
-#saveRDS(m3u_u_f_fit, file = here("mle","update","m3u_fit.rds"))
+saveRDS(m3_u_per_fit, file = here("mle","susc","m3_u_per_fit.rds"))
 ```
 
 
 
 
-This version uses an expoentnial function to relate u by resources
+```{r}
+m3_rho_ll <- function(u, rho){
 
-```{r, m3b_sim}
-m3b_sim <- function(R, time, f, u, length, gamma, Z, h, k, resource){
-  times <- seq(0, time, by=0.01)
-  xstart <- c(R=R,
-              S=0.999,
-              I=0,
-              Z=Z)
-  params <- c(f=f*(length^gamma)/(1+f*(length^gamma)*h*R),
-              u=1/(1+exp(-u*exp(k*resource))))
-  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
-  if(Z == 0) {
-  end_data <- slice_max(output, time)[,2]
-  }
-  else {
-  end_data <- slice_max(output, time)[,4]  
-  }
-  
-  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
-  #probably unnecessary
-  return(end_data)
-}
-```
-
-```{r, m3a_ll}
-m3a_ll <- function(f, u, h){
-  data <- tmp
-  R_end <- as.data.frame(mapply(m3a_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                h=h*fora_vol,
-                                #k=k,
-                                resource = data$resource))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
   exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
 
   
-  I_end <- as.data.frame(mapply(m3a_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                h=h*life_vol,
-                                #k=k,
-                                resource = exp_data$resource))
+  I_end <- as.data.frame(mapply(m3_sim, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f_est/life_vol, 
+                                u=u*exp(exp_data$resource*rho), 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t = ref_t,
+                                arr_t_f = arr_f_est,
+                                h = (h_est + exp_data$temp*w_est)*life_vol,
+                                temp=exp_data$temp))
 
   colnames(I_end) <- "I_end"
   
@@ -519,28 +556,33 @@ m3a_ll <- function(f, u, h){
   
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
+  nll_sum <- -sum(exp_data$ll)
+  
+  print(u)
+  print(rho)
+  
   return(nll_sum)
 }
 ```
 
 
-Now we use the optimizer
-```{r, m3a_mle, eval=F}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m3a_u_f_fit <- mle2(m3a_ll, start=list(u = 0.0001, f=1, h=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, h=1)),
+m3_u_exp_fit <- mle2(m3_rho_ll, start=list(u = 0.0001,
+                                   rho = 0.001), 
+                     control=list(parscale = c(u = 0.0001,
+                                   rho = 0.001)),
                      skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = -Inf, f = 0, h=0), 
-                   upper=c(u = Inf, f = Inf, h=Inf))
+                 lower=c(u = 0, rho = -Inf), 
+                 upper=c(u = 1, rho = Inf))
 end_time <- Sys.time()
-m3a_runtime <- end_time - start_time
-m3a_runtime
+m3_runtime <- end_time - start_time
+m3_runtime
 
-coef(m3a_u_f_fit)
+coef(m3_u_exp_fit)
 
-#saveRDS(m3a_u_f_fit, file = here("mle","update","m3a_fit.rds"))
+saveRDS(m3_u_exp_fit, file = here("mle","susc","m3_u_exp_fit.rds"))
 ```
 
 
@@ -552,14 +594,15 @@ $$
 \frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} S \\
 $$
 
-```{r, m4_sim}
+```{r}
 m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/(1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
               u=u*exp(arr_t_u*(1/ref_t - 1/temp)))
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   if(Z == 0) {
@@ -575,37 +618,24 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
 }
 ```
 
-```{r, m4_ll}
-m4_ll <- function(f, u, arr_t_f, arr_t_u, h){
-  data <- tmp
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=h*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
+```{r}
+m4_ll <- function(u, arr_t_u, rho){
+
   exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
 
   
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=h*life_vol,
+  I_end <- as.data.frame(mapply(m4_sim, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f_est/life_vol, 
+                                u=u*exp(exp_data$resource*rho), 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t = ref_t,
+                                arr_t_f = arr_f_est,
+                                arr_t_u = arr_t_u,
+                                h = (h_est + exp_data$temp*w_est)*life_vol,
                                 temp=exp_data$temp))
 
   colnames(I_end) <- "I_end"
@@ -618,439 +648,59 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h){
   
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
+  nll_sum <- -sum(exp_data$ll)
+  
+  print(u)
+  print(arr_t_u)
+  print(rho)
+  
   return(nll_sum)
 }
 ```
 
 
-Now we use the optimizer
-```{r, m4_mle, eval=F}
+
+
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m4_u_f_fit <- mle2(m4_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1)),
+m4_u_fit <- mle2(m4_ll, start=list(u = 0.0001, 
+                                     arr_t_u=10, 
+                                     rho=0.01), 
+                     control=list(parscale = c(u = 0.0001, 
+                                     arr_t_u=10, 
+                                     rho=0.01)),
                      skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf))
+                   lower=c(u = 0, 
+                           arr_t_f = 0, 
+                           rho = -Inf), 
+                   upper=c(u = Inf, 
+                           arr_t_f = Inf, 
+                           rho = Inf))
 end_time <- Sys.time()
 m4_runtime <- end_time - start_time
 m4_runtime
 
-coef(m4_u_f_fit)
+coef(m4_u_fit)
 
-saveRDS(m4_u_f_fit, file = here("mle","update","m4_fit.rds"))
-```
-
-Per treatment version for u
-
-```{r, m4u_ll}
-m4u_ll <- function(f, u_15_0.1, u_15_0.5, u_15_1.0, u_20_0.1, u_20_0.5, u_20_1.0, u_25_0.1, u_25_0.5, u_25_1.0, arr_t_f, arr_t_u, h){
-  data <- tmp
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=h*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  u_nll <- 0  
-  u_vec <- c(u_15_0.1, u_15_0.5, u_15_1.0, u_20_0.1, u_20_0.5, u_20_1.0, u_25_0.1, u_25_0.5, u_25_1.0)
-  for(j in 1:length(treatment_IDs)){  
-      exp_data <- dataset %>% filter(exposed==TRUE)
-      exp_data %<>% filter(treatment == treatment_IDs[j])
-      
-      
-      
-      I_end <- as.data.frame(mapply(m4_sim, 
-                                    R=exp_data$resource*life_vol/1000, 
-                                    time=exp_data$time, 
-                                    f=f/life_vol, 
-                                    u=u_vec[j], 
-                                    length = exp_data$life_mm, 
-                                    gamma=gamma, 
-                                    Z=spore_conc*life_vol,
-                                    h=h*life_vol))
-    
-      colnames(I_end) <- "I_end"
-      
-      exp_data %<>% cbind(I_end)
-      
-        inf_out <- function(inf_status, I_end){
-        dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-        }
-        
-      exp_data %<>% 
-        mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-      u_nll <- u_nll + -sum(exp_data$ll)
-  }
-  
-    
-
-  nll_sum <- nll_sum + u_nll
-  return(nll_sum)
-}
+saveRDS(m4_u_fit, file = here("mle","susc","m4_u_rho_fit.rds"))
 ```
 
 
-Now we use the optimizer
-```{r, m4u_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
 
-u_vec <- c(0.0001,#pass
-           0.001,#
-           0.0001,#
-           0.0001,#
-           0.0001,#
-           0.0001,#
-           0.0001,#
-           0.0001,#
-           0.0001)#
 
-m4u_u_f_fit <- mle2(m4u_ll, start=list(u_15_0.1 = u_vec[1],
-                                       u_15_0.5 = u_vec[2],
-                                       u_15_1.0 = u_vec[3],
-                                       u_20_0.1 = u_vec[4],
-                                       u_20_0.5 = u_vec[5],
-                                       u_20_1.0 = u_vec[6],
-                                       u_25_0.1 = u_vec[7],
-                                       u_25_0.5 = u_vec[8],
-                                       u_25_1.0 = u_vec[9], f=1, arr_t_f=10, arr_t_u=10, h=1), 
-                     control=list(parscale = c(u_15_0.1 = u_vec[1],
-                                       u_15_0.5 = u_vec[2],
-                                       u_15_1.0 = u_vec[3],
-                                       u_20_0.1 = u_vec[4],
-                                       u_20_0.5 = u_vec[5],
-                                       u_20_1.0 = u_vec[6],
-                                       u_25_0.1 = u_vec[7],
-                                       u_25_0.5 = u_vec[8],
-                                       u_25_1.0 = u_vec[9], f=1, arr_t_f=10, arr_t_u=10, h=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u_15_0.1 = 0,
-                                       u_15_0.5 = 0,
-                                       u_15_1.0 = 0,
-                                       u_20_0.1 = 0,
-                                       u_20_0.5 = 0,
-                                       u_20_1.0 = 0,
-                                       u_25_0.1 = 0,
-                                       u_25_0.5 = 0,
-                                       u_25_1.0 = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0), 
-                   upper=c(u_15_0.1 = 1,
-                                       u_15_0.5 = 1,
-                                       u_15_1.0 = 1,
-                                       u_20_0.1 = 1,
-                                       u_20_0.5 = 1,
-                                       u_20_1.0 = 1,
-                                       u_25_0.1 = 1,
-                                       u_25_0.5 = 1,
-                                       u_25_1.0 = 1,  f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf))
-end_time <- Sys.time()
-m4u_runtime <- end_time - start_time
-m4u_runtime
-
-coef(m4u_u_f_fit)
-
-saveRDS(m4u_u_f_fit, file = here("mle","update","m4u_fit.rds"))
-```
 
 
 # Model 5 - Resource on temperature interaction
 
 Same as model 4 but we include a linear interaction term for the arrhenius coefficient, thus representing the interactive effect of resources on the temperature effect
 
-```{r, m5a_ll}
-m5a_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u){
-  data <- tmp
-  
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
-                                f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f + data$resource*p_f,
-                                arr_t_u=arr_t_u + data$resource*p_u,
-                                h=h*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
 
-  
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f + exp_data$resource*p_f,
-                                arr_t_u=arr_t_u + exp_data$resource*p_u,
-                                h=h*life_vol,
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-Need to rerun
-```{r, m5a_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m5a_u_f_fit <- mle2(m5a_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf))
-end_time <- Sys.time()
-m5a_runtime <- end_time - start_time
-m5a_runtime
-
-coef(m5a_u_f_fit)
-
-saveRDS(m5a_u_f_fit, file = here("mle","update","m5a_fit.rds"))
-```
-
-Model 5a with an exponential interaction term rather than linear
-
-```{r, m5b_ll}
-m5b_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u){
-  data <- tmp
-  
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
-                                f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f*exp(data$resource*p_f),
-                                arr_t_u=arr_t_u*exp(data$resource*p_u),
-                                h=h*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f*(exp_data$resource*p_f),
-                                arr_t_u=arr_t_u*(exp_data$resource*p_u),
-                                h=h*life_vol,
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-```{r, m5b_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m5b_u_f_fit <- mle2(m5b_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf))
-end_time <- Sys.time()
-m5b_runtime <- end_time - start_time
-m5b_runtime
-
-coef(m5b_u_f_fit)
-
-saveRDS(m5b_u_f_fit, file = here("mle","update","m5b_fit.rds"))
-```
 
 # Model 6 - Temperature on Resource interaction
 
 Same as model 4 with a linear interaction for how handling time is affected by temperature, thus incoporating an interactive effect of temperature on the resource effect.
 
-```{r, m6a_ll}
-m6a_ll <- function(f, u, arr_t_f, arr_t_u, h, w){
-  data <- tmp
-  
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
-                                f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=(h + data$temp*w)*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=(h + exp_data$temp*w)*life_vol,
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-```{r, m6a_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m6a_u_f_fit <- mle2(m6a_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, w=0.1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, w=0.1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, w=-Inf), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, w=Inf))
-end_time <- Sys.time()
-m6a_runtime <- end_time - start_time
-m6a_runtime
-
-coef(m6a_u_f_fit)
-
-saveRDS(m6a_u_f_fit, file = here("mle","update","m6a_fit.rds"))
-```
-
-
-Same as model 6a but with an exponential interactive term
-
-```{r, m6b_ll}
-m6b_ll <- function(f, u, arr_t_f, arr_t_u, h, w){
-  data <- tmp
-  
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
-                                f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=(h + data$temp*w)*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=h*exp(exp_data$temp*w)*life_vol,
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-```{r, m6b_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m6b_u_f_fit <- mle2(m6b_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, w=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, w=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, w=-Inf), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, w=Inf))
-end_time <- Sys.time()
-m6b_runtime <- end_time - start_time
-m6b_runtime
-
-coef(m6b_u_f_fit)
-
-saveRDS(m6b_u_f_fit, file = here("mle","update","m6b_fit.rds"))
-```
 
 
 # Model 7 - Full interaction
@@ -1059,297 +709,13 @@ Full interaction model where both temperature and resources effects are function
 
 Model 7a is linear interaction terms
 
-```{r, m7a_ll}
-m7a_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u, w){
-  data <- tmp
-  
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
-                                f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f + data$resource*p_f,
-                                arr_t_u=arr_t_u + data$resource*p_u,
-                                h=(h + data$temp*w)*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f + exp_data$resource*p_f,
-                                arr_t_u=arr_t_u + exp_data$resource*p_u,
-                                h=(h + exp_data$temp*w)*life_vol,
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-```{r, m7a_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m7a_u_f_fit <- mle2(m7a_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf, w=-Inf), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf, w=Inf))
-end_time <- Sys.time()
-m7a_runtime <- end_time - start_time
-m7a_runtime
-
-coef(m7a_u_f_fit)
-
-saveRDS(m7a_u_f_fit, file = here("mle","update","m7a_fit.rds"))
-```
-
-model 7b is linear effect of resources on temp and exponential effect of temperature on resources
-
-```{r, m7b_ll}
-m7b_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u, w){
-  data <- tmp
-  
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
-                                f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f + data$resource*p_f,
-                                arr_t_u=arr_t_u + data$resource*p_u,
-                                h=h*exp(data$temp*w)*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f + exp_data$resource*p_f,
-                                arr_t_u=arr_t_u + exp_data$resource*p_u,
-                                h=h*exp(exp_data$temp*w)*life_vol,
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-```{r, m7b_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m7b_u_f_fit <- mle2(m7b_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf, w=-Inf), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf, w=Inf))
-end_time <- Sys.time()
-m7b_runtime <- end_time - start_time
-m7b_runtime
-
-coef(m7b_u_f_fit)
-
-saveRDS(m7b_u_f_fit, file = here("mle","update","m7b_fit.rds"))
-```
-
-model 7c is exponential effect of resource on temp and linear effect of temp on resource
-
-```{r, m7c_ll}
-m7c_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u, w){
-  data <- tmp
-  
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
-                                f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f*exp(data$resource*p_f),
-                                arr_t_u=arr_t_u*exp(data$resource*p_u),
-                                h=(h + data$temp*w)*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f*exp(exp_data$resource*p_f),
-                                arr_t_u=arr_t_u*exp(exp_data$resource*p_u),
-                                h=(h + exp_data$temp*w)*life_vol,
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-```{r, m7c_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m7c_u_f_fit <- mle2(m7c_ll, start=list(u = 0.0001, f=1, arr_t_f=100, arr_t_u=100, h=1, p_f=1, p_u=0.1, w=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=100, arr_t_u=100, h=1, p_f=1, p_u=0.1, w=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf, w=-Inf), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf, w=Inf))
-end_time <- Sys.time()
-m7c_runtime <- end_time - start_time
-m7c_runtime
-
-coef(m7c_u_f_fit)
-
-saveRDS(m7c_u_f_fit, file = here("mle","update","m7c_fit.rds"))
-```
-
-model 7d is exponential interactive effect both ways
-
-```{r, m7d_ll}
-m7d_ll <- function(f, u, arr_t_f, arr_t_u, h, p_f, p_u, w){
-  data <- tmp
-  
-  R_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*fora_vol/1000, time=data$time/60/24, 
-                                f=f/fora_vol,
-                                 u = 0, #u actually not important for this part. just wanted to use a single deSolve function for both
-                                 length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f*exp(data$resource*p_f),
-                                arr_t_u=arr_t_u*exp(data$resource*p_u),
-                                h=h*exp(data$temp*w)*fora_vol,
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, 
-                                u=u, length = exp_data$life_mm, gamma=gamma, Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f*exp(exp_data$resource*p_f),
-                                arr_t_u=arr_t_u*exp(exp_data$resource*p_u),
-                                h=h*exp(exp_data$temp*w)*life_vol,
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-  return(nll_sum)
-}
-```
-
-
-```{r, m7d_mle, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m7d_u_f_fit <- mle2(m7d_ll, start=list(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1), 
-                     control=list(parscale = c(u = 0.0001, f=1, arr_t_f=10, arr_t_u=10, h=1, p_f=1, p_u=1, w=1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0, p_f=-Inf, p_u=-Inf, w=-Inf), 
-                   upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf, p_f=Inf, p_u=Inf, w=Inf))
-end_time <- Sys.time()
-m7d_runtime <- end_time - start_time
-m7d_runtime
-
-coef(m7d_u_f_fit)
-
-saveRDS(m7d_u_f_fit, file = here("mle","update","m7d_fit.rds"))
-```
 
 ```{r}
-m1_u_f_fit <- readRDS(file = here("mle", "update", "m1_fit.rds"))
-m2_u_f_fit <- readRDS(file = here("mle", "update", "m2_fit.rds"))
-m3_u_f_fit <- readRDS(file = here("mle", "update", "m3_fit.rds"))
-m4_u_f_fit <- readRDS(file = here("mle", "update", "m4_fit.rds"))
-m5a_u_f_fit <- readRDS(file = here("mle", "update", "m5a_fit.rds"))
-m5b_u_f_fit <- readRDS(file = here("mle", "update", "m5b_fit.rds"))
-m6a_u_f_fit <- readRDS(file = here("mle", "update", "m6a_fit.rds"))
-m6b_u_f_fit <- readRDS(file = here("mle", "update", "m6b_fit.rds"))
-m7a_u_f_fit <- readRDS(file = here("mle", "update", "m7a_fit.rds"))
-m7b_u_f_fit <- readRDS(file = here("mle", "update", "m7b_fit.rds"))
-m7c_u_f_fit <- readRDS(file = here("mle", "update", "m7c_fit.rds"))
-m7d_u_f_fit <- readRDS(file = here("mle", "update", "m7d_fit.rds"))
+m1_u_fit <- readRDS(file = here("mle", "susc", "m1_u_fit.rds"))
+m2_u_fit <- readRDS(file = here("mle", "susc", "m2_u_fit.rds"))
+m3_u_per_fit <- readRDS(file = here("mle", "susc", "m3_u_per_fit.rds"))
+m3_u_exp_fit <- readRDS(file = here("mle", "susc", "m3_u_exp_fit.rds"))
+m4_u_fit <- readRDS(file = here("mle", "susc", "m4_u_rho_fit.rds"))
 ```
 
 
@@ -1360,11 +726,11 @@ getAIC <- function(model){
 ```
 
 ```{r}
-getAIC(m1_u_f_fit)
-getAIC(m2_u_f_fit)
-getAIC(m3_u_f_fit)
-getAIC(m4_u_f_fit)
-getAIC(m7d_u_f_fit)
+getAIC(m1_u_fit)
+getAIC(m2_u_fit)
+getAIC(m3_u_per_fit)
+getAIC(m3_u_exp_fit)
+getAIC(m4_u_fit)
 ```
 
 
