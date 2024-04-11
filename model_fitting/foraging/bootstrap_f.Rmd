@@ -145,7 +145,7 @@ We'll include the bootstrapping here
 
 ```{r, 00}
 
-  iterations <- 10
+  iterations <- 50
   
   m6c_f_boot_00 <- list()
   
@@ -177,7 +177,7 @@ We'll include the bootstrapping here
 
 ```{r, 01}
 
-  iterations <- 10
+  iterations <- 50
   
   m6c_f_boot_01 <- list()
   
@@ -209,7 +209,7 @@ We'll include the bootstrapping here
 
 ```{r, 02}
 
-  iterations <- 10
+  iterations <- 50
   
   m6c_f_boot_02 <- list()
   
@@ -241,7 +241,7 @@ We'll include the bootstrapping here
 
 ```{r, 03}
 
-  iterations <- 10
+  iterations <- 50
   
   m6c_f_boot_03 <- list()
   
@@ -273,7 +273,7 @@ We'll include the bootstrapping here
 
 ```{r, 04}
 
-  iterations <- 10
+  iterations <- 50
   
   m6c_f_boot_04 <- list()
   
@@ -305,7 +305,7 @@ We'll include the bootstrapping here
 
 ```{r, 05}
 
-  iterations <- 10
+  iterations <- 50
   
   m6c_f_boot_05 <- list()
   
@@ -340,6 +340,10 @@ We'll include the bootstrapping here
 
 60 iterations run later on 4/8/24
 
+300 iterations on 4/9/24
+
+142 iterations on 4/10/24
+
 bind lists
 ```{r}
 length(m6c_f_boot_00)
@@ -359,10 +363,10 @@ m6c_f_boot <- c(m6c_f_boot_00,
 
 Add to older iterations
 ```{r}
-# m6c_f_boot_read <- readRDS(file = here("mle", "m6c_f_boot_full.rds"))
-# m6c_f_boot <- c(m6c_f_boot, m6c_f_boot_read)
-# 
-# saveRDS(m6c_f_boot, file = here("mle", "m6c_f_boot_full.rds"))
+#m6c_f_boot_read <- readRDS(file = here("mle", "m6c_f_boot_full.rds"))
+#m6c_f_boot <- c(m6c_f_boot, m6c_f_boot_read)
+# # 
+#saveRDS(m6c_f_boot, file = here("mle", "m6c_f_boot_full.rds"))
 ```
 
 
