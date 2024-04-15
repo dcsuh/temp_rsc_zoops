@@ -647,35 +647,15 @@ saveRDS(seq_data, file=here("u_fit.rds"))
 
 
 ```{r}
-
-seq_data %>% filter(temp %in% c(15,20,25)) %>%
-  ggplot(.) +
-  geom_line(aes(x=resource, 
-                y=m4_I_end,
-                group=temp_factor,
-                color=as.factor(temp_factor))) +
-  geom_point(aes(x=resource, 
-                  y=prev, 
-                  group = as.factor(temp), 
-                  color = as.factor(temp),
-                  shape = as.factor(temp)),
-             size=3) + 
-    geom_linerange(aes(x=resource, 
-                       ymin=conf$lower,
-                       ymax=conf$upper,
-                       color=as.factor(temp))) +
-    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-  labs(x="Resource", y="Prevalence", color="Temperature", shape="Temperature", title = "") 
-
-```
-
-
-```{r}
 m1_plot <- seq_plot("m1_I_end") + labs(title = paste("Constant u. AIC =", round(m1_aic, 3)))
 m2_plot <- seq_plot("m2_I_end") + labs(title = paste("temp-dependent. AIC =", round(m2_aic, 3)))
 m3_plot <- seq_plot("m3_I_end") + labs(title = paste("resource-dependent. AIC =", round(m3_aic, 3)))
 m4_plot <- seq_plot("m4_I_end") + labs(title = paste("full model. AIC =", round(m4_aic, 3)))
 
+ggsave("m1_u_fit.png", m1_plot, path=here("mle/fit_plots"))
+ggsave("m2_u_fit.png", m2_plot, path=here("mle/fit_plots"))
+ggsave("m3_u_fit.png", m3_plot, path=here("mle/fit_plots"))
+ggsave("m4_u_fit.png", m4_plot, path=here("mle/fit_plots"))
 
 ```
 
@@ -691,55 +671,14 @@ m4_plot
 
 
 
-Make a plot that shows the 3 best models
+heatmap of prevalence
 
 ```{r}
-best_three_fit <- seq_data %>% dplyr::select(resource, temp_factor, m7c_rate, m6c_rate, m7d_rate) %>%
-  filter(temp_factor %in% c(15, 20, 25)) %>%
-  mutate("exp-exp" = m7c_rate, "h(T)~exp" = m6c_rate, "lin-exp" = m7d_rate) %>%
-  dplyr::select(-c(m7c_rate, m6c_rate, m7d_rate)) %>%
-  pivot_longer(cols=c('exp-exp', 'h(T)~exp', 'lin-exp')) %>%
-  ggplot(.,aes(x=resource, y=value, group = interaction(name, temp_factor),color=temp_factor)) +
-  geom_line(aes(linetype=name)) +
-  scale_linetype_manual(values = c(1, 3, 5)) +
-  geom_point(data=data_summ, aes(x=resource, 
-                            y=rate_len_mean, 
-                            group = as.factor(temp), 
-                            color = as.factor(temp),
-                            shape = as.factor(temp))) + 
-  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "3 Best Models", linetype="Model") 
-
-best_three_fit
-
-ggsave("best_three_fit.png", best_three_fit, path=here("mle/fit_plots"))
+seq_data %>% ggplot(.,aes(x=resource, y=temp, fill=m2_I_end)) + geom_tile() + scale_fill_viridis_c()
 ```
 
 
-```{r}
-seq_data %>% na.omit() %>%
-  ggplot(.) +
-  geom_line(aes(x=resource, 
-                y=m7c_rate,
-                group=temp_factor,
-                color="black")) +
-  new_scale_color() +
-  geom_line(aes(x=resource, 
-                y=m6c_rate,
-                group=temp_factor,
-                color="blue")) +
-  new_scale_color() +
-  geom_line(aes(x=resource, 
-                y=m7d_rate,
-                group=temp_factor,
-                color="purple")) +
-  geom_point(data=data_summ, aes(x=resource, 
-                            y=rate_len_mean, 
-                            group = as.factor(temp), 
-                            color = as.factor(temp),
-                            shape = as.factor(temp))) + 
-  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
 
-```
 
 
 
