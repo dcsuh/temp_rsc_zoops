@@ -853,6 +853,91 @@ saveRDS(m5b_u_fit, file = here("mle","susc","m5b_u_rho_fit.rds"))
 
 
 
+
+```{r}
+m5u_per_ll <- function(u, arr_low, arr_med, arr_high){
+
+  
+  nll_sum <- 0  
+  u_nll <- 0
+  arr_vec <- c(arr_low, arr_med, arr_high)
+  for(j in 1:length(resource_IDs)){  
+    
+      exp_data <- dataset %>% filter(exposed==TRUE)
+      exp_data %<>% filter(resource == resource_IDs[j])
+      
+      
+      I_end <- as.data.frame(mapply(m4_sim, 
+                                    R=exp_data$resource*life_vol/1000, 
+                                    time=exp_data$time, 
+                                    f=f_est/life_vol, 
+                                    u=u, 
+                                    length = exp_data$life_mm, 
+                                    gamma=gamma, 
+                                    Z=spore_conc*life_vol,
+                                    ref_t = ref_t,
+                                    arr_t_f = arr_f_est,
+                                    arr_t_u = arr_vec[j],
+                                    h = (h_est + exp_data$temp*w_est),
+                                    temp=exp_data$temp))
+    
+      colnames(I_end) <- "I_end"
+      
+      exp_data %<>% cbind(I_end)
+      
+        inf_out <- function(inf_status, I_end){
+        dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+        }
+        
+      exp_data %<>% 
+        mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+      u_nll <- u_nll + -sum(exp_data$ll)
+  }
+  
+  print(u)
+  print(paste(arr_low, arr_med, arr_high, sep ="_"))  
+
+  nll_sum <- nll_sum + u_nll
+  return(nll_sum)
+}
+```
+
+
+```{r, eval=F}
+start_time <- Sys.time()
+
+arr_vec <- c(10,
+             10,
+             10)
+
+tmp <- data
+m5u_per_fit <- mle2(m5u_per_ll, start=list(u = 0.0001, 
+                                     arr_low = arr_vec[1],
+                                     arr_med = arr_vec[2],
+                                     arr_high = arr_vec[3]), 
+                     control=list(parscale = c(u = 0.0001, 
+                                     arr_low = arr_vec[1],
+                                     arr_med = arr_vec[2],
+                                     arr_high = arr_vec[3])),
+                     skip.hessian=F, method="L-BFGS-B", 
+                   lower=c(u = 0, 
+                                     arr_low = 0,
+                                     arr_med = 0,
+                                     arr_high = 0), 
+                   upper=c(u = 1, 
+                                     arr_low = Inf,
+                                     arr_med = Inf,
+                                     arr_high = Inf))
+end_time <- Sys.time()
+m5_per_runtime <- end_time - start_time
+m5_per_runtime
+
+coef(m5u_per_fit)
+
+saveRDS(m5u_per_fit, file = here("mle","susc","m5u_per_fit.rds"))
+```
+
+
 # Model 6 - Temperature on Resource interaction
 
 Same as model 4 with a linear interaction for how exponential resource effect is affected by temperature, thus incorporating an interactive effect of temperature on the resource effect.
@@ -1018,6 +1103,7 @@ m3_u_exp_fit <- readRDS(file = here("mle", "susc", "m3_u_exp_fit.rds"))
 m4_u_fit <- readRDS(file = here("mle", "susc", "m4_u_rho_fit.rds"))
 # m5a_u_fit <- readRDS(file = here("mle", "susc", "m5a_u_rho_fit.rds"))
 # m5b_u_fit <- readRDS(file = here("mle", "susc", "m5b_u_rho_fit.rds"))
+m5u_per_fit <- readRDS(file = here("mle", "susc", "m5u_per_fit.rds"))
 ```
 
 
@@ -1035,7 +1121,7 @@ getAIC(m3_u_exp_fit)
 getAIC(m4_u_fit)
 # getAIC(m5a_u_fit)
 # getAIC(m5b_u_fit)
-
+getAIC(m5u_per_fit)
 ```
 
 
@@ -1076,17 +1162,17 @@ viz_summ %<>% left_join(., data_summ)
 viz_summ %<>% left_join(., length_summ)
 ```
 
+# need to check these units
+
 ```{r}
-f_mod <- f_est/fora_vol
+
+
+f_mod <- f_est
 h_mod <- h_est
 
-# get_rate <- function(f, arr, temp, h, resource){
-#   ((f*exp(arr*(1/ref_t - 1/temp)))/(1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
-# }
-
 data_summ %<>% mutate(clearance = 
-                        (f_mod*exp(arr_f_est*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+f_est*exp(arr_f_est*(1/ref_t - 1/temp))*(mm_mean^gamma)*(h_mod + exp(w_est*temp))))
+                        (f_mod*exp(arr_f_est*(1/ref_t - 1/temp)))/
+                        (1+f_est*exp(arr_f_est*(1/ref_t - 1/temp))*(h_mod*exp(w_est*temp))*resource/15))
 
 
 ```
