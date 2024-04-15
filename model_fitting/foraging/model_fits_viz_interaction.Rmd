@@ -14,6 +14,11 @@ source(here("base","src.R"))
 library(ggnewscale)
 ```
 
+# Note!!
+
+This script needs to be fixed for the visualizations to account for h being changed for model 6c. h was fixed for this model so that it is not in units of per mL but that means that it does not align with everything else. Eventually, everything should be fixed so that it is not per mL for h but the get_rate function should be fixed so that the resource is per tube (i.e. divided by 15 because the tube was 1 tube/15mL...I think)
+
+
 
 First, make basic plot that shows temperature gradient on x-axis, foraging rate on y-axis, and a geom layer for resource concentration. This will be the actual data and will be consistent between each of the model fit visualizations.
 
@@ -292,7 +297,7 @@ data_summ %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr, h=(m6b_h
 m6c_coef
 m6c_f <- as.numeric(m6c_coef[1])
 m6c_arr <- as.numeric(m6c_coef[2])
-m6c_h <- as.numeric(m6c_coef[3])
+m6c_h <- as.numeric(m6c_coef[3])/15
 m6c_w <- as.numeric(m6c_coef[4])
 
   data_summ %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))

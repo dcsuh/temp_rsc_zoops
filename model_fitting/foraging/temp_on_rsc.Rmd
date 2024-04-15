@@ -227,7 +227,7 @@ m6c_ll <- function(f, arr_t, h, w){
   data <- tmp 
   output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, 
-                                 h=h*data$vol*exp(w*data$temp)))
+                                 h=h*exp(w*data$temp)))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
   data %<>% mutate(resid = log(end) - log(amt_rem))
@@ -247,11 +247,11 @@ start_time <- Sys.time()
 tmp <- data
 m6c_f_fit <- mle2(m6c_ll,
                 skip.hessian = T,
-                start=list(f=10, arr_t=50, h=0.01, w=0.1),
+                start=list(f=10, arr_t=50, h=10, w=0.1),
                 method = "L-BFGS-B",
                 lower = c(f=0, arr_t=0, h=0, w=-Inf),
                 upper = c(Inf, Inf, Inf, Inf),
-                control=list(parscale=c(f=10, arr_t=50, h=0.01, w=0.1), maxit=10000))
+                control=list(parscale=c(f=10, arr_t=50, h=10, w=0.1), maxit=10000))
 end_time <- Sys.time()
 m6c_runtime <- end_time-start_time
 m6c_runtime
