@@ -22,6 +22,8 @@ Objective: Write functions for spore yield that incorporate resource and tempera
 data <- read_csv(here("raw_data/main_mort_edit.csv"))
 births <- read_csv(here("raw_data/main_fitness_edit.csv"))
 ```
+
+
 ```{r}
 data %<>% filter(!is.na(spore_RAW)) %>% filter(!is.na(length)) %>% filter(inf==1) %>% filter(temp %in% const_temp) %>% mutate(temp = as.numeric(temp))
 
@@ -50,27 +52,117 @@ data %<>% left_join(., births)
 ```{r}
 aic_f <- readRDS(here("mle", "aic_table.rds"))
 aic_f
-f_coefs <- coef(readRDS(here("mle", "m7c_f_fit.rds")))
+f_coefs <- coef(readRDS(here("mle", "m6c_f_fit.rds")))
 f_coefs
 ```
 
-```{r}
-get_f <- function(temp, resource, length){
-  ref_t <- 15
-  f <- as.numeric(f_coefs[1])
-  arr_prime <- as.numeric(f_coefs[2])
-  h_prime <- as.numeric(f_coefs[3])
-  p <- as.numeric(f_coefs[4])
-  w <- as.numeric(f_coefs[5])
-    arr <- arr_prime*exp(p*resource)
-    h <- h_prime*exp(w*temp)
-    ((f*exp(arr*(1/ref_t - 1/temp))*length^2)/(1+f*exp(arr*(1/ref_t - 1/temp))*length^2*h*resource))
+```{r, m4_num_sol}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  with(as.list(params),{
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))
+    res <- c(dR)
+    list(res)}
+    )
+}
+```
+
+```{r, m4_sim}
+m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma,
+              arr_t=arr_t,
+              ref_t=ref_t,
+              temp=temp,
+              h=h)
+  output <- as.data.frame(lsoda(y=xstart, times, m4_num_sol, params))
+  
+  r_end <- slice_max(output, time)[,2]
+  
+  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
+  #probably unnecessary
+  return(r_end)
 }
 ```
 
 ```{r}
-data %<>% mutate(foraging = mapply(get_f, data$temp, data$resource, data$length))
+data %<>% mutate(amt_rem_day = mapply(m4_sim, 
+                                  R = resource,
+                                  time = 1,
+                                  f = f_coefs[1],
+                                  length = data$length,
+                                  gamma = 2,
+                                  arr_t = f_coefs[2],
+                                  ref_t = 15,
+                                  temp = temp,
+                                  h = f_coefs[3]*exp(temp*f_coefs[4])))
+
+data %<>% mutate(amt_consumed_day = resource-amt_rem_day,
+                 amt_consumed_life = amt_consumed_day*lifespan)
+                                  
 ```
+
+
+# ```{r}
+# get_f <- function(temp, resource, length){
+#   ref_t <- 15
+#   f <- as.numeric(f_coefs[1])
+#   arr_prime <- as.numeric(f_coefs[2])
+#   h_prime <- as.numeric(f_coefs[3])
+#   w <- as.numeric(f_coefs[4])
+#     arr <- arr_prime
+#     h <- h_prime*exp(w*temp)
+#     ((f*exp(arr*(1/ref_t - 1/temp))*length^2)/(1+f*exp(arr*(1/ref_t - 1/temp))*length^2*h*resource))
+# }
+# ```
+
+
+
+# Summarize
+
+```{r}
+data %<>% mutate(treatment_ID = paste(temp, resource, sep = "_"))
+
+data_summ <- data %>% group_by(treatment_ID) %>%
+  summarize(mean_consumed = mean(consumed),
+            se_consumed = sd(consumed)/sqrt(n()),
+            mean_lifespan = mean(lifespan),
+            se_lifespan = sd(lifespan)/sqrt(n()),
+            mean_spore = mean(log(spore_yield)),
+            se_spore = sd(log(spore_yield))/sqrt(n()),
+            n = n(),
+            temp = temp,
+            resource = resource)
+```
+
+```{r}
+data_summ %>% filter(n>3) %>% ggplot(.,aes(y = mean_consumed, x = mean_lifespan, 
+                                           color = as.factor(temp), shape = as.factor(resource))) + 
+  geom_point(size = 3) + 
+  geom_errorbarh(aes(xmin = mean_lifespan-se_lifespan, xmax = mean_lifespan+se_lifespan, width = 0.01)) +
+  geom_errorbar(aes(ymin = mean_consumed-se_consumed, ymax = mean_consumed+se_consumed)) + 
+  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60"))
+
+data_summ %>% filter(n>3) %>% ggplot(.,aes(x = mean_consumed, y = mean_spore,
+                                           color = as.factor(temp), shape = as.factor(resource))) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = mean_spore-se_spore, ymax = mean_spore+se_spore, width = 0.01)) +
+  geom_errorbarh(aes(xmin = mean_consumed-se_consumed, xmax = mean_consumed+se_consumed)) + 
+  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60"))
+
+data_summ %>% filter(n>3) %>% ggplot(.,aes(x = mean_lifespan, y = mean_spore, 
+                                           color = as.factor(temp), shape = as.factor(resource))) +  
+  geom_point() + 
+  geom_errorbar(aes(ymin = mean_spore-se_spore, ymax = mean_spore+se_spore, width = 0.01)) +
+  geom_errorbarh(aes(xmin = mean_lifespan-se_lifespan, xmax = mean_lifespan+se_lifespan)) + 
+  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60"))
+```
+
+
+
 
 
 # Yield ~ Food consumed
@@ -79,7 +171,8 @@ How is spore yield related to amount of food consumed in lifetime?
 Total food consumed is rate (ml/day) * concentration (mgC/L) * time (days)
 
 ```{r}
-data %<>% mutate(consumed = foraging*resource*0.001*lifespan)
+#data %<>% mutate(consumed = foraging*resource*0.001*lifespan)
+data %<>% mutate(consumed = amt_consumed_life)
 ```
 
 ```{r}
@@ -118,6 +211,27 @@ data %>% ggplot(.,aes(x=consumed, y=spore_yield)) + geom_point() + facet_grid(co
 ```{r}
 data %>% ggplot(.,aes(x=resource, y=length, color=as.factor(temp))) + geom_point()
 ```
+
+```{r}
+data %>% ggplot(.,aes(x=resource, y=lifespan, color=as.factor(temp))) + geom_point()
+```
+
+```{r}
+data %>% ggplot(.,aes(x=resource, y=consumed, color=as.factor(temp))) + geom_point()
+```
+
+```{r}
+data %>% ggplot(.,aes(x=lifespan, y=length, color=as.factor(temp), shape=as.factor(resource))) + 
+  geom_point() 
+
+data %>% filter(is.na(male)) %>% ggplot(.,aes(x=lifespan, y=length, color=as.factor(temp), shape=as.factor(resource))) + 
+  geom_point() 
+
+data %>% ggplot(.,aes(x=lifespan, y=length)) + 
+  geom_point() + 
+  geom_smooth(method = "lm")
+```
+
 
 
 

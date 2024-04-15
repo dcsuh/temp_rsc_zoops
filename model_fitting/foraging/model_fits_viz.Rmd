@@ -122,7 +122,7 @@ geom_point() +
 geom_hline(yintercept=m0_f) +
 # geom_linerange(aes(ymin=rate_mean-rate_se, 
 #                  ymax=rate_mean+rate_se)) +
-labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Independent model without size correction")
+labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Independent model without size correction")
 ```
 
 
@@ -170,7 +170,7 @@ geom_point(data=data_summ, aes(x=temp,
                           group = as.factor(resource), 
                           color = as.factor(resource),
                           shape = as.factor(resource))) + 
-labs(x="Temperature", y="Foraging rate (mL/min)", color="Resource", shape="Resource", title = "Temperature-dependent model") 
+labs(x="Temperature", y="Foraging rate (mL/day)", color="Resource", shape="Resource", title = "Temperature-dependent model") 
 ```
 
 
@@ -200,7 +200,7 @@ geom_point(data=data_summ, aes(x=resource,
                           group = as.factor(temp), 
                           color = as.factor(temp),
                           shape = as.factor(temp))) + 
-labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature", shape="Temperature", title = "Resource-dependent model") 
+labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "Resource-dependent model") 
 ```
 
 
