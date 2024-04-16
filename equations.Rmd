@@ -69,6 +69,9 @@ $$
 \frac{dZ}{dt} = -L^{\gamma} fZ(S+I)\\
 $$
 
+$$
+u = ue^{T_{A}(1/T_{R}-1/T)}\\
+$$
 
 $$
 \beta = contact\ rate\ \cdot probability\ of\ infection\ given\ contact\\

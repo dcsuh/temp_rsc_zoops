@@ -368,7 +368,8 @@ seq_plot <- function(I_end){
                        ymin=conf$lower,
                        ymax=conf$upper,
                        color=as.factor(temp))) +
-    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
   labs(x="Resource", y="Proportion\n Infected", color="Temperature", shape="Temperature", title = "") 
 }
 
@@ -393,6 +394,8 @@ seq_plot_temp <- function(rate){
 }
 
 ```
+
+
 
 
 
@@ -645,17 +648,39 @@ saveRDS(seq_data, file=here("u_fit.rds"))
 ```
 
 
+```{r}
+inf_data <- seq_data %>% filter(temp %in% c(15,20,25)) %>%
+  ggplot(.) +
+  geom_point(aes(x=resource, 
+                  y=prev, 
+                  group = as.factor(temp), 
+                  color = as.factor(temp),
+                  shape = as.factor(temp)),
+             size=3) + 
+    geom_linerange(aes(x=resource, 
+                       ymin=conf$lower,
+                       ymax=conf$upper,
+                       color=as.factor(temp))) +
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
+  labs(x="Resource", y="Proportion\n Infected", color="Temperature", shape="Temperature", title = "Infection Assay") 
+
+ggsave("inf_data.png", inf_data, path=here("mle/fit_plots"), width = 7.29, height = 4.51)
+
+```
+
+
 
 ```{r}
-m1_plot <- seq_plot("m1_I_end") + labs(title = paste("Constant u. AIC =", round(m1_aic, 3)))
-m2_plot <- seq_plot("m2_I_end") + labs(title = paste("temp-dependent. AIC =", round(m2_aic, 3)))
-m3_plot <- seq_plot("m3_I_end") + labs(title = paste("resource-dependent. AIC =", round(m3_aic, 3)))
-m4_plot <- seq_plot("m4_I_end") + labs(title = paste("full model. AIC =", round(m4_aic, 3)))
+m1_plot <- seq_plot("m1_I_end") + labs(title = paste("Size-dependent only. AIC =", round(m1_aic, 3)))
+m2_plot <- seq_plot("m2_I_end") + labs(title = paste("Temperature-dependent. AIC =", round(m2_aic, 3)))
+m3_plot <- seq_plot("m3_I_end") + labs(title = paste("Resource-dependent. AIC =", round(m3_aic, 3)))
+m4_plot <- seq_plot("m4_I_end") + labs(title = paste("Full model. AIC =", round(m4_aic, 3)))
 
-ggsave("m1_u_fit.png", m1_plot, path=here("mle/fit_plots"))
-ggsave("m2_u_fit.png", m2_plot, path=here("mle/fit_plots"))
-ggsave("m3_u_fit.png", m3_plot, path=here("mle/fit_plots"))
-ggsave("m4_u_fit.png", m4_plot, path=here("mle/fit_plots"))
+ggsave("m1_u_fit.png", m1_plot, path=here("mle/fit_plots"), width = 7.29, height = 4.51)
+ggsave("m2_u_fit.png", m2_plot, path=here("mle/fit_plots"), width = 7.29, height = 4.51)
+ggsave("m3_u_fit.png", m3_plot, path=here("mle/fit_plots"), width = 7.29, height = 4.51)
+ggsave("m4_u_fit.png", m4_plot, path=here("mle/fit_plots"), width = 7.29, height = 4.51)
 
 ```
 

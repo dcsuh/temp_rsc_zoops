@@ -204,8 +204,9 @@ fora_data <- data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_len_mean,
   geom_point(size=2) +
   geom_linerange(aes(ymin=rate_len_mean-rate_len_mean_se,
                      ymax=rate_len_mean+rate_len_mean_se)) +
-  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature")
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", title="Foraging Rate Assay")
 
 fora_data 
 
