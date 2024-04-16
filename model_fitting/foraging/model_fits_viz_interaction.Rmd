@@ -26,6 +26,8 @@ First, make basic plot that shows temperature gradient on x-axis, foraging rate 
 data <- readRDS(here("processed_data","foraging_raw.rds"))
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
 m0 <- readRDS(here("mle", "m0_f_fit.rds"))
+m1 <- readRDS(here("mle", "m1_f_fit.rds"))
+
 
 m2 <- readRDS(here("mle", "m2_f_fit.rds"))
 m3 <- readRDS(here("mle", "m3_f_fit.rds"))
@@ -197,11 +199,17 @@ seq_plot_temp <- function(rate){
 # Fitting foraging rate
 
 ```{r}
-data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_len_mean, color=as.factor(temp))) +
+fora_data <- data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_len_mean, color=as.factor(temp))) +
   geom_point(size=2) +
   geom_linerange(aes(ymin=rate_len_mean-rate_len_mean_se,
                      ymax=rate_len_mean+rate_len_mean_se)) +
-  labs(x="Resource", y="Foraging rate (mL/min)", color="Temperature")
+  scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature")
+
+fora_data 
+
+ggsave("fora_data.png", fora_data, path=here("mle/fit_plots"))
+
 ```
 
 
@@ -218,6 +226,15 @@ data_summ %<>% mutate(m0_rate = m0_f)
 $$
 observed\; f = \frac{fe^{T_{A}(1/T_{R}-1/T)}}{1 + fe^{T_{A}(1/T_{R}-1/T)}hR} \\
 $$
+
+```{r}
+m1_coef <- coef(m1)
+m1_f <- as.numeric(m1_coef[1])
+
+data_summ %<>% mutate(m1_rate = mm_mean^gamma*m1_f)
+seq_data %<>% mutate(m1_rate = mean_length^gamma*m1_f)
+```
+
 
 ```{r}
 m2_coef <- coef(m2)
@@ -357,6 +374,9 @@ saveRDS(seq_data, file=here("rate_fit.rds"))
 
 
 ```{r}
+m1_plot <- seq_plot("m1_rate")
+m2_plot <- seq_plot("m2_rate")
+m3_plot <- seq_plot("m3_rate")
 m4_plot <- seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
 m5b_plot <- seq_plot("m5b_rate") + labs(title = paste("arr_t(resource) ~ LINEAR. AIC =", round(m5b_aic, 3)))
 m5c_plot <- seq_plot("m5c_rate") + labs(title = paste("arr_t(resource) ~ EXP. AIC =", round(m5c_aic, 3)))

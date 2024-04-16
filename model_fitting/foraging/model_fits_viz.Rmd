@@ -396,6 +396,11 @@ ggsave("m6_fit.png", m6_plot, path=here("mle/fit_plots"))
 ggsave("m7_fit.png", m7_plot, path=here("mle/fit_plots"))
 ```
 
+```{r}
+base_mods <- seq_data %>% dplyr::select(temp:m4_rate)
+
+saveRDS(base_mods, file = here("model_fitting", "base_mods.rds"))
+```
 
 
 

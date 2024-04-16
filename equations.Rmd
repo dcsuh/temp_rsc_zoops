@@ -1,0 +1,91 @@
+---
+title: "equations"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(deSolve)
+```
+
+
+
+$$
+\frac{dR}{dt} = -fRS \\
+$$
+
+
+$$
+\frac{dR}{dt} = -L^{\gamma} fRS\\
+$$
+
+$$
+\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\
+$$
+
+$$
+\frac{dR}{dt} = - \frac{fL^{\gamma}RS}{1 + fL^{\gamma}hR} \\
+$$
+
+```{r}
+dat1 <- tibble(h = seq(0,30,by=1),
+               R = 1)
+dat1 %<>% mutate(f = R/(1+h*R))
+dat1 %>% ggplot(., aes(x=h, y=f)) + geom_line()
+
+dat2 <- tibble(h = 1,
+               R = seq(30,0,by=-1))
+dat2 %<>% mutate(f = R/(1+h*R))
+dat2 %>% ggplot(., aes(x=R, y=f)) + geom_line()
+
+```
+
+
+
+$$
+\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}RS}{1 + fe^{T_{A}(1/T_{R}-1/T)}L^{\gamma}hR} \\
+$$
+
+$$
+h = h'e^{{\omega}T}
+$$
+
+
+
+$$
+\frac{dR}{dt} = -L^{\gamma} fR(S+I)\\
+\frac{dS}{dt} = -u L^{\gamma} fZS\\
+\frac{dI}{dt} = u L^{\gamma} fZS\\
+\frac{dZ}{dt} = -L^{\gamma} fZ(S+I)\\
+$$
+
+
+$$
+\beta = contact\ rate\ \cdot probability\ of\ infection\ given\ contact\\
+$$
+
+$$
+\beta = foraging\ rate\ \cdot probability\ of\ infection\ per\ spore\ consumed\
+$$
+
+$$
+\beta = f \cdot u
+$$
+
+$$
+L = length
+$$
+
+$$
+\gamma = scaling\ parameter
+$$
+
+
+
