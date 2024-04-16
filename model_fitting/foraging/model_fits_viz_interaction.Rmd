@@ -374,9 +374,10 @@ saveRDS(seq_data, file=here("rate_fit.rds"))
 
 
 ```{r}
-m1_plot <- seq_plot("m1_rate")
-m2_plot <- seq_plot("m2_rate")
-m3_plot <- seq_plot("m3_rate")
+m1_plot <- seq_plot("m1_rate") + labs(title = "Size-dependent model")
+m2_plot <- seq_plot("m2_rate") + labs(title = "Temperature-dependent model")
+m3_plot <- seq_plot("m3_rate") + labs(title = "Resource-dependent model")
+m4_plot_base <- seq_plot("m4_rate") + labs(title = "Temp. and Res. dependent model")
 m4_plot <- seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
 m5b_plot <- seq_plot("m5b_rate") + labs(title = paste("arr_t(resource) ~ LINEAR. AIC =", round(m5b_aic, 3)))
 m5c_plot <- seq_plot("m5c_rate") + labs(title = paste("arr_t(resource) ~ EXP. AIC =", round(m5c_aic, 3)))
@@ -384,6 +385,10 @@ m4_plot
 m5b_plot
 m5c_plot
 
+ggsave("m1_fit.png", m1_plot, path=here("mle/fit_plots"))
+ggsave("m2_fit.png", m2_plot, path=here("mle/fit_plots"))
+ggsave("m3_fit.png", m3_plot, path=here("mle/fit_plots"))
+ggsave("m4_fit_base.png", m4_plot_base, path=here("mle/fit_plots"))
 ggsave("m4_fit.png", m4_plot, path=here("mle/fit_plots"))
 ggsave("m5b_fit.png", m5b_plot, path=here("mle/fit_plots"))
 ggsave("m5c_fit.png", m5c_plot, path=here("mle/fit_plots"))
