@@ -167,7 +167,8 @@ seq_plot <- function(rate){
                        ymin=rate_len_mean-rate_len_mean_se,
                        ymax=rate_len_mean+rate_len_mean_se,
                        color=as.factor(temp))) +
-    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
   labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
 }
 
@@ -516,9 +517,9 @@ ggsave("m5_arr_plot.png", m5_arr_plot, path=here("mle/fit_plots"))
 ```{r}
 m6_range <- tibble(temp = temp_range)
 
-m6_range %<>% mutate(h = m4_h,
-                     h_b = (m6b_h + m6b_w*temp)*vol,
-                     h_c = (m6c_h*exp(m6c_w*temp))*vol)
+m6_range %<>% mutate(h = m4_h*15,
+                     h_b = (m6b_h*15 + m6b_w*temp),
+                     h_c = (m6c_h*15*exp(m6c_w*temp)))
 
 m6_range %<>% pivot_longer(cols=c(h, h_b, h_c))
 

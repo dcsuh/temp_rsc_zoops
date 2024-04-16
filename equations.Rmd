@@ -52,6 +52,9 @@ dat2 %>% ggplot(., aes(x=R, y=f)) + geom_line()
 $$
 \frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}RS}{1 + fe^{T_{A}(1/T_{R}-1/T)}L^{\gamma}hR} \\
 $$
+$$
+h = h' + {\omega}T
+$$
 
 $$
 h = h'e^{{\omega}T}
