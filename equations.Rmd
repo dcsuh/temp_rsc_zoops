@@ -42,7 +42,7 @@ dat1 %>% ggplot(., aes(x=h, y=f)) + geom_line()
 
 dat2 <- tibble(h = 1,
                R = seq(30,0,by=-1))
-dat2 %<>% mutate(f = R/(1+h*R))
+dat2 %<>% mutate(f = 1/(1+h*R))
 dat2 %>% ggplot(., aes(x=R, y=f)) + geom_line()
 
 ```
