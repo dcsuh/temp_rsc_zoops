@@ -459,6 +459,135 @@ m3_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, h, temp){
 }
 ```
 
+
+```{r}
+m3u_ll <- function(u){
+
+  exp_data <- iter_data %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m3_sim, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f_est/life_vol, 
+                                u=u, 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t = ref_t,
+                                arr_t_f = arr_f_est,
+                                h = h_est*exp(exp_data$temp*w_est),
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+    inf_out <- function(inf_status, I_end){
+    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+  }
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- -sum(exp_data$ll)
+  
+  print(u)
+  
+  return(nll_sum)
+}
+```
+
+
+```{r, eval=F}
+start_time <- Sys.time()
+m3_u_fits <- list()
+
+u_vec <- c(0.0001,#pass
+           0.0005,#fail
+           0.001)#fail
+
+for(i in 1:length(resource_IDs)) {
+  
+  iter_data <- dataset %>% filter(resource == resource_IDs[i])
+  m3_u_fits[i] <- mle2(m3u_ll, start=list(u = u_vec[i]), 
+                     control=list(parscale = c(u = u_vec[i])),
+                     skip.hessian=F, method="L-BFGS-B", 
+                     lower=c(u = 0.00001), 
+                     upper=c(u = 0.001))
+                 
+}
+
+end_time <- Sys.time()
+m3_runtime <- end_time - start_time
+m3_runtime
+
+saveRDS(m3_u_fits, file = here("mle","susc","m3_u_fits.rds"))
+```
+
+
+```{r}
+m1_num_sol <- function(t, x, params){
+  R <- x[1]
+  S <- x[2]
+  I <- x[3]
+  Z <- x[4]
+  with(as.list(params),{
+    dR <- -f*R*(S+I)
+    dS <- -u*f*Z*S
+    dI <- u*f*Z*S
+    dZ <- -f*Z*(S+I)
+    res <- c(dR, dS, dI, dZ)
+    list(res)}
+    )
+}
+
+
+resource <- 0.5
+R <- resource*50/1000
+Z <- 200*50
+arr_t_f <- arr_f_est
+arr_t_u <- 10
+length <- 1
+gamma <- 2
+time <- 1
+#rho <- 0.05
+#u <- 0.000001*exp(resource*rho)
+u <- 0.00001
+f <- f_est/50
+w <- w_est
+ref_t <- 15
+temp <- 20
+h <- h_est*exp(temp*w)
+
+
+
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+              u=u)
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+
+output %>% ggplot(.,aes(x=time, y=R)) + geom_point()
+output %>% ggplot(.,aes(x=time, y=S)) + geom_point() + ylim(0,1)
+output %>% ggplot(.,aes(x=time, y=I)) + geom_point() + ylim(0,1)
+output %>% ggplot(.,aes(x=time, y=Z)) + geom_point()
+
+# dat1 <- tibble(res = seq(0.1,1,by=0.1))
+# dat1 %<>% mutate(res = res/1000,
+#                  f = (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*res)/
+#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*res),
+#                 f_pc = (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*res))
+# dat1 %>% ggplot(., aes(x=res, y=f)) + geom_point()
+
+```
+
+
+
 ```{r}
 m3u_ll <- function(u_low, u_med, u_high){
 
@@ -506,14 +635,15 @@ m3u_ll <- function(u_low, u_med, u_high){
 ```
 
 
+
 Now we use the optimizer
 ```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 
-u_vec <- c(0.00001,#pass
-           0.00001,#pass
-           0.00001)#not working
+u_vec <- c(0.0001,#pass
+           0.0001,#pass
+           0.001)#not working
 
 m3_u_per_fit <- mle2(m3u_ll, start=list(u_low = u_vec[1],
                                        u_med = u_vec[2],
@@ -582,10 +712,10 @@ m3_rho_ll <- function(u, rho){
 ```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m3_u_exp_fit <- mle2(m3_rho_ll, start=list(u = 0.00001,
-                                   rho = 0.001), 
-                     control=list(parscale = c(u = 0.00001,
-                                   rho = 0.001)),
+m3_u_exp_fit <- mle2(m3_rho_ll, start=list(u = 0.000001,
+                                   rho = 0.05), 
+                     control=list(parscale = c(u = 0.000001,
+                                   rho = 0.05)),
                      skip.hessian=F, method="L-BFGS-B", 
                  lower=c(u = 0, rho = -Inf), 
                  upper=c(u = 1, rho = Inf))
@@ -677,12 +807,12 @@ m4_ll <- function(u, arr_t_u, rho){
 ```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m4_u_fit <- mle2(m4_ll, start=list(u = 0.00001, 
+m4_u_fit <- mle2(m4_ll, start=list(u = 0.000001, 
                                      arr_t_u=10, 
-                                     rho=0.1), 
-                     control=list(parscale = c(u = 0.00001, 
+                                     rho=0.05), 
+                     control=list(parscale = c(u = 0.000001, 
                                      arr_t_u=10, 
-                                     rho=0.1)),
+                                     rho=0.05)),
                      skip.hessian=F, method="L-BFGS-B", 
                    lower=c(u = 0, 
                            arr_t_f = 0, 
@@ -698,6 +828,9 @@ coef(m4_u_fit)
 
 saveRDS(m4_u_fit, file = here("mle","susc","m4_u_rho_fit.rds"))
 ```
+
+
+
 
 
 
@@ -1098,6 +1231,7 @@ Model 7a is linear interaction terms
 ```{r}
 m1_u_fit <- readRDS(file = here("mle", "susc", "m1_u_fit.rds"))
 m2_u_fit <- readRDS(file = here("mle", "susc", "m2_u_fit.rds"))
+m3_u_fits <- readRDS(file = here("mle", "susc", "m3_u_fits.rds"))
 m3_u_per_fit <- readRDS(file = here("mle", "susc", "m3_u_per_fit.rds"))
 m3_u_exp_fit <- readRDS(file = here("mle", "susc", "m3_u_exp_fit.rds"))
 m4_u_fit <- readRDS(file = here("mle", "susc", "m4_u_rho_fit.rds"))
@@ -1116,6 +1250,7 @@ getAIC <- function(model){
 ```{r}
 getAIC(m1_u_fit)
 getAIC(m2_u_fit)
+sum(getAIC(m3_u_fits[[1]]) + getAIC(m3_u_fits[[2]]) + getAIC(m3_u_fits[[3]]))
 getAIC(m3_u_per_fit)
 getAIC(m3_u_exp_fit)
 getAIC(m4_u_fit)
@@ -1270,6 +1405,10 @@ viz_summ %<>% mutate(m2_I_end = mapply(m2_sim,
 
 
 ```{r}
+m3_u_low <- coef(m3_u_fits[[1]])
+m3_u_med <- coef(m3_u_fits[[2]])
+m3_u_high <- coef(m3_u_fits[[3]])
+
 viz_summ %<>% mutate(m3_per_I_end = mapply(m3_sim, 
                                     R=resource*life_vol/1000, 
                                     time=time_mean, 
@@ -1284,6 +1423,9 @@ viz_summ %<>% mutate(m3_per_I_end = mapply(m3_sim,
                                     arr_t_f = arr_f_est,
                                     h = h_est*exp(temp*w_est),
                                     temp=temp))
+
+viz_summ %>% ggplot(.,aes(x=resource, y=m3_per_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
 ```
 
 ```{r}
@@ -1291,7 +1433,7 @@ viz_summ %<>% mutate(m3_I_end = mapply(m3_sim,
                                     R=resource*life_vol/1000, 
                                     time=time_mean, 
                                     f=f_est/life_vol, 
-                                    u=m3_u*exp(m3_rho*resource), 
+                                    u=m3_u*exp(m3_rho*resource/1000), 
                                     length = mm_mean, 
                                     gamma=gamma, 
                                     Z=spore_conc*life_vol,
@@ -1299,6 +1441,10 @@ viz_summ %<>% mutate(m3_I_end = mapply(m3_sim,
                                     arr_t_f = arr_f_est,
                                     h = h_est*exp(temp*w_est),
                                     temp=temp))
+
+
+viz_summ %>% ggplot(.,aes(x=resource, y=m3_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
 ```
 
 
