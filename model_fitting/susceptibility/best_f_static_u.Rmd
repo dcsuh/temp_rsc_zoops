@@ -137,27 +137,6 @@ w_est <- best_f_coef[4] #per-degree Celsius (i.e. 1/Celsius)
 
 
 
-# ```{r}
-# m6c_quantiles <- readRDS(file = here("mle", "m6c_quantiles.rds"))
-# 
-# f_est <- m6c_quantiles$f[1]
-# f_lower <- m6c_quantiles$f[3]
-# f_upper <- m6c_quantiles$f[4]
-# 
-# arr_f_est <- m6c_quantiles$arr[1]
-# arr_f_lower <- m6c_quantiles$arr[3]
-# arr_f_upper <- m6c_quantiles$arr[4]
-# 
-# h_est <- m6c_quantiles$h[1]
-# h_lower <- m6c_quantiles$h[3]
-# h_upper <- m6c_quantiles$h[4]
-# 
-# w_est <- m6c_quantiles$w[1]
-# w_lower <- m6c_quantiles$w[3]
-# w_upper <- m6c_quantiles$w[4]
-# ```
-
-
 
 # Independent Model
 
@@ -335,141 +314,27 @@ exp_data %>% group_by(treatment) %>% dplyr::select(treatment, resource, temp, sp
 ```
 
 
-
-```{r}
-# m1_sim_list <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
-#   times <- seq(0, time, by=0.01)
-#   xstart <- c(R=R,
-#               S=1,
-#               I=0,
-#               Z=Z)
-#   
-#   params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
-#               u=u)
-#   
-#   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
-#   
-#   return(output)
-# }
-```
-
-```{r}
-# output_list <- list()
-# 
-# for(i in 1:nrow(data_summ)){
-#   output_list[[i]] <- m1_sim_list(R = data_summ$temp[i]*life_vol/1000,
-#                                   time=data_summ$time_mean[i],
-#                                   f=f_est/life_vol,
-#                                   u=0.0001,
-#                                   length = data_summ$mm_mean[i],
-#                                   gamma=gamma,
-#                                   Z=spore_conc*life_vol,
-#                                   ref_t = ref_t,
-#                                   arr_t_f = arr_f_est,
-#                                   h = h_est*exp(data_summ$temp[i]*w_est),
-#                                   temp=data_summ$temp[i])
-# }
-
-```
-
-
-```{r}
-# output_plot <- list()
-# for(i in 1:9){
-# tmp <- output_list[[i]]
-# 
-# output_plot[[i]] <- tmp %>% ggplot(., aes(x=time, y=Z)) + geom_point()
-# }
-```
-
-```{r}
-# output_plot[[1]]
-# 
-# output_plot[[4]]
-# 
-# output_plot[[7]]
-```
-
-
-```{r}
-# (f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R)
-```
-
-
-
-```{r}
-# R <- 0.1*50/1000
-# Z <- 200*50
-# f <- f_est
-# arr_t_f <- arr_f_est
-# time <- 1
-# temp <- 25
-# length <- 1.1
-# h <- h_est*exp(temp*w_est)
-# u <- 0.0001
-# 
-# (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
-# 
-#   times <- seq(0, time, by=0.01)
-#   xstart <- c(R=R,
-#               S=1,
-#               I=0,
-#               Z=Z)
-#   
-#   
-#   
-#   params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
-#               u=u)
-#   
-#   
-#   
-#   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
-#   
-#   output %<>% mutate(f_R = (f/life_vol*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
-#                 Z_R = -f_R*Z)
-```
-
-
-```{r}
-# output %>% ggplot(., aes(x=time, y=R)) + geom_point()
-#   output %>% ggplot(., aes(x=time, y=S)) + geom_point()
-#   output %>% ggplot(., aes(x=time, y=I)) + geom_point()
-#   output %>% ggplot(., aes(x=time, y=Z)) + geom_point()
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 If we can use this form of u, then we can more easily write negative log-likelihood functions to represent the effects of variables on u and have it run much faster.
 
+This function returns the log-likelihood from a bernoulli trial
 ```{r}
 inf_out <- function(inf_status, I_end){
     dbinom(x = inf_status, size = 1, prob=I_end, log=T)
   }
 ```
 
+We'll use this function to measure AIC of our models
+```{r}
+getAIC <- function(model){
+  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
+}
+```
 
-
-```{r, m1_ll}
+This function generates the sum of the negative log-likelihood for all individuals assuming u is a constant across all conditions
+```{r}
 m1_ll <- function(u){
 
-  exp_data %<>% mutate(I_end = spores_consumed*u*life_mm^gamma)
+  exp_data %<>% mutate(I_end = spores_consumed*u)
   
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
@@ -495,59 +360,16 @@ m1_runtime
 
 coef(m1_u_fit)
 
+getAIC(m1_u_fit)
+
 saveRDS(m1_u_fit, file = here("mle","susc","m1_u_fit_alt.rds"))
 ```
-
-
-Another way of doing this
-
-Not sure why this provides different results than using dbinom per tube but it does as of now
-
-# ```{r}
-# life_summ <- exp_data %>% group_by(treatment, spores_consumed) %>% summarize(n_inf = sum(inf),
-#                                                             n_total = n())
-# ```
-# 
-# ```{r, m1_ll}
-# m1_ll <- function(u){
-# 
-#   life_summ %<>% mutate(I_end = spores_consumed*u)
-#   
-#   life_summ %<>% mutate(I_end = ifelse(I_end>1, 1, I_end))
-#   
-#     inf_out_alt <- function(n_inf, n_total, I_end){
-#     dbinom(x = n_inf, size = n_total, prob=I_end, log=T)
-#   }
-#   
-#   life_summ %<>% 
-#     mutate(ll = mapply(inf_out_alt, n_inf = n_inf, n_total = n_total, I_end=I_end))
-#   nll_sum <- -sum(life_summ$ll)
-#   
-#   print(u)
-#   
-#   return(nll_sum)
-# }
-# ```
-# 
-# ```{r}
-# m1_u_fit <- mle2(m1_ll, start=list(u = 0.0001), 
-#                      control=list(parscale = c(u = 0.0001)),
-#                      skip.hessian=F, method="L-BFGS-B", 
-#                  lower=c(u = 0), 
-#                  upper=c(u = 1))
-# 
-# m1_u_fit <- mle2(m1_ll, start=list(u = 0.0001), 
-#                      control=list(parscale = c(u = 0.0001)),
-#                      skip.hessian=F, method="BFGS")
-# ```
-
-
 
 
 
 # Temperature-Dependent Model
 
-
+First, we look at temperature effects by fitting a single u for each temperature regardless of resources
 ```{r}
 m2u_ll <- function(u){
 
@@ -604,21 +426,21 @@ end_time <- Sys.time()
 m2_runtime <- end_time - start_time
 m2_runtime
 
+getAIC(m2_u_fits[[1]]) + getAIC(m2_u_fits[[2]]) + getAIC(m2_u_fits[[3]])
+
 saveRDS(m2_u_fits, file = here("mle","susc","m2_u_fits_alt.rds"))
 ```
 
 
-This model includes an Arrhenius function to modify f and u separately as a function of temperature.
-
+Next, we'll incorporate effects of temperature by interpreting u as a function of temperature according to this form of the Arrhenius equation
 
 $$
-\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\  
+proportion\ infected = spores\ consumed \cdot ue^{T_{A}(1/T_{R}-1/T)} \\
 $$
 
 
-
-
-```{r}
+Testing area
+```{r, eval=F}
 u <- 0.00000001
 arr_t_u <- 300
 
@@ -631,7 +453,7 @@ print(nll_sum)
 ```
 
 
-
+This is the negative log-likelihood function for this version
 ```{r}
 m2_ll <- function(u, arr_t_u){
   
@@ -672,9 +494,31 @@ m2_runtime
 
 coef(m2_u_fit)
 
+getAIC(m2_u_fit)
+
 saveRDS(m2_u_fit, file = here("mle","susc","m2_u_fit_alt.rds"))
 ```
 
+
+# check this!!!
+test different starting params. We do get different results for these since they can generate similar products?
+
+```{r, eval=FALSE}
+m2_u_fit <- mle2(m2_ll, start=list(u = 0.00001,
+                                   arr_t_u = 10),
+                     control=list(parscale = c(u = 0.00001,
+                                   arr_t_u = 10)),
+                     skip.hessian=F, method="BFGS")
+
+m2_u_fita <- mle2(m2_ll, start=list(u = 0.000001,
+                                   arr_t_u = 100),
+                     control=list(parscale = c(u = 0.000001,
+                                   arr_t_u = 100)),
+                     skip.hessian=F, method="BFGS")
+```
+
+
+We'll do this again but we'll estimate the Arrhenius temperature for each resource treatment
 
 ```{r, eval=F}
 start_time <- Sys.time()
@@ -713,9 +557,13 @@ end_time <- Sys.time()
 m2_runtime <- end_time - start_time
 m2_runtime
 
+getAIC(m2_u_arr_fits[[1]]) + getAIC(m2_u_arr_fits[[2]]) + getAIC(m2_u_arr_fits[[3]])
+
 saveRDS(m2_u_arr_fits, file = here("mle","susc","m2_u_arr_fits_alt.rds"))
 ```
 
+
+Finally, we'll try another way of incorporating temperature effects by using an exponential function of temperature to alter u according to temperature.
 
 ```{r}
 m2a_ll <- function(u, phi){
@@ -757,34 +605,24 @@ m2_runtime
 
 coef(m2a_u_fit)
 
+getAIC(m2a_u_fit)
+
 saveRDS(m2a_u_fit, file = here("mle","susc","m2a_u_fit_alt.rds"))
 ```
 
-test different starting params. We do get different results for these
-```{r}
-# m2_u_fit <- mle2(m2_ll, start=list(u = 0.00001,
-#                                    arr_t_u = 10), 
-#                      control=list(parscale = c(u = 0.00001,
-#                                    arr_t_u = 10)),
-#                      skip.hessian=F, method="BFGS")
-# 
-# m2_u_fita <- mle2(m2_ll, start=list(u = 0.000001,
-#                                    arr_t_u = 100), 
-#                      control=list(parscale = c(u = 0.000001,
-#                                    arr_t_u = 100)),
-#                      skip.hessian=F, method="BFGS")
-```
+
 
 
 
 # Resource-dependent Model
 
-u per resource and u with exponential function for resource
+Now we incorporate resource effects assuming a type-II functional response
 
-u per resource treatment
+$$
+proportion\ infected = spores\ consumed \cdot u e^{R\rho}\\
+$$
 
-
-
+We'll start by estimating a separate u for each resource treatment that is constant over temperature conditions.
 ```{r}
 m3u_ll <- function(u){
 
@@ -842,7 +680,10 @@ saveRDS(m3_u_fits, file = here("mle","susc","m3_u_fits_alt.rds"))
 ```
 
 
-```{r}
+Next, we'll try modeling u as an exponential function of *initial* resource conditions
+
+testing area
+```{r, eval=F}
 u <- 0.00001
 rho <- 10
 
@@ -855,8 +696,6 @@ rho <- 10
   print(u)
   print(rho)
 ```
-
-
 
 ```{r}
 m3_rho_ll <- function(u, rho){
@@ -899,8 +738,13 @@ m3_runtime
 
 coef(m3_u_exp_fit)
 
+getAIC(m3_u_exp_fit)
+
 saveRDS(m3_u_exp_fit, file = here("mle","susc","m3_u_exp_fit_alt.rds"))
 ```
+
+
+Next, we'll try this again but get different estimates for each temperature condition
 
 
 ```{r, eval=F}
@@ -926,10 +770,8 @@ m3_runtime
 coef(m3_u_exp_fit_15)
 
 saveRDS(m3_u_exp_fit_15, file = here("mle","susc","m3_u_exp_fit_alt_15.rds"))
-```
 
-```{r, eval=F}
-start_time <- Sys.time()
+
 tmp <- exp_data %>% filter(temp %in% temp_IDs[2])
 m3_u_exp_fit_20 <- mle2(m3_rho_ll, start=list(u = 0.0001,
                                    rho = -0.1), 
@@ -951,10 +793,8 @@ m3_runtime
 coef(m3_u_exp_fit_20)
 
 saveRDS(m3_u_exp_fit_20, file = here("mle","susc","m3_u_exp_fit_alt_20.rds"))
-```
 
-```{r, eval=F}
-start_time <- Sys.time()
+
 tmp <- exp_data %>% filter(temp %in% temp_IDs[3])
 m3_u_exp_fit_25 <- mle2(m3_rho_ll, start=list(u = 0.0001,
                                    rho = -0.1), 
@@ -973,6 +813,8 @@ end_time <- Sys.time()
 m3_runtime <- end_time - start_time
 m3_runtime
 
+getAIC(m3_u_exp_fit_15) + getAIC(m3_u_exp_fit_20) + getAIC(m3_u_exp_fit_25)
+
 coef(m3_u_exp_fit_25)
 
 saveRDS(m3_u_exp_fit_25, file = here("mle","susc","m3_u_exp_fit_alt_25.rds"))
@@ -981,14 +823,15 @@ saveRDS(m3_u_exp_fit_25, file = here("mle","susc","m3_u_exp_fit_alt_25.rds"))
 
 # Full Model
 
-This version uses an arrhenius function for both f and u and a handling time function for f only.
+Here, we incorporate both temperature and resource effects on u
+
 
 $$
-\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}R}{1 + fe^{T_{A}(1/T_{R}-1/T)}hL^{\gamma}R} S \\
+proportion\ infected = spores\ consumed \cdot ue^{T_{A}(1/T_{R}-1/T)} e^{R\rho}\\
 $$
 
-
-```{r}
+testing area
+```{r, eval=F}
 u <- 0.00001
 arr_t_u <- 10
 rho <- -0.01
@@ -1003,7 +846,6 @@ rho <- -0.01
   print(arr_t_u)
   print(rho)
 ```
-
 
 
 ```{r}
@@ -1024,8 +866,6 @@ m4_ll <- function(u, arr_t_u, rho){
   return(nll_sum)
 }
 ```
-
-
 
 
 ```{r, eval=F}
@@ -1061,6 +901,8 @@ coef(m4_u_fit)
 saveRDS(m4_u_fit, file = here("mle","susc","m4_u_rho_fit_alt.rds"))
 ```
 
+
+We try it again here but use exponential function of temperature instead of Arrhenius equation
 
 ```{r}
 m4a_ll <- function(u, phi, rho){
@@ -1102,10 +944,15 @@ saveRDS(m4a_u_fit, file = here("mle","susc","m4a_u_rho_fit_alt.rds"))
 ```
 
 
+
+# Fits
+
+Read in the fits here
 ```{r}
 m1_u_fit <- readRDS(here("mle", "susc", "m1_u_fit_alt.rds"))
 m2_u_fit <- readRDS(here("mle", "susc", "m2_u_fit_alt.rds"))
 m2a_u_fit <- readRDS(here("mle", "susc", "m2a_u_fit_alt.rds"))
+m2_u_fits <- readRDS(here("mle", "susc", "m2_u_fits_alt.rds"))
 m3_u_fits <- readRDS(here("mle", "susc", "m3_u_fits_alt.rds"))
 m3_u_exp_fit <- readRDS(here("mle", "susc", "m3_u_exp_fit_alt.rds"))
 m3_u_exp_fit_15 <- readRDS(here("mle", "susc", "m3_u_exp_fit_alt_15.rds"))
@@ -1115,23 +962,27 @@ m4_u_fit <- readRDS(here("mle", "susc", "m4_u_rho_fit_alt.rds"))
 m4a_u_fit <- readRDS(here("mle", "susc", "m4a_u_rho_fit_alt.rds"))
 ```
 
-
-
-
-```{r}
-getAIC <- function(model){
-  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
-}
-```
-
+AIC
 ```{r}
 getAIC(m1_u_fit)
+```
+
+
+```{r}
 getAIC(m2_u_fit)
 getAIC(m2a_u_fit)
 sum(getAIC(m2_u_fits[[1]]) + getAIC(m2_u_fits[[2]]) + getAIC(m2_u_fits[[3]]))
+```
+
+
+```{r}
 sum(getAIC(m3_u_fits[[1]]) + getAIC(m3_u_fits[[2]]) + getAIC(m3_u_fits[[3]]))
 sum(getAIC(m3_u_exp_fit_15) + getAIC(m3_u_exp_fit_20) + getAIC(m3_u_exp_fit_25))
 getAIC(m3_u_exp_fit)
+```
+
+
+```{r}
 getAIC(m4_u_fit)
 getAIC(m4a_u_fit)
 ```
@@ -1142,7 +993,9 @@ getAIC(best_f)
 ```
 
 
+# compare to data
 
+get actual infection data to compare the model results to
 ```{r}
 prevalence <- readRDS(here("processed_data", "prevalence.rds"))
 prevalence %<>% filter(temp %in% c(15, 20, 25)) %>% filter(species=="D") %>% mutate(ID = paste(temp, resource, sep="_")) %>% dplyr::select(-c(temp, resource, species))
@@ -1156,6 +1009,7 @@ life_summ %<>% mutate(ID = treatment) %>% left_join(., prevalence, by = "ID") %>
 ```
 
 
+# these generate the data from the models for the specific experiment conditions
 
 ```{r}
 m1_u <- coef(m1_u_fit)
@@ -1177,7 +1031,7 @@ m4a_u <- coef(m4_u_fit)[1]
 m4a_phi <- coef(m4_u_fit)[2]
 m4a_rho <- coef(m4_u_fit)[3]
 
-life_summ %<>% mutate(rate = (f_est/life_vol*exp(arr_t_f*(1/ref_t - 1/temp))*(life_mm^gamma))/
+life_summ %<>% mutate(rate = (f_est/life_vol*exp(arr_f_est*(1/ref_t - 1/temp))*(life_mm^gamma))/
                 (1+f_est/life_vol*exp(arr_f_est*(1/ref_t - 1/temp))*(life_mm^gamma)*h_est*exp(temp*w_est)*resource))
 
 life_summ %<>% mutate(m1_end = spores_consumed*m1_u,
@@ -1231,13 +1085,21 @@ life_summ %<>% mutate(m3_per_susc = case_when(temp==15 ~ m3_u_15*exp(resource*m3
                                              temp == 25 ~ m3_u_25*exp(resource*m3_rho_25)))
 ```
 
+# visualizations
 
+```{r}
+life_summ %>% ggplot(.,aes(x=resource, y=spores_consumed, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="spores_consumed")
+```
+
+### constant u prevalence
 ```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m1_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="independent model")
 ```
 
 
+### temperature-dependent prevalence
 ```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m2_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="temp model")
@@ -1247,10 +1109,9 @@ life_summ %>% ggplot(.,aes(x=resource, y=m2a_end, color=as.factor(temp))) + geom
 
 life_summ %>% ggplot(.,aes(x=resource, y=m2_per_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="temp model")
-
 ```
 
-
+### resource-dependent prevalence
 ```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m3_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource model")
@@ -1259,6 +1120,7 @@ life_summ %>% ggplot(.,aes(x=resource, y=m3_per_end, color=as.factor(temp))) + g
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource model")
 ```
 
+### temp and resource-dependent prevalence
 
 ```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m4_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
@@ -1269,16 +1131,16 @@ life_summ %>% ggplot(.,aes(x=resource, y=m4a_end, color=as.factor(temp))) + geom
 
 ```
 
-```{r}
-life_summ %>% ggplot(.,aes(x=resource, y=spores_consumed, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + labs(title="spores_consumed")
-```
 
+### constant u
 
 ```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m1_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + labs(title="independent model")
+```
 
+### temperature-dependent u
+```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m2_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + labs(title="temp model")
 
@@ -1290,7 +1152,7 @@ life_summ %>% ggplot(.,aes(x=resource, y=m2_per_susc, color=as.factor(temp))) + 
 
 ```
 
-
+### resource-dependent u
 ```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m3_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + labs(title="resource model")
@@ -1299,7 +1161,7 @@ life_summ %>% ggplot(.,aes(x=resource, y=m3_per_susc, color=as.factor(temp))) + 
   new_scale_color() + labs(title="resource model")
 ```
 
-
+### temp and resource-dependent u
 ```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m4_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + labs(title="full model")
