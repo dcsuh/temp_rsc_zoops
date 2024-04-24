@@ -123,14 +123,16 @@ dataset %<>% left_join(., mean_length_summ)
 
 
 ```{r}
-m6c <- readRDS(here("mle","m6c_f_fit.rds")) # EXP-EXP
+#generated from here("model_fitting", "foraging", "best_fit_f.Rmd")
+best_f <- readRDS(here("mle","update","best_f_fit.rds")) # full model with exponential effect of temp on handling time
 
-m6c_coef <- coef(m6c)
+best_f_coef <- coef(best_f)
 
-f_est <- m6c_coef[1]
-arr_f_est <- m6c_coef[2]
-h_est <- m6c_coef[3]
-w_est <- m6c_coef[4]
+f_est <- best_f_coef[1] #ml/day
+arr_f_est <- best_f_coef[2] #Celsius
+h_est <- best_f_coef[3] #mg dry weight carbon/day
+#h is a huge number because it is milligrams carbon/day but daphnia are eating micrograms per day
+w_est <- best_f_coef[4] #per-degree Celsius (i.e. 1/Celsius)
 ```
 
 
@@ -324,6 +326,12 @@ I_end_alt <- as.data.frame(mapply(m1_sim_alt,
                               h = h_est*exp(exp_data$temp*w_est),
                               temp=exp_data$temp))
 
+```
+
+
+```{r}
+exp_data %>% group_by(treatment) %>% dplyr::select(treatment, resource, temp, spores_consumed) %>% distinct() %>% 
+  ggplot(.,aes(x=resource, y=spores_consumed, color=as.factor(temp))) + geom_point()
 ```
 
 
@@ -1130,7 +1138,7 @@ getAIC(m4a_u_fit)
 
 
 ```{r}
-getAIC(m6c)
+getAIC(best_f)
 ```
 
 
