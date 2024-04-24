@@ -19,6 +19,13 @@ library(ggnewscale)
 
  - this version uses the best fitting f and tries to estiamte u under different formulations
  - each version should use the same u formulation from model 6c which is the full model with an exponential interaction term for the effect of temperature on the resource effect
+ - we estimate u as a function of spores consumed
+    - so I model dynamics once to figure out how many spores each treatment consumes and use that to estimate the probability of infection we observed
+ - as of now, a per-temperature resource-dependent model appears to be the best fitting
+ 
+# things to do
+ - effects of temp on u are still wonky. this may just be a units issue
+ 
 
 # Read data and set global params
 
@@ -197,6 +204,9 @@ m1_num_sol_alt <- function(t, x, params){
 ```
 
 
+
+
+
 ```{r}
 m1_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
   times <- seq(0, time, by=0.01)
@@ -211,17 +221,12 @@ m1_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
   
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   
-  # if(Z == 0) {
-  # end_data <- slice_max(output, time)[,2]
-  # }
-  # else {
+  
   end_data <- slice_max(output, time)[,4]
-  # }
+
   
-  # end_data <- slice_min(output, time)[,5] - slice_max(output, time)[,5] # spores consumed
-  
-  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
-  #probably unnecessary
+  #end_data <- slice_min(output, time)[,5] - slice_max(output, time)[,5] # spores consumed
+
   return(end_data)
 }
 ```
@@ -240,17 +245,11 @@ m1_sim_alt <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u,
   
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol_alt, params))
   
-  # if(Z == 0) {
-  # end_data <- slice_max(output, time)[,2]
-  # }
-  # else {
   end_data <- slice_max(output, time)[,4]
-  # }
+
   
-  # end_data <- slice_min(output, time)[,5] - slice_max(output, time)[,5] # spores consumed
-  
-  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
-  #probably unnecessary
+  #end_data <- slice_min(output, time)[,5] - slice_max(output, time)[,5] # spores consumed
+
   return(end_data)
 }
 ```
@@ -272,15 +271,6 @@ m1_sim_Z <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h
   
   end_data <- slice_min(output, time)[,5] - slice_max(output, time)[,5] # spores consumed
   
-  # if(Z == 0) {
-  # end_data <- slice_max(output, time)[,2]
-  # }
-  # else {
-  # end_data <- slice_max(output, time)[,4]  
-  # }
-  
-  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
-  #probably unnecessary
   return(end_data)
 }
 ```
@@ -337,6 +327,127 @@ I_end_alt <- as.data.frame(mapply(m1_sim_alt,
 ```
 
 
+
+```{r}
+# m1_sim_list <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
+#   times <- seq(0, time, by=0.01)
+#   xstart <- c(R=R,
+#               S=1,
+#               I=0,
+#               Z=Z)
+#   
+#   params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+#               u=u)
+#   
+#   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+#   
+#   return(output)
+# }
+```
+
+```{r}
+# output_list <- list()
+# 
+# for(i in 1:nrow(data_summ)){
+#   output_list[[i]] <- m1_sim_list(R = data_summ$temp[i]*life_vol/1000,
+#                                   time=data_summ$time_mean[i],
+#                                   f=f_est/life_vol,
+#                                   u=0.0001,
+#                                   length = data_summ$mm_mean[i],
+#                                   gamma=gamma,
+#                                   Z=spore_conc*life_vol,
+#                                   ref_t = ref_t,
+#                                   arr_t_f = arr_f_est,
+#                                   h = h_est*exp(data_summ$temp[i]*w_est),
+#                                   temp=data_summ$temp[i])
+# }
+
+```
+
+
+```{r}
+# output_plot <- list()
+# for(i in 1:9){
+# tmp <- output_list[[i]]
+# 
+# output_plot[[i]] <- tmp %>% ggplot(., aes(x=time, y=Z)) + geom_point()
+# }
+```
+
+```{r}
+# output_plot[[1]]
+# 
+# output_plot[[4]]
+# 
+# output_plot[[7]]
+```
+
+
+```{r}
+# (f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+```
+
+
+
+```{r}
+# R <- 0.1*50/1000
+# Z <- 200*50
+# f <- f_est
+# arr_t_f <- arr_f_est
+# time <- 1
+# temp <- 25
+# length <- 1.1
+# h <- h_est*exp(temp*w_est)
+# u <- 0.0001
+# 
+# (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+# 
+#   times <- seq(0, time, by=0.01)
+#   xstart <- c(R=R,
+#               S=1,
+#               I=0,
+#               Z=Z)
+#   
+#   
+#   
+#   params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+#               u=u)
+#   
+#   
+#   
+#   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+#   
+#   output %<>% mutate(f_R = (f/life_vol*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+#                 Z_R = -f_R*Z)
+```
+
+
+```{r}
+# output %>% ggplot(., aes(x=time, y=R)) + geom_point()
+#   output %>% ggplot(., aes(x=time, y=S)) + geom_point()
+#   output %>% ggplot(., aes(x=time, y=I)) + geom_point()
+#   output %>% ggplot(., aes(x=time, y=Z)) + geom_point()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 If we can use this form of u, then we can more easily write negative log-likelihood functions to represent the effects of variables on u and have it run much faster.
 
 ```{r}
@@ -350,7 +461,7 @@ inf_out <- function(inf_status, I_end){
 ```{r, m1_ll}
 m1_ll <- function(u){
 
-  exp_data %<>% mutate(I_end = spores_consumed*u)
+  exp_data %<>% mutate(I_end = spores_consumed*u*life_mm^gamma)
   
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
@@ -366,9 +477,9 @@ m1_ll <- function(u){
 ```{r, eval=F}
 start_time <- Sys.time()
 
-m1_u_fit <- mle2(m1_ll, start=list(u = 0.000001), 
-                     control=list(parscale = c(u = 0.000001)),
-                     skip.hessian=F, method="BFGS")
+m1_u_fit <- mle2(m1_ll, start=list(u = 0.0001), 
+                     control=list(parscale = c(u = 0.0001)),
+                     skip.hessian=F, method="Nelder-Mead")
 
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
@@ -428,6 +539,67 @@ Not sure why this provides different results than using dbinom per tube but it d
 
 # Temperature-Dependent Model
 
+
+```{r}
+m2u_ll <- function(u){
+
+  iter_data %<>% mutate(I_end = spores_consumed*u)
+  
+  iter_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- -sum(iter_data$ll)
+  
+  print(u)
+  
+  return(nll_sum)
+}
+```
+
+
+```{r, eval=F}
+start_time <- Sys.time()
+m2_u_fits <- list()
+
+u_vec <- c(0.000001,#pass
+           0.000001,#pass
+           0.0001)#pass
+
+#for(i in 1:length(resource_IDs))
+  
+  iter_data <- exp_data %>% filter(temp == temp_IDs[1])
+  m2_u_fits[1] <- mle2(m2u_ll, start=list(u = u_vec[1]), 
+                     control=list(parscale = c(u = u_vec[1])),
+                     skip.hessian=F, method="L-BFGS-B"
+                     ,
+                     lower=c(u = 0),
+                     upper=c(u = 1/6608.229))
+  
+  iter_data <- exp_data %>% filter(temp == temp_IDs[2])
+  m2_u_fits[2] <- mle2(m2u_ll, start=list(u = u_vec[2]),
+                   control=list(parscale = c(u = u_vec[2])),
+                   skip.hessian=F, method="L-BFGS-B"
+                   ,
+                   lower=c(u = 0),
+                   upper=c(u = 1/6980.857))
+  
+  iter_data <- exp_data %>% filter(temp == temp_IDs[3])
+  m2_u_fits[3] <- mle2(m2u_ll, start=list(u = u_vec[3]), 
+                 control=list(parscale = c(u = u_vec[3])),
+                 skip.hessian=F, method="L-BFGS-B"
+                   ,
+                   lower=c(u = 0),
+                   upper=c(u = 1/6980.857))
+                 
+
+
+end_time <- Sys.time()
+m2_runtime <- end_time - start_time
+m2_runtime
+
+saveRDS(m2_u_fits, file = here("mle","susc","m2_u_fits_alt.rds"))
+```
+
+
 This model includes an Arrhenius function to modify f and u separately as a function of temperature.
 
 
@@ -437,13 +609,12 @@ $$
 
 
 
+
 ```{r}
-u <- 0.0001
-arr_t_u <- 10
+u <- 0.00000001
+arr_t_u <- 300
 
   exp_data %<>% mutate(I_end = spores_consumed*u*exp(arr_t_u*(1/ref_t - 1/temp)))
-
-  exp_data %<>% mutate(I_end = ifelse(I_end > 1, 0.999, I_end))
   
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
@@ -453,7 +624,7 @@ print(nll_sum)
 
 
 
-```{r, m1_ll}
+```{r}
 m2_ll <- function(u, arr_t_u){
   
   exp_data %<>% mutate(I_end = spores_consumed*u*exp(arr_t_u*(1/ref_t - 1/temp)))
@@ -474,17 +645,17 @@ m2_ll <- function(u, arr_t_u){
 start_time <- Sys.time()
 tmp <- data
 m2_u_fit <- mle2(m2_ll, start=list(u = 0.00001,
-                                   arr_t_u = 10), 
+                                   arr_t_u = 10),
                      control=list(parscale = c(u = 0.00001,
                                    arr_t_u = 10)),
-                     skip.hessian=F, method="BFGS")
+                     skip.hessian=F, method="Nelder-Mead")
 
-# m2_u_fit <- mle2(m2_ll, start=list(u = 0.0001,
-#                                    arr_t_u = 10), 
+# m2_u_fit <- mle2(m2_ll, start=list(u = 0.00001,
+#                                    arr_t_u = 10),
 #                      control=list(parscale = c(u = 0.0001,
 #                                    arr_t_u = 10)),
-#                      skip.hessian=F, method="L-BFGS-B", 
-#                  lower=c(u = 0, arr_t_u = 0), 
+#                      skip.hessian=F, method="L-BFGS-B",
+#                  lower=c(u = 0, arr_t_u = 0),
 #                  upper=c(u = 1, arr_t_u = Inf))
 
 end_time <- Sys.time()
@@ -494,6 +665,91 @@ m2_runtime
 coef(m2_u_fit)
 
 saveRDS(m2_u_fit, file = here("mle","susc","m2_u_fit_alt.rds"))
+```
+
+
+```{r, eval=F}
+start_time <- Sys.time()
+m2_u_arr_fits <- list()
+
+u_vec <- c(0.0000001,#pass
+           0.00003,#pass
+           0.00000001)#pass
+
+#for(i in 1:length(resource_IDs))
+  
+  iter_data <- exp_data %>% filter(resource == resource_IDs[1])
+  m2_u_arr_fits[[1]] <- mle2(m2_ll, start=list(u = u_vec[1],
+                                   arr_t_u = 10),
+                     control=list(parscale = c(u = u_vec[1],
+                                   arr_t_u = 1)),
+                     skip.hessian=F, method="BFGS")
+
+    iter_data <- exp_data %>% filter(resource == resource_IDs[2])
+  m2_u_arr_fits[[2]] <- mle2(m2_ll, start=list(u = u_vec[2],
+                                   arr_t_u = 66),
+                     control=list(parscale = c(u = u_vec[2],
+                                   arr_t_u = 1)),
+                     skip.hessian=F, method="BFGS")
+  
+    iter_data <- exp_data %>% filter(resource == resource_IDs[3])
+  m2_u_arr_fits[[3]] <- mle2(m2_ll, start=list(u = u_vec[3],
+                                   arr_t_u = 10),
+                     control=list(parscale = c(u = u_vec[3],
+                                   arr_t_u = 1)),
+                     skip.hessian=F, method="BFGS")
+                 
+
+
+end_time <- Sys.time()
+m2_runtime <- end_time - start_time
+m2_runtime
+
+saveRDS(m2_u_arr_fits, file = here("mle","susc","m2_u_arr_fits_alt.rds"))
+```
+
+
+```{r}
+m2a_ll <- function(u, phi){
+  
+  exp_data %<>% mutate(I_end = spores_consumed*u*exp(phi*temp))
+
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- -sum(exp_data$ll)
+  
+  print(u)
+  print(phi)
+  
+  return(nll_sum)
+}
+```
+
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m2a_u_fit <- mle2(m2a_ll, start=list(u = 0.000001,
+                                   phi = 0.1),
+                     control=list(parscale = c(u = 0.000001,
+                                   phi = 0.1)),
+                     skip.hessian=F, method="Nelder-Mead")
+
+# m2_u_fit <- mle2(m2_ll, start=list(u = 0.00001,
+#                                    arr_t_u = 10),
+#                      control=list(parscale = c(u = 0.0001,
+#                                    arr_t_u = 10)),
+#                      skip.hessian=F, method="L-BFGS-B",
+#                  lower=c(u = 0, arr_t_u = 0),
+#                  upper=c(u = 1, arr_t_u = Inf))
+
+end_time <- Sys.time()
+m2_runtime <- end_time - start_time
+m2_runtime
+
+coef(m2a_u_fit)
+
+saveRDS(m2a_u_fit, file = here("mle","susc","m2a_u_fit_alt.rds"))
 ```
 
 test different starting params. We do get different results for these
@@ -541,8 +797,8 @@ m3u_ll <- function(u){
 start_time <- Sys.time()
 m3_u_fits <- list()
 
-u_vec <- c(0.0001,#fail
-           0.0001,#fail
+u_vec <- c(0.000001,#fail
+           0.000001,#fail
            0.0001)#pass
 
 #for(i in 1:length(resource_IDs))
@@ -550,14 +806,16 @@ u_vec <- c(0.0001,#fail
   iter_data <- exp_data %>% filter(resource == resource_IDs[1])
   m3_u_fits[1] <- mle2(m3u_ll, start=list(u = u_vec[1]), 
                      control=list(parscale = c(u = u_vec[1])),
-                     skip.hessian=F, method="L-BFGS-B",
+                     skip.hessian=F, method="L-BFGS-B"
+                     ,
                      lower=c(u = 0),
                      upper=c(u = 1/6608.229))
   
   iter_data <- exp_data %>% filter(resource == resource_IDs[2])
   m3_u_fits[2] <- mle2(m3u_ll, start=list(u = u_vec[2]),
                    control=list(parscale = c(u = u_vec[2])),
-                   skip.hessian=F, method="L-BFGS-B",
+                   skip.hessian=F, method="L-BFGS-B"
+                   ,
                    lower=c(u = 0),
                    upper=c(u = 1/6980.857))
   
@@ -595,6 +853,8 @@ rho <- 10
 ```{r}
 m3_rho_ll <- function(u, rho){
 
+  exp_data <- tmp
+  
   exp_data %<>% mutate(I_end = spores_consumed*u*exp(resource*rho))
   
   exp_data %<>% 
@@ -611,7 +871,7 @@ m3_rho_ll <- function(u, rho){
 
 ```{r, eval=F}
 start_time <- Sys.time()
-tmp <- data
+tmp <- exp_data
 m3_u_exp_fit <- mle2(m3_rho_ll, start=list(u = 0.0001,
                                    rho = -0.1), 
                      control=list(parscale = c(u = 0.0001,
@@ -635,6 +895,82 @@ saveRDS(m3_u_exp_fit, file = here("mle","susc","m3_u_exp_fit_alt.rds"))
 ```
 
 
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- exp_data %>% filter(temp %in% temp_IDs[1])
+m3_u_exp_fit_15 <- mle2(m3_rho_ll, start=list(u = 0.0001,
+                                   rho = -0.1), 
+                     control=list(parscale = c(u = 0.0001,
+                                   rho = -0.1)),
+                     skip.hessian=F, method="Nelder-Mead")
+
+# m3_u_exp_fit <- mle2(m3_rho_ll, start=list(u = 0.000001,
+#                                    rho = 0.05), 
+#                      control=list(parscale = c(u = 0.000001,
+#                                    rho = 0.05)),
+#                      skip.hessian=F, method="L-BFGS-B", 
+#                  lower=c(u = 0, rho = -Inf), 
+#                  upper=c(u = 1, rho = Inf))
+end_time <- Sys.time()
+m3_runtime <- end_time - start_time
+m3_runtime
+
+coef(m3_u_exp_fit_15)
+
+saveRDS(m3_u_exp_fit_15, file = here("mle","susc","m3_u_exp_fit_alt_15.rds"))
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- exp_data %>% filter(temp %in% temp_IDs[2])
+m3_u_exp_fit_20 <- mle2(m3_rho_ll, start=list(u = 0.0001,
+                                   rho = -0.1), 
+                     control=list(parscale = c(u = 0.0001,
+                                   rho = -0.1)),
+                     skip.hessian=F, method="Nelder-Mead")
+
+# m3_u_exp_fit <- mle2(m3_rho_ll, start=list(u = 0.000001,
+#                                    rho = 0.05), 
+#                      control=list(parscale = c(u = 0.000001,
+#                                    rho = 0.05)),
+#                      skip.hessian=F, method="L-BFGS-B", 
+#                  lower=c(u = 0, rho = -Inf), 
+#                  upper=c(u = 1, rho = Inf))
+end_time <- Sys.time()
+m3_runtime <- end_time - start_time
+m3_runtime
+
+coef(m3_u_exp_fit_20)
+
+saveRDS(m3_u_exp_fit_20, file = here("mle","susc","m3_u_exp_fit_alt_20.rds"))
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- exp_data %>% filter(temp %in% temp_IDs[3])
+m3_u_exp_fit_25 <- mle2(m3_rho_ll, start=list(u = 0.0001,
+                                   rho = -0.1), 
+                     control=list(parscale = c(u = 0.0001,
+                                   rho = -0.1)),
+                     skip.hessian=F, method="Nelder-Mead")
+
+# m3_u_exp_fit <- mle2(m3_rho_ll, start=list(u = 0.000001,
+#                                    rho = 0.05), 
+#                      control=list(parscale = c(u = 0.000001,
+#                                    rho = 0.05)),
+#                      skip.hessian=F, method="L-BFGS-B", 
+#                  lower=c(u = 0, rho = -Inf), 
+#                  upper=c(u = 1, rho = Inf))
+end_time <- Sys.time()
+m3_runtime <- end_time - start_time
+m3_runtime
+
+coef(m3_u_exp_fit_25)
+
+saveRDS(m3_u_exp_fit_25, file = here("mle","susc","m3_u_exp_fit_alt_25.rds"))
+```
+
+
 # Full Model
 
 This version uses an arrhenius function for both f and u and a handling time function for f only.
@@ -645,7 +981,7 @@ $$
 
 
 ```{r}
-u <- 0.0001
+u <- 0.00001
 arr_t_u <- 10
 rho <- -0.01
 
@@ -665,7 +1001,9 @@ rho <- -0.01
 ```{r}
 m4_ll <- function(u, arr_t_u, rho){
 
-  exp_data %<>% mutate(I_end = spores_consumed*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho))
+  exp_data %<>% mutate(I_end = spores_consumed*u*
+                         exp(arr_t_u*(1/ref_t - 1/temp))*
+                         exp(resource*rho))
   
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
@@ -685,10 +1023,10 @@ m4_ll <- function(u, arr_t_u, rho){
 ```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
-m4_u_fit <- mle2(m4_ll, start=list(u = 0.0001, 
+m4_u_fit <- mle2(m4_ll, start=list(u = 0.00001, 
                                      arr_t_u=10, 
                                      rho=-0.01), 
-                     control=list(parscale = c(u = 0.0001, 
+                     control=list(parscale = c(u = 0.00001, 
                                      arr_t_u=10, 
                                      rho=-0.01)),
                      skip.hessian=F, method="Nelder-Mead")
@@ -716,6 +1054,59 @@ saveRDS(m4_u_fit, file = here("mle","susc","m4_u_rho_fit_alt.rds"))
 ```
 
 
+```{r}
+m4a_ll <- function(u, phi, rho){
+
+  exp_data %<>% mutate(I_end = spores_consumed*u*
+                         exp(phi*temp)*
+                         exp(resource*rho))
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- -sum(exp_data$ll)
+  
+  print(u)
+  print(phi)
+  print(rho)
+  
+  return(nll_sum)
+}
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+m4a_u_fit <- mle2(m4a_ll, start=list(u = 0.00001, 
+                                     phi=0.1, 
+                                     rho=-0.01), 
+                     control=list(parscale = c(u = 0.00001, 
+                                     phi=0.1, 
+                                     rho=-0.01)),
+                     skip.hessian=F, method="Nelder-Mead")
+
+end_time <- Sys.time()
+m4_runtime <- end_time - start_time
+m4_runtime
+
+coef(m4a_u_fit)
+
+saveRDS(m4a_u_fit, file = here("mle","susc","m4a_u_rho_fit_alt.rds"))
+```
+
+
+```{r}
+m1_u_fit <- readRDS(here("mle", "susc", "m1_u_fit_alt.rds"))
+m2_u_fit <- readRDS(here("mle", "susc", "m2_u_fit_alt.rds"))
+m2a_u_fit <- readRDS(here("mle", "susc", "m2a_u_fit_alt.rds"))
+m3_u_fits <- readRDS(here("mle", "susc", "m3_u_fits_alt.rds"))
+m3_u_exp_fit <- readRDS(here("mle", "susc", "m3_u_exp_fit_alt.rds"))
+m3_u_exp_fit_15 <- readRDS(here("mle", "susc", "m3_u_exp_fit_alt_15.rds"))
+m3_u_exp_fit_20 <- readRDS(here("mle", "susc", "m3_u_exp_fit_alt_20.rds"))
+m3_u_exp_fit_25 <- readRDS(here("mle", "susc", "m3_u_exp_fit_alt_25.rds"))
+m4_u_fit <- readRDS(here("mle", "susc", "m4_u_rho_fit_alt.rds"))
+m4a_u_fit <- readRDS(here("mle", "susc", "m4a_u_rho_fit_alt.rds"))
+```
+
 
 
 
@@ -728,9 +1119,18 @@ getAIC <- function(model){
 ```{r}
 getAIC(m1_u_fit)
 getAIC(m2_u_fit)
+getAIC(m2a_u_fit)
+sum(getAIC(m2_u_fits[[1]]) + getAIC(m2_u_fits[[2]]) + getAIC(m2_u_fits[[3]]))
 sum(getAIC(m3_u_fits[[1]]) + getAIC(m3_u_fits[[2]]) + getAIC(m3_u_fits[[3]]))
+sum(getAIC(m3_u_exp_fit_15) + getAIC(m3_u_exp_fit_20) + getAIC(m3_u_exp_fit_25))
 getAIC(m3_u_exp_fit)
 getAIC(m4_u_fit)
+getAIC(m4a_u_fit)
+```
+
+
+```{r}
+getAIC(m6c)
 ```
 
 
@@ -744,7 +1144,7 @@ life_summ <- exp_data %>%
   summarize(n_inf = sum(inf),
             n_total = n())
 
-life_summ %<>% mutate(ID = treatment) %>% left_join(., prevalence, by = "ID")
+life_summ %<>% mutate(ID = treatment) %>% left_join(., prevalence, by = "ID") %>% left_join(., length_summ)
 ```
 
 
@@ -755,6 +1155,9 @@ m1_u <- coef(m1_u_fit)
 m2_u <- coef(m2_u_fit)[1]
 m2_arr <- coef(m2_u_fit)[2]
 
+m2a_u <- coef(m2a_u_fit)[1]
+m2a_phi <- coef(m2a_u_fit)[2]
+
 m3_u <- coef(m3_u_exp_fit)[1]
 m3_rho <- coef(m3_u_exp_fit)[2]
 
@@ -762,705 +1165,141 @@ m4_u <- coef(m4_u_fit)[1]
 m4_arr <- coef(m4_u_fit)[2]
 m4_rho <- coef(m4_u_fit)[3]
 
+m4a_u <- coef(m4_u_fit)[1]
+m4a_phi <- coef(m4_u_fit)[2]
+m4a_rho <- coef(m4_u_fit)[3]
+
+life_summ %<>% mutate(rate = (f_est/life_vol*exp(arr_t_f*(1/ref_t - 1/temp))*(life_mm^gamma))/
+                (1+f_est/life_vol*exp(arr_f_est*(1/ref_t - 1/temp))*(life_mm^gamma)*h_est*exp(temp*w_est)*resource))
+
 life_summ %<>% mutate(m1_end = spores_consumed*m1_u,
                       m2_end = spores_consumed*m2_u*exp(m2_arr*(1/ref_t - 1/temp)),
+                      m2a_end = spores_consumed*m2a_u*exp(m2a_phi*temp),
                       m3_end = spores_consumed*m3_u*exp(resource*m3_rho),
-                      m4_end = spores_consumed*m4_u*exp(m4_arr*(1/ref_t - 1/temp))*exp(resource*m4_rho))
+                      m4_end = spores_consumed*m4_u*exp(m4_arr*(1/ref_t - 1/temp))*exp(resource*m4_rho),
+                      m4a_end = spores_consumed*m4a_u*exp(m4a_phi*temp)*exp(resource*m4a_rho))
+
+
+life_summ %<>% mutate(m1_susc = m1_u,
+                      m2_susc = m2_u*exp(m2_arr*(1/ref_t - 1/temp)),
+                      m2a_susc = m2a_u*exp(m2a_phi*temp),
+                      m3_susc = m3_u*exp(resource*m3_rho),
+                      m4_susc = m4_u*exp(m4_arr*(1/ref_t - 1/temp))*exp(resource*m4_rho),
+                      m4a_susc = m4a_u*exp(m4a_phi*temp)*exp(resource*m4a_rho))
+```
+
+```{r}
+m2_u_15 <- coef(m2_u_fits[[1]])[1]
+m2_u_20 <- coef(m2_u_fits[[2]])[1]
+m2_u_25 <- coef(m2_u_fits[[3]])[1]
+
+life_summ %<>% mutate(m2_per_end = case_when(temp==15 ~ spores_consumed*m2_u_15,
+                                             temp == 20 ~ spores_consumed*m2_u_20,
+                                             temp == 25 ~ spores_consumed*m2_u_25))
+
+life_summ %<>% mutate(m2_per_susc = case_when(temp==15 ~ m2_u_15,
+                                              temp==20 ~ m2_u_20,
+                                              temp==25 ~ m2_u_25))
+```
+
+
+
+```{r}
+m3_u_15 <- coef(m3_u_exp_fit_15)[1]
+m3_rho_15 <- coef(m3_u_exp_fit_15)[2]
+
+m3_u_20 <- coef(m3_u_exp_fit_20)[1]
+m3_rho_20 <- coef(m3_u_exp_fit_20)[2]
+
+m3_u_25 <- coef(m3_u_exp_fit_25)[1]
+m3_rho_25 <- coef(m3_u_exp_fit_25)[2]
+
+life_summ %<>% mutate(m3_per_end = case_when(temp==15 ~ spores_consumed*m3_u_15*exp(resource*m3_rho_15),
+                                             temp == 20 ~ spores_consumed*m3_u_20*exp(resource*m3_rho_20),
+                                             temp == 25 ~ spores_consumed*m3_u_25*exp(resource*m3_rho_25)))
+
+life_summ %<>% mutate(m3_per_susc = case_when(temp==15 ~ m3_u_15*exp(resource*m3_rho_15),
+                                             temp == 20 ~ m3_u_20*exp(resource*m3_rho_20),
+                                             temp == 25 ~ m3_u_25*exp(resource*m3_rho_25)))
 ```
 
 
 ```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m1_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="independent model")
+```
 
+
+```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m2_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="temp model")
 
+life_summ %>% ggplot(.,aes(x=resource, y=m2a_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="temp model")
+
+life_summ %>% ggplot(.,aes(x=resource, y=m2_per_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="temp model")
+
+```
+
+
+```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m3_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource model")
 
+life_summ %>% ggplot(.,aes(x=resource, y=m3_per_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource model")
+```
+
+
+```{r}
 life_summ %>% ggplot(.,aes(x=resource, y=m4_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="full model")
-```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Model 5 - Resource on temperature interaction
-
-Same as model 4 but we include a linear interaction term for the arrhenius coefficient, thus representing the interactive effect of resources on the temperature effect
-
-
-```{r}
-m5a_ll <- function(u, arr_t_u, rho, p_u){
-
-  exp_data <- dataset %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, 
-                                R=exp_data$resource*life_vol, 
-                                time=exp_data$time, 
-                                f=f_est/life_vol, 
-                                u=u*exp(exp_data$resource*rho), 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t = ref_t,
-                                arr_t_f = arr_f_est,
-                                arr_t_u = arr_t_u + p_u*exp_data$resource,
-                                h = (h_est + exp_data$temp*w_est),
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- -sum(exp_data$ll)
-  
-  print(u)
-  print(arr_t_u)
-  print(rho)
-  print(p_u)
-  
-  return(nll_sum)
-}
-```
-
-```{r, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m5a_u_fit <- mle2(m5a_ll, start=list(u = 0.0001, 
-                                     arr_t_u=10, 
-                                     rho=0.01,
-                                     p_u = 1), 
-                     control=list(parscale = c(u = 0.0001, 
-                                     arr_t_u=10, 
-                                     rho=0.01,
-                                     p_u = 1)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, 
-                           arr_t_f = 0, 
-                           rho = -Inf,
-                           p_u = -Inf), 
-                   upper=c(u = Inf, 
-                           arr_t_f = Inf, 
-                           rho = Inf,
-                           p_u = Inf))
-end_time <- Sys.time()
-m5a_runtime <- end_time - start_time
-m5a_runtime
-
-coef(m5a_u_fit)
-
-saveRDS(m5a_u_fit, file = here("mle","susc","m5a_u_rho_fit.rds"))
-```
-
-
-
-```{r}
-m5b_ll <- function(u, arr_t_u, rho, p_u){
-
-  exp_data <- dataset %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, 
-                                R=exp_data$resource*life_vol/1000, 
-                                time=exp_data$time, 
-                                f=f_est/life_vol, 
-                                u=u*exp(exp_data$resource*rho), 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t = ref_t,
-                                arr_t_f = arr_f_est,
-                                arr_t_u = arr_t_u*exp(p_u*exp_data$resource),
-                                h = (h_est + exp_data$temp*w_est),
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- -sum(exp_data$ll)
-  
-  print(u)
-  print(arr_t_u)
-  print(rho)
-  print(p_u)
-  
-  return(nll_sum)
-}
-```
-
-```{r, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m5b_u_fit <- mle2(m5a_ll, start=list(u = 0.0001, 
-                                     arr_t_u=10, 
-                                     rho=0.01,
-                                     p_u = 0.01), 
-                     control=list(parscale = c(u = 0.0001, 
-                                     arr_t_u=10, 
-                                     rho=0.01,
-                                     p_u = 0.01)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, 
-                           arr_t_f = 0, 
-                           rho = -Inf,
-                           p_u = -Inf), 
-                   upper=c(u = Inf, 
-                           arr_t_f = Inf, 
-                           rho = Inf,
-                           p_u = -Inf))
-end_time <- Sys.time()
-m5b_runtime <- end_time - start_time
-m5b_runtime
-
-coef(m5b_u_fit)
-
-saveRDS(m5b_u_fit, file = here("mle","susc","m5b_u_rho_fit.rds"))
-```
-
-
-
-
-```{r}
-m5u_per_ll <- function(u, arr_low, arr_med, arr_high){
-
-  
-  nll_sum <- 0  
-  u_nll <- 0
-  arr_vec <- c(arr_low, arr_med, arr_high)
-  for(j in 1:length(resource_IDs)){  
-    
-      exp_data <- dataset %>% filter(exposed==TRUE)
-      exp_data %<>% filter(resource == resource_IDs[j])
-      
-      
-      I_end <- as.data.frame(mapply(m4_sim, 
-                                    R=exp_data$resource*life_vol/1000, 
-                                    time=exp_data$time, 
-                                    f=f_est/life_vol, 
-                                    u=u, 
-                                    length = exp_data$life_mm, 
-                                    gamma=gamma, 
-                                    Z=spore_conc*life_vol,
-                                    ref_t = ref_t,
-                                    arr_t_f = arr_f_est,
-                                    arr_t_u = arr_vec[j],
-                                    h = (h_est + exp_data$temp*w_est),
-                                    temp=exp_data$temp))
-    
-      colnames(I_end) <- "I_end"
-      
-      exp_data %<>% cbind(I_end)
-      
-        inf_out <- function(inf_status, I_end){
-        dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-        }
-        
-      exp_data %<>% 
-        mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-      u_nll <- u_nll + -sum(exp_data$ll)
-  }
-  
-  print(u)
-  print(paste(arr_low, arr_med, arr_high, sep ="_"))  
-
-  nll_sum <- nll_sum + u_nll
-  return(nll_sum)
-}
-```
-
-
-```{r, eval=F}
-start_time <- Sys.time()
-
-arr_vec <- c(10,
-             10,
-             10)
-
-tmp <- data
-m5u_per_fit <- mle2(m5u_per_ll, start=list(u = 0.0001, 
-                                     arr_low = arr_vec[1],
-                                     arr_med = arr_vec[2],
-                                     arr_high = arr_vec[3]), 
-                     control=list(parscale = c(u = 0.0001, 
-                                     arr_low = arr_vec[1],
-                                     arr_med = arr_vec[2],
-                                     arr_high = arr_vec[3])),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, 
-                                     arr_low = 0,
-                                     arr_med = 0,
-                                     arr_high = 0), 
-                   upper=c(u = 1, 
-                                     arr_low = Inf,
-                                     arr_med = Inf,
-                                     arr_high = Inf))
-end_time <- Sys.time()
-m5_per_runtime <- end_time - start_time
-m5_per_runtime
-
-coef(m5u_per_fit)
-
-saveRDS(m5u_per_fit, file = here("mle","susc","m5u_per_fit.rds"))
-```
-
-
-# Model 6 - Temperature on Resource interaction
-
-Same as model 4 with a linear interaction for how exponential resource effect is affected by temperature, thus incorporating an interactive effect of temperature on the resource effect.
-
-
-```{r}
-m6a_ll <- function(u, arr_t_u, rho, w){
-
-  exp_data <- dataset %>% filter(exposed==TRUE)
-  
-  I_end <- as.data.frame(mapply(m4_sim, 
-                                R=exp_data$resource*life_vol/1000, 
-                                time=exp_data$time, 
-                                f=f_est/life_vol, 
-                                u=u*exp(exp_data$resource*(rho + exp(exp_data$temp*w))), 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t = ref_t,
-                                arr_t_f = arr_f_est,
-                                arr_t_u = arr_t_u,
-                                h = (h_est + exp_data$temp*w_est),
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- -sum(exp_data$ll)
-  
-  print(u)
-  print(arr_t_u)
-  print(rho)
-  print(w)
-  
-  return(nll_sum)
-}
-```
-
-
-
-
-```{r, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m6a_u_fit <- mle2(m6a_ll, start=list(u = 0.0001, 
-                                     arr_t_u=10, 
-                                     rho=0.01,
-                                     w=0.01), 
-                     control=list(parscale = c(u = 0.0001, 
-                                     arr_t_u=10, 
-                                     rho=0.01,
-                                     w=0.01)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, 
-                           arr_t_f = 0, 
-                           rho = -Inf,
-                           w = -Inf), 
-                   upper=c(u = Inf, 
-                           arr_t_f = Inf, 
-                           rho = Inf,
-                           w = Inf))
-end_time <- Sys.time()
-m6a_runtime <- end_time - start_time
-m6a_runtime
-
-coef(m6a_u_fit)
-
-saveRDS(m6a_u_fit, file = here("mle","susc","m6a_u_rho_fit.rds"))
-```
-
-
-```{r}
-m6b_ll <- function(u, arr_t_u, rho, w){
-
-  exp_data <- dataset %>% filter(exposed==TRUE)
-  
-  I_end <- as.data.frame(mapply(m4_sim, 
-                                R=exp_data$resource*life_vol/1000, 
-                                time=exp_data$time, 
-                                f=f_est/life_vol, 
-                                u=u*exp(exp_data$resource*(rho + exp(exp_data$temp*w))), 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t = ref_t,
-                                arr_t_f = arr_f_est,
-                                arr_t_u = arr_t_u,
-                                h = (h_est + exp_data$temp*w_est),
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- -sum(exp_data$ll)
-  
-  print(u)
-  print(arr_t_u)
-  print(rho)
-  print(w)
-  
-  return(nll_sum)
-}
-```
-
-
-
-
-```{r, eval=F}
-start_time <- Sys.time()
-tmp <- data
-m6b_u_fit <- mle2(m6b_ll, start=list(u = 0.0001, 
-                                     arr_t_u=10, 
-                                     rho=0.01,
-                                     w=0.01), 
-                     control=list(parscale = c(u = 0.0001, 
-                                     arr_t_u=10, 
-                                     rho=0.01,
-                                     w=0.01)),
-                     skip.hessian=F, method="L-BFGS-B", 
-                   lower=c(u = 0, 
-                           arr_t_f = 0, 
-                           rho = -Inf,
-                           w = -Inf), 
-                   upper=c(u = Inf, 
-                           arr_t_f = Inf, 
-                           rho = Inf,
-                           w = Inf))
-end_time <- Sys.time()
-m6b_runtime <- end_time - start_time
-m6b_runtime
-
-coef(m6b_u_fit)
-
-saveRDS(m6b_u_fit, file = here("mle","susc","m6b_u_rho_fit.rds"))
-```
-
-# Model 7 - Full interaction
-
-Full interaction model where both temperature and resources effects are functions of each other.
-
-Model 7a is linear interaction terms
-
-
-```{r}
-m1_u_fit <- readRDS(file = here("mle", "susc", "m1_u_fit.rds"))
-m2_u_fit <- readRDS(file = here("mle", "susc", "m2_u_fit.rds"))
-m3_u_fits <- readRDS(file = here("mle", "susc", "m3_u_fits.rds"))
-m3_u_per_fit <- readRDS(file = here("mle", "susc", "m3_u_per_fit.rds"))
-m3_u_exp_fit <- readRDS(file = here("mle", "susc", "m3_u_exp_fit.rds"))
-m4_u_fit <- readRDS(file = here("mle", "susc", "m4_u_rho_fit.rds"))
-# m5a_u_fit <- readRDS(file = here("mle", "susc", "m5a_u_rho_fit.rds"))
-# m5b_u_fit <- readRDS(file = here("mle", "susc", "m5b_u_rho_fit.rds"))
-m5u_per_fit <- readRDS(file = here("mle", "susc", "m5u_per_fit.rds"))
-```
-
-
-```{r}
-getAIC <- function(model){
-  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
-}
-```
-
-```{r}
-getAIC(m1_u_fit)
-getAIC(m2_u_fit)
-sum(getAIC(m3_u_fits[[1]]) + getAIC(m3_u_fits[[2]]) + getAIC(m3_u_fits[[3]]))
-getAIC(m3_u_per_fit)
-getAIC(m3_u_exp_fit)
-getAIC(m4_u_fit)
-# getAIC(m5a_u_fit)
-# getAIC(m5b_u_fit)
-getAIC(m5u_per_fit)
-```
-
-
-```{r}
-getAIC(m6c)
-getAIC(m6c) + getAIC(m2_u_fit)
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-fora_summ <- data %>% 
-  mutate(ID = treatment_ID) %>%
-  group_by(ID) %>% 
-  summarize(end_r_mean = mean(amt_rem)*fora_vol/1000,
-            end_r_se = (sd(amt_rem)/sqrt(n()))*fora_vol/1000)
-
-prevalence <- readRDS(here("processed_data", "prevalence.rds"))
-prevalence %<>% filter(temp %in% c(15, 20, 25)) %>% filter(species=="D") %>% mutate(ID = paste(temp, resource, sep="_")) %>% dplyr::select(-c(temp, resource, species))
-
-
-viz_summ <- left_join(fora_summ, prevalence)
-viz_summ %<>% left_join(., data_summ)
-viz_summ %<>% left_join(., length_summ)
-```
-
-# need to check these units
-
-```{r}
-
-
-f_mod <- f_est
-h_mod <- h_est
-
-data_summ %<>% mutate(clearance = 
-                        (f_mod*exp(arr_f_est*(1/ref_t - 1/temp)))/
-                        (1+f_est*exp(arr_f_est*(1/ref_t - 1/temp))*(h_mod*exp(w_est*temp))*resource/15))
-
-
-```
-
-
-```{r}
-m1_coef <- coef(m1_u_fit)
-m1_u <- as.numeric(m1_coef[1])
-
-data_summ %<>% mutate(m1_u = m1_u)
-```
-
-
-```{r}
-m2_coef <- coef(m2_u_fit)
-m2_u <- as.numeric(m2_coef[1])
-m2_arr_u <- as.numeric(m2_coef[2])
-
-data_summ %<>% mutate(m2_u = m2_u*exp(m2_arr_u*(1/ref_t - 1/temp)))
-```
-
-```{r}
-m3_per_coef <- coef(m3_u_per_fit)
-
-m3_u_low <- as.numeric(m3_per_coef[1])
-m3_u_med <- as.numeric(m3_per_coef[2])
-m3_u_high <- as.numeric(m3_per_coef[3])
-
-data_summ %<>% mutate(m3_u = case_when(resource==0.1 ~ m3_u_low,
-                                       resource==0.5 ~ m3_u_med,
-                                       resource==1 ~ m3_u_high,))
-```
-
-```{r}
-m3_coef <- coef(m3_u_exp_fit)
-
-m3_u <- as.numeric(m3_coef[1])
-m3_rho <- as.numeric(m3_coef[2])
-
-data_summ %<>% mutate(m3_u = m3_u*exp(m3_rho*resource))
-```
-
-
-```{r}
-m4_coef <- coef(m4_u_fit)
-
-m4_u <- as.numeric(m4_coef[1])
-m4_arr_u <- as.numeric(m4_coef[2])
-m4_rho <- as.numeric(m4_coef[3])
-
-data_summ %<>% mutate(m4_u = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp))*exp(m4_rho*resource))
-```
-
-
-```{r}
-data_summ %<>% mutate(rate_mean_ml_day=rate_len_mean*60*24,
-                      rate_se_ml_day=rate_len_mean_se*60*24)
-```
-
-
-
-
-```{r}
-viz_summ %<>% mutate(m1_I_end = mapply(m1_sim, 
-                                R=resource*life_vol/1000, 
-                                time=time_mean, 
-                                f=f_est/life_vol, 
-                                u=m1_u, 
-                                length = mm_mean, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t = ref_t,
-                                arr_t_f = arr_f_est,
-                                h = h_est*exp(temp*w_est),
-                                temp=temp))
-
-```
-
-```{r}
-viz_summ %<>% mutate(m2_I_end = mapply(m2_sim, 
-                                R=resource*life_vol/1000, 
-                                time=time_mean, 
-                                f=f_est/life_vol, 
-                                u=m2_u, 
-                                length = mm_mean, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t = ref_t,
-                                arr_t_f = arr_f_est,
-                                arr_t_u = m2_arr_u,
-                                h = h_est*exp(temp*w_est),
-                                temp=temp))
-
-```
-
-
-```{r}
-m3_u_low <- coef(m3_u_fits[[1]])
-m3_u_med <- coef(m3_u_fits[[2]])
-m3_u_high <- coef(m3_u_fits[[3]])
-
-viz_summ %<>% mutate(m3_per_I_end = mapply(m3_sim, 
-                                    R=resource*life_vol/1000, 
-                                    time=time_mean, 
-                                    f=f_est/life_vol, 
-                                    u=case_when(resource==0.1 ~ m3_u_low,
-                                                resource==0.5 ~ m3_u_med,
-                                                resource==1 ~ m3_u_high), 
-                                    length = mm_mean, 
-                                    gamma=gamma, 
-                                    Z=spore_conc*life_vol,
-                                    ref_t = ref_t,
-                                    arr_t_f = arr_f_est,
-                                    h = h_est*exp(temp*w_est),
-                                    temp=temp))
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m3_per_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
-```
-
-```{r}
-viz_summ %<>% mutate(m3_I_end = mapply(m3_sim, 
-                                    R=resource*life_vol/1000, 
-                                    time=time_mean, 
-                                    f=f_est/life_vol, 
-                                    u=m3_u*exp(m3_rho*resource/1000), 
-                                    length = mm_mean, 
-                                    gamma=gamma, 
-                                    Z=spore_conc*life_vol,
-                                    ref_t = ref_t,
-                                    arr_t_f = arr_f_est,
-                                    h = h_est*exp(temp*w_est),
-                                    temp=temp))
-
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m3_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
-```
-
-
-```{r}
-viz_summ %<>% mutate(m4_I_end = mapply(m4_sim, 
-                                R=resource*life_vol/1000, 
-                                time=time_mean, 
-                                f=f_est/life_vol, 
-                                u=m4_u*exp(resource*m4_rho), 
-                                length = mm_mean, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t = ref_t,
-                                arr_t_f = arr_f_est,
-                                arr_t_u = m4_arr_u,
-                                h = h_est*exp(temp*w_est),
-                                temp=temp))
-```
-
-
-```{r}
-viz_summ %>% ggplot(.,aes(x=resource, y=m1_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="independent model")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m2_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="temperature-dependent model")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m3_per_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m3_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m4_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+life_summ %>% ggplot(.,aes(x=resource, y=m4a_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="full model")
 
-
 ```
 
 ```{r}
-
-data_summ %>% ggplot(.,aes(x=resource, y=clearance, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="full model")
-
-
-data_summ %>% ggplot(.,aes(x=resource, y=clearance, color=as.factor(temp))) + geom_point(size = 3, shape=2)
+life_summ %>% ggplot(.,aes(x=resource, y=spores_consumed, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="spores_consumed")
 ```
 
 
-```{r, eval=F}
-data_summ %>% ggplot(.,aes(x=resource, y=m1_u, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=m2_u, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=m4_u, color=as.factor(temp))) + geom_point()
+```{r}
+life_summ %>% ggplot(.,aes(x=resource, y=m1_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="independent model")
+
+life_summ %>% ggplot(.,aes(x=resource, y=m2_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="temp model")
+
+life_summ %>% ggplot(.,aes(x=resource, y=m2a_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="temp model")
+
+life_summ %>% ggplot(.,aes(x=resource, y=m2_per_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="temp model")
+
 ```
 
+
+```{r}
+life_summ %>% ggplot(.,aes(x=resource, y=m3_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="resource model")
+
+life_summ %>% ggplot(.,aes(x=resource, y=m3_per_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="resource model")
+```
+
+
+```{r}
+life_summ %>% ggplot(.,aes(x=resource, y=m4_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="full model")
+
+life_summ %>% ggplot(.,aes(x=resource, y=m4a_susc, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + labs(title="full model")
+
+```
 
 
 

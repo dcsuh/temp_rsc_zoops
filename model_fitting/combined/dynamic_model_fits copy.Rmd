@@ -255,7 +255,7 @@ m2_ll <- function(f, u, arr_t_f, arr_t_u, h){
                                 arr_t_f=arr_t_f,
                                 arr_t_u=arr_t_u,
                                 ref_t=ref_t,
-                                h=h*fora_vol,
+                                h=h,
                                 temp=data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
@@ -267,8 +267,8 @@ m2_ll <- function(f, u, arr_t_f, arr_t_u, h){
                  log = T)
     nll_sum <- -sum(nll, na.rm = T)
   
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
+#  exp_data <- dataset %>% filter(exposed==TRUE)
+  exp_data <- tmp_dataset %>% filter(exposed==TRUE)
 
   
   I_end <- as.data.frame(mapply(m2_sim, R=exp_data$resource*life_vol/1000, time=exp_data$time, f=f/life_vol, u=u, 
@@ -276,7 +276,7 @@ m2_ll <- function(f, u, arr_t_f, arr_t_u, h){
                                 arr_t_f=arr_t_f,
                                 arr_t_u=arr_t_u,
                                 ref_t=ref_t,
-                                h=h*life_vol,
+                                h=h,
                                 temp=exp_data$temp))
 
   colnames(I_end) <- "I_end"
@@ -318,6 +318,9 @@ coef(m2_u_f_fit)
 
 #saveRDS(m2_u_f_fit, file = here("mle","update","m2_fit.rds"))
 ```
+
+
+
 
 
 # Resource-depdendent Model
@@ -763,12 +766,23 @@ saveRDS(m4_u_f_fit, file = here("mle","update","m4_fit.rds"))
 
 
 ```{r}
-# m1_u_f_fit <- readRDS(file = here("mle", "update", "m1_fit.rds"))
-# m2_u_f_fit <- readRDS(file = here("mle", "update", "m2_fit.rds"))
-# m3_u_f_fit <- readRDS(file = here("mle", "update", "m3_fit.rds"))
- m4_u_f_fit <- readRDS(file = here("mle", "update", "m4_fit.rds"))
+m1_u_f_fit <- readRDS(file = here("mle", "update", "m1_fit.rds"))
+m2_u_f_fit <- readRDS(file = here("mle", "update", "m2_fit.rds"))
+m3_u_f_fit <- readRDS(file = here("mle", "update", "m3_fit.rds"))
+m4_u_f_fit <- readRDS(file = here("mle", "update", "m4_fit.rds"))
 
 ```
+
+```{r}
+m3_u_f_fit_15 <- readRDS(here("mle", "update", "m3_fit_15.rds"))
+m3_u_f_fit_20 <- readRDS(here("mle", "update", "m3_fit_20.rds"))
+m3_u_f_fit_25 <- readRDS(here("mle", "update", "m3_fit_25.rds"))
+
+m3_u_f_fit_15_rho <- readRDS(here("mle", "update", "m3_fit_15_rho.rds"))
+m3_u_f_fit_20_rho <- readRDS(here("mle", "update", "m3_fit_20_rho.rds"))
+m3_u_f_fit_25_rho <- readRDS(here("mle", "update", "m3_fit_25_rho.rds"))
+```
+
 
 
 ```{r}
@@ -779,9 +793,15 @@ getAIC <- function(model){
 
 ```{r}
 getAIC(m1_u_f_fit) #constant u
-#getAIC(m2_u_f_fit)
-#getAIC(m3_u_f_fit)
-getAIC(m4_u_f_fit) #temperature-dependent u
+getAIC(m2_u_f_fit) #temperature-dependent u and no handling time
+getAIC(m3_u_f_fit) #handling time
+getAIC(m4_u_f_fit) #temperature-dependent u and handling time
+```
+
+```{r}
+getAIC(m3_u_f_fit_15) + getAIC(m3_u_f_fit_20) + getAIC(m3_u_f_fit_25)
+
+getAIC(m3_u_f_fit_15_rho) + getAIC(m3_u_f_fit_20_rho) + getAIC(m3_u_f_fit_25_rho)
 ```
 
 
@@ -1104,9 +1124,9 @@ viz_summ %>% ggplot(.,aes(x=resource, y=m3_R_end*1000, color=as.factor(temp))) +
   new_scale_color() + geom_point(aes(x=resource, y=amt_mean, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
 
 data_summ %>% ggplot(.,aes(x=resource, y=m3_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="resource_dependent model")
+  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
 
-data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_point() + geom_line(aes(group=as.factor(temp)))
 
 ```
 
