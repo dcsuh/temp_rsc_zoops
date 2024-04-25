@@ -689,7 +689,7 @@ saveRDS(m3_u_per_fit, file = here("mle","susc","m3_u_per_fit.rds"))
 ```{r}
 m3_rho_ll <- function(u, rho){
 
-  exp_data <- dataset %>% filter(exposed==TRUE)
+  exp_data <- tmp_dataset %>% filter(exposed==TRUE)
 
   
   I_end <- as.data.frame(mapply(m3_sim, 
@@ -727,7 +727,7 @@ m3_rho_ll <- function(u, rho){
 
 ```{r, eval=F}
 start_time <- Sys.time()
-tmp <- data
+tmp_dataset <- dataset
 m3_u_exp_fit <- mle2(m3_rho_ll, start=list(u = 0.000001,
                                    rho = 0.05), 
                      control=list(parscale = c(u = 0.000001,
@@ -742,6 +742,52 @@ m3_runtime
 coef(m3_u_exp_fit)
 
 saveRDS(m3_u_exp_fit, file = here("mle","susc","m3_u_exp_fit.rds"))
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+
+m3_u_exp_per_temp_fits <- list()
+
+tmp_dataset <- dataset %>% filter(temp == temp_IDs[1])
+
+m3_u_exp_per_temp_fits[[1]] <- mle2(m3_rho_ll, start=list(u = 0.000001,
+                                   rho = 1), 
+                     control=list(parscale = c(u = 0.000001,
+                                   rho = 1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, rho = -Inf), 
+                 upper=c(u = 1, rho = Inf))
+
+tmp_dataset <- dataset %>% filter(temp == temp_IDs[2])
+m3_u_exp_per_temp_fits[[2]] <- mle2(m3_rho_ll, start=list(u = 0.000001,
+                                   rho = 1), 
+                     control=list(parscale = c(u = 0.000001,
+                                   rho = 1)),
+                     skip.hessian=F, method="L-BFGS-B", 
+                 lower=c(u = 0, rho = -Inf), 
+                 upper=c(u = 1, rho = Inf))
+
+tmp_dataset <- dataset %>% filter(temp == temp_IDs[3])
+m3_u_exp_per_temp_fits[[3]] <- mle2(m3_rho_ll, start=list(u = 0.001,
+                                   rho = 1), 
+                     control=list(parscale = c(u = 0.001,
+                                   rho = 1)),
+                     skip.hessian=F, method="Nelder-Mead")
+                 #     , 
+                 # lower=c(u = 0, rho = -Inf), 
+                 # upper=c(u = 1, rho = Inf))
+
+
+end_time <- Sys.time()
+m3_runtime <- end_time - start_time
+m3_runtime
+
+coef(m3_u_exp_per_temp_fits[[1]])
+coef(m3_u_exp_per_temp_fits[[2]])
+coef(m3_u_exp_per_temp_fits[[3]])
+
+saveRDS(m3_u_exp_per_temp_fits, file = here("mle","susc","m3_u_exp_per_temp_fits.rds"))
 ```
 
 
@@ -1269,6 +1315,7 @@ getAIC(m2_u_fit)
 sum(getAIC(m3_u_fits[[1]]) + getAIC(m3_u_fits[[2]]) + getAIC(m3_u_fits[[3]]))
 getAIC(m3_u_per_fit)
 getAIC(m3_u_exp_fit)
+getAIC(m3_u_exp_per_temp_fits[[1]]) + getAIC(m3_u_exp_per_temp_fits[[2]]) + getAIC(m3_u_exp_per_temp_fits[[3]])
 getAIC(m4_u_fit)
 # getAIC(m5a_u_fit)
 # getAIC(m5b_u_fit)
@@ -1280,14 +1327,6 @@ getAIC(m5u_per_fit)
 getAIC(m6c)
 getAIC(m6c) + getAIC(m2_u_fit)
 ```
-
-
-
-
-
-
-
-
 
 
 
@@ -1432,6 +1471,33 @@ viz_summ %<>% mutate(m3_per_I_end = mapply(m3_sim,
                                     u=case_when(resource==0.1 ~ m3_u_low,
                                                 resource==0.5 ~ m3_u_med,
                                                 resource==1 ~ m3_u_high), 
+                                    length = mm_mean, 
+                                    gamma=gamma, 
+                                    Z=spore_conc*life_vol,
+                                    ref_t = ref_t,
+                                    arr_t_f = arr_f_est,
+                                    h = h_est*exp(temp*w_est),
+                                    temp=temp))
+
+viz_summ %>% ggplot(.,aes(x=resource, y=m3_per_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
+```
+
+```{r}
+m3_u_15 <- coef(m3_u_exp_per_temp_fits[[1]])[1]
+m3_rho_15 <- coef(m3_u_exp_per_temp_fits[[1]])[2]
+m3_u_20 <- coef(m3_u_exp_per_temp_fits[[2]])[1]
+m3_rho_20 <- coef(m3_u_exp_per_temp_fits[[2]])[2]
+m3_u_25 <- coef(m3_u_exp_per_temp_fits[[3]])[1]
+m3_rho_25 <- coef(m3_u_exp_per_temp_fits[[3]])[2]
+
+viz_summ %<>% mutate(m3_per_I_end = mapply(m3_sim, 
+                                    R=resource*life_vol/1000, 
+                                    time=time_mean, 
+                                    f=f_est/life_vol, 
+                                    u=case_when(temp==15 ~ m3_u_15*exp(m3_rho_15*resource),
+                                                temp==20 ~ m3_u_20*exp(m3_rho_20*resource),
+                                                temp==25 ~ m3_u_25*exp(m3_rho_25*resource)),
                                     length = mm_mean, 
                                     gamma=gamma, 
                                     Z=spore_conc*life_vol,
