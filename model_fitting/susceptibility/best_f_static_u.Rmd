@@ -22,6 +22,7 @@ library(ggnewscale)
  - we estimate u as a function of spores consumed
     - so I model dynamics once to figure out how many spores each treatment consumes and use that to estimate the probability of infection we observed
  - as of now, a per-temperature resource-dependent model appears to be the best fitting
+ - it seems that whatever model specification we use needs to be able to handle the fact that prevalence was so much higher at low temp, high resource. This flips the order of u at high resource and makes it difficult for general models to fit. We don't have a way to incorporate temperature as a function that will allow this to occur. It needs to be categorical. Because of this, the best model fits the resource-dependent effect on a per-temperature basis. this results in a model that is nearly as good a fit as the per-treatment version
  
 # things to do
  - effects of temp on u are still wonky. this may just be a units issue
@@ -330,6 +331,89 @@ getAIC <- function(model){
 }
 ```
 
+# per-treatment fit
+
+we'll use this version every time we get u per treatment
+```{r}
+u_per_ll <- function(u){
+
+  iter_data %<>% mutate(I_end = spores_consumed*u)
+  
+  iter_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- -sum(iter_data$ll)
+  
+  #print(u)
+  
+  return(nll_sum)
+}
+```
+
+```{r}
+start_time <- Sys.time()
+u_fits <- list() 
+
+u_vec <- c(0.00001,#pass
+           0.00001,#pass
+           0.00001,#pass
+           0.0001,#pass
+           0.0001,#pass
+           0.0001,#
+           0.0001,#pass
+           0.0001,#pass
+           0.0001)#pass
+
+for(i in 1:length(treatment_IDs)){
+  print(i)
+  
+  iter_data <- exp_data %>% filter(treatment == treatment_IDs[i])
+  u_fits[[i]] <- mle2(u_per_ll, start=list(u = u_vec[i]), 
+                     control=list(parscale = c(u = u_vec[i])),
+                     skip.hessian=F, method="Brent",
+                     lower = c(u = 0),
+                     upper = c(u = 1/max(iter_data$spores_consumed)))
+  
+end_time <- Sys.time()
+end_time - start_time
+
+}
+
+AIC <- 0
+
+u_per <- tibble(ID = treatment_IDs,
+                u = c(NA))
+
+for(i in 1:length(treatment_IDs)){
+ print(coef(u_fits[[i]]))
+ u_per$u[i] <- coef(u_fits[[i]])
+ tmp_AIC <- getAIC(u_fits[[i]])
+ AIC <- tmp_AIC + AIC
+}
+
+for(i in 1:length(treatment_IDs)){
+  iter_data <- exp_data %>% filter(treatment == treatment_IDs[i])
+  print(paste(i, 1/max(iter_data$spores_consumed)))
+}
+
+u_per <- data_summ %>% dplyr::select(temp, resource, ID) %>% left_join(., u_per)
+
+saveRDS(u_fits, file = here("mle","susc","u_per_fits_alt.rds"))
+
+```
+
+```{r}
+ggplot(u_per, aes(x=resource, y=u, color=as.factor(temp))) + geom_point()
+
+ggplot(u_per, aes(x=temp, y=u, color=as.factor(resource))) + geom_point()
+```
+
+
+
+
+
+
+# independent model
+
 This function generates the sum of the negative log-likelihood for all individuals assuming u is a constant across all conditions
 ```{r}
 m1_ll <- function(u){
@@ -385,46 +469,69 @@ m2u_ll <- function(u){
 }
 ```
 
+# check this!!!
+Note: results were robust to method. the commented out methods also provided the same results
+strangely, when doing it using this method, we get a non-monotonic relationship across temperature. This may not be that strange though because we see such different results across resource conditions. When conflating resource, it is at 20C we get the highest per-spore susceptibility, followed by 15C and then 25C.
+
 
 ```{r, eval=F}
 start_time <- Sys.time()
 m2_u_fits <- list()
 
-u_vec <- c(0.000001,#pass
-           0.000001,#pass
+u_vec <- c(0.0001,#pass
+           0.0001,#pass
            0.0001)#pass
 
 #for(i in 1:length(resource_IDs))
   
   iter_data <- exp_data %>% filter(temp == temp_IDs[1])
-  m2_u_fits[1] <- mle2(m2u_ll, start=list(u = u_vec[1]), 
+  m2_u_fits[[1]] <- mle2(u_per_ll, start=list(u = u_vec[1]), 
                      control=list(parscale = c(u = u_vec[1])),
-                     skip.hessian=F, method="L-BFGS-B"
-                     ,
-                     lower=c(u = 0),
-                     upper=c(u = 1/6608.229))
+                     skip.hessian=F, method="BFGS")
   
   iter_data <- exp_data %>% filter(temp == temp_IDs[2])
-  m2_u_fits[2] <- mle2(m2u_ll, start=list(u = u_vec[2]),
+  m2_u_fits[[2]] <- mle2(u_per_ll, start=list(u = u_vec[2]),
                    control=list(parscale = c(u = u_vec[2])),
-                   skip.hessian=F, method="L-BFGS-B"
-                   ,
-                   lower=c(u = 0),
-                   upper=c(u = 1/6980.857))
+                   skip.hessian=F, method="BFGS")
   
   iter_data <- exp_data %>% filter(temp == temp_IDs[3])
-  m2_u_fits[3] <- mle2(m2u_ll, start=list(u = u_vec[3]), 
+  m2_u_fits[[3]] <- mle2(u_per_ll, start=list(u = u_vec[3]), 
                  control=list(parscale = c(u = u_vec[3])),
-                 skip.hessian=F, method="L-BFGS-B"
-                   ,
-                   lower=c(u = 0),
-                   upper=c(u = 1/6980.857))
-                 
+                 skip.hessian=F, method="Nelder-Mead")
+  
+  # iter_data <- exp_data %>% filter(temp == temp_IDs[1])
+  # m2_u_fits[[1]] <- mle2(u_per_ll, start=list(u = u_vec[1]), 
+  #                    control=list(parscale = c(u = u_vec[1])),
+  #                    skip.hessian=F, method="L-BFGS-B"
+  #                    ,
+  #                    lower=c(u = 0),
+  #                    upper=c(u = 1/max(iter_data$spores_consumed)))
+  # 
+  # iter_data <- exp_data %>% filter(temp == temp_IDs[2])
+  # m2_u_fits[[2]] <- mle2(u_per_ll, start=list(u = u_vec[2]),
+  #                  control=list(parscale = c(u = u_vec[2])),
+  #                  skip.hessian=F, method="L-BFGS-B"
+  #                  ,
+  #                  lower=c(u = 0),
+  #                  upper=c(u = 1/(max(iter_data$spores_consumed))))
+  # 
+  # iter_data <- exp_data %>% filter(temp == temp_IDs[3])
+  # m2_u_fits[[3]] <- mle2(u_per_ll, start=list(u = u_vec[3]), 
+  #                control=list(parscale = c(u = u_vec[3])),
+  #                skip.hessian=F, method="L-BFGS-B"
+  #                  ,
+  #                  lower=c(u = 0),
+  #                  upper=c(u = 1/max(iter_data$spores_consumed)))
+  #                
 
 
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
 m2_runtime
+
+coef(m2_u_fits[[1]])
+coef(m2_u_fits[[2]])
+coef(m2_u_fits[[3]])
 
 getAIC(m2_u_fits[[1]]) + getAIC(m2_u_fits[[2]]) + getAIC(m2_u_fits[[3]])
 
@@ -443,6 +550,10 @@ Testing area
 ```{r, eval=F}
 u <- 0.00000001
 arr_t_u <- 300
+
+exp(arr_t_u*(1/ref_t - 1/15))
+exp(arr_t_u*(1/ref_t - 1/20))
+exp(arr_t_u*(1/ref_t - 1/25))
 
   exp_data %<>% mutate(I_end = spores_consumed*u*exp(arr_t_u*(1/ref_t - 1/temp)))
   
@@ -473,11 +584,11 @@ m2_ll <- function(u, arr_t_u){
 
 ```{r, eval=F}
 start_time <- Sys.time()
-tmp <- data
-m2_u_fit <- mle2(m2_ll, start=list(u = 0.00001,
-                                   arr_t_u = 10),
+
+m2_u_fit <- mle2(m2_ll, start=list(u = 0.00035,
+                                   arr_t_u = 63),
                      control=list(parscale = c(u = 0.00001,
-                                   arr_t_u = 10)),
+                                   arr_t_u = 1)),
                      skip.hessian=F, method="Nelder-Mead")
 
 # m2_u_fit <- mle2(m2_ll, start=list(u = 0.00001,
@@ -650,7 +761,7 @@ u_vec <- c(0.000001,#fail
 #for(i in 1:length(resource_IDs))
   
   iter_data <- exp_data %>% filter(resource == resource_IDs[1])
-  m3_u_fits[1] <- mle2(m3u_ll, start=list(u = u_vec[1]), 
+  m3_u_fits[1] <- mle2(u_per_ll, start=list(u = u_vec[1]), 
                      control=list(parscale = c(u = u_vec[1])),
                      skip.hessian=F, method="L-BFGS-B"
                      ,
@@ -658,7 +769,7 @@ u_vec <- c(0.000001,#fail
                      upper=c(u = 1/6608.229))
   
   iter_data <- exp_data %>% filter(resource == resource_IDs[2])
-  m3_u_fits[2] <- mle2(m3u_ll, start=list(u = u_vec[2]),
+  m3_u_fits[2] <- mle2(u_per_ll, start=list(u = u_vec[2]),
                    control=list(parscale = c(u = u_vec[2])),
                    skip.hessian=F, method="L-BFGS-B"
                    ,
@@ -666,7 +777,7 @@ u_vec <- c(0.000001,#fail
                    upper=c(u = 1/6980.857))
   
   iter_data <- exp_data %>% filter(resource == resource_IDs[3])
-  m3_u_fits[3] <- mle2(m3u_ll, start=list(u = u_vec[3]), 
+  m3_u_fits[3] <- mle2(u_per_ll, start=list(u = u_vec[3]), 
                  control=list(parscale = c(u = u_vec[3])),
                  skip.hessian=F, method="BFGS")
                  
