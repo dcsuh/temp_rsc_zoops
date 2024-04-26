@@ -130,22 +130,28 @@ $$
 \frac{dR}{dt} = -L^{\gamma} fRS\\
 $$
 
-```{r, m1_num_sol}
+```{r}
 m1_num_sol <- function(t, x, params){
   R <- x[1]
   S <- x[2]
   I <- x[3]
   Z <- x[4]
+  
   with(as.list(params),{
-    dR <- -f*R*(S+I)
-    dS <- -u*f*Z*S
-    dI <- u*f*Z*S
-    dZ <- -f*Z*(S+I)
+    dR <- -((f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R))*R*(S+I)
+    dS <- -u*((f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R))*Z*S
+    dI <- u*((f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R))*Z*S
+    dZ <- -((f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R))*Z*(S+I)
     res <- c(dR, dS, dI, dZ)
     list(res)}
     )
 }
 ```
+
 
 ```{r, m1_sim}
 m1_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, h, temp){
@@ -154,8 +160,7 @@ m1_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, h, temp){
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+  params <- c(f=f,
               u=u)
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   
@@ -259,8 +264,7 @@ m2_sim <-  function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h,
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+  params <- c(f=f,
               u=u*exp(arr_t_u*(1/ref_t - 1/temp)))
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   
@@ -387,8 +391,7 @@ m3_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, h, temp){
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+  params <- c(f=f,
               u=u)
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   if(Z == 0) {
@@ -502,6 +505,8 @@ saveRDS(m3_u_f_fit, file = here("mle","final","m3_fit.rds"))
 # Full Model
 
 
+
+
 ```{r, m4_sim}
 m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
   times <- seq(0, time, by=0.01)
@@ -509,8 +514,7 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
               S=1,
               I=0,
               Z=Z)
-  params <- c(f=(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R),
+  params <- c(f=f,
               u=u*exp(arr_t_u*(1/ref_t - 1/temp)))
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
   
@@ -520,12 +524,28 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
   else {
   end_data <- slice_max(output, time)[,4]  
   }
-  
-  # r_end <- ifelse(r_end<0, 0, r_end) #ensure that final resource concentration is never negative
-  #probably unnecessary
+
   return(end_data)
 }
 ```
+
+
+```{r}
+m4_coef
+
+f <- m4_coef[1]
+u <- m4_coef[2]
+arr_t_f <- m4_coef[3]
+arr_t_u <- m4_coef[4]
+h <- m4_coef[5]
+w <- m4_coef[6]
+rho <- m4_coef[7]
+
+
+```
+
+
+
 
 ```{r, m4_ll}
 m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
@@ -572,10 +592,6 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
   colnames(I_end) <- "I_end"
   
   exp_data %<>% cbind(I_end)
-  
-    inf_out <- function(inf_status, I_end){
-    dbinom(x = inf_status, size = 1, prob=I_end, log=T)
-  }
   
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
@@ -633,128 +649,24 @@ saveRDS(m4_u_f_fit, file = here("mle","final","m4_fit.rds"))
 
 
 # Interaction Model
-this one might be more complicated
 
 
 ```{r}
-# m5_ll <- function(f, u, arr_t_f, h, w, rho){
-#   data <- tmp
-#   R_end <- as.data.frame(mapply(m3_sim, 
-#                                 R=data$amt_init*fora_vol/1000, 
-#                                 time=data$time/60/24, 
-#                                 f=f/fora_vol,
-#                                 u = 0, 
-#                                 length=data$mm, gamma=gamma, Z=0,
-#                                 ref_t=ref_t,
-#                                 arr_t_f=arr_t_f,
-#                                 h=h*exp(w*data$temp),
-#                                 temp = data$temp))
-#   colnames(R_end) <- "R_end"
-#   data$end <- R_end$R_end
-#   data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-#   
-#     nll <- dnorm(data$resid, 
-#                  mean = 0, 
-#                  sd = sd(data$resid, na.rm = T), 
-#                  log = T)
-#     nll_sum <- -sum(nll, na.rm = T)
-#   
-#   exp_data <- tmp_dataset %>% filter(exposed==TRUE)
-# 
-#   
-#   I_end <- as.data.frame(mapply(m3_sim, 
-#                                 R=exp_data$resource*life_vol/1000, 
-#                                 time=exp_data$time, 
-#                                 f=f/life_vol, 
-#                                 u=u*exp(exp_data$resource*rho), 
-#                                 length = exp_data$life_mm, 
-#                                 gamma=gamma, 
-#                                 Z=spore_conc*life_vol,
-#                                 ref_t=ref_t,
-#                                 arr_t_f=arr_t_f,
-#                                 h=h*exp(w*exp_data$temp),
-#                                 temp=exp_data$temp))
-# 
-#   colnames(I_end) <- "I_end"
-#   
-#   exp_data %<>% cbind(I_end)
-#   
-#   
-#   exp_data %<>% 
-#     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-#   nll_sum <- nll_sum + -sum(exp_data$ll)
-#   return(nll_sum)
-# }
+m5_coef
+
+f <- m5_coef[1]
+u_15 <- m5_coef[2]
+u_20 <- m5_coef[3]
+u_25 <- m5_coef[4]
+arr_t_f <- m5_coef[5]
+h <- m5_coef[6]
+w <- m5_coef[7]
+rho_15 <- m5_coef[8]
+rho_20 <- m5_coef[9]
+rho_25 <- m5_coef[10]
+
 ```
 
-Now we use the optimizer
-
-```{r, eval=F}
-# start_time <- Sys.time()
-# m5_u_f_fit <- list()
-# tmp <- data %>% filter(temp == temp_IDs[1])
-# tmp_dataset <- dataset %>% filter(temp == temp_IDs[1])
-# m5_u_f_fit[1] <- mle2(m4_ll, start=list(u = 0.0001, 
-#                                         f=1, 
-#                                         arr_t_f=10, 
-#                                         h=1,
-#                                         w=0.1,
-#                                         rho=0.1), 
-#                      control=list(parscale = c(u = 0.0001, 
-#                                                f=1, 
-#                                                arr_t_f=10, 
-#                                                h=1,
-#                                                w=0.1,
-#                                                rho=0.1)),
-#                      skip.hessian=F, method="L-BFGS-B", 
-#                    lower=c(u = 0, f = 0, arr_t_f = 0, h = 0, w=-Inf, rho=-Inf), 
-#                    upper=c(u = 1, f = Inf, arr_t_f = Inf, h = Inf, w=Inf, rho=Inf))
-# 
-# tmp <- data %>% filter(temp == temp_IDs[2])
-# tmp_dataset <- dataset %>% filter(temp == temp_IDs[2])
-# m5_u_f_fit[2] <- mle2(m4_ll, start=list(u = 0.0001, 
-#                                         f=1, 
-#                                         arr_t_f=10, 
-#                                         h=1,
-#                                         w=0.1,
-#                                         rho=0.1), 
-#                      control=list(parscale = c(u = 0.0001, 
-#                                                f=1, 
-#                                                arr_t_f=10, 
-#                                                h=1,
-#                                                w=0.1,
-#                                                rho=0.1)),
-#                      skip.hessian=F, method="L-BFGS-B", 
-#                    lower=c(u = 0, f = 0, arr_t_f = 0, h = 0, w=-Inf, rho=-Inf), 
-#                    upper=c(u = 1, f = Inf, arr_t_f = Inf, h = Inf, w=Inf, rho=Inf))
-# 
-# tmp <- data %>% filter(temp == temp_IDs[3])
-# tmp_dataset <- dataset %>% filter(temp == temp_IDs[3])
-# m5_u_f_fit[3] <- mle2(m4_ll, start=list(u = 0.0001, 
-#                                         f=1, 
-#                                         arr_t_f=10, 
-#                                         h=1,
-#                                         w=0.1,
-#                                         rho=0.1), 
-#                      control=list(parscale = c(u = 0.0001, 
-#                                                f=1, 
-#                                                arr_t_f=10, 
-#                                                h=1,
-#                                                w=0.1,
-#                                                rho=0.1)),
-#                      skip.hessian=F, method="L-BFGS-B", 
-#                    lower=c(u = 0, f = 0, arr_t_f = 0, h = 0, w=-Inf, rho=-Inf), 
-#                    upper=c(u = 1, f = Inf, arr_t_f = Inf, h = Inf, w=Inf, rho=Inf))
-# 
-# 
-# end_time <- Sys.time()
-# end_time - start_time
-# 
-# 
-# coef(m5_u_f_fit)
-# 
-# saveRDS(m5_u_f_fit, file = here("mle","final","m5_fit.rds"))
-```
 
 
 ```{r}
@@ -814,9 +726,9 @@ m5_ll <- function(f, u_15, u_20, u_25, arr_t_f, h, w, rho_15, rho_20, rho_25){
 }
 ```
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
-
+tmp <- data
 tmp_dataset <- dataset
 m5_u_f_fit <- mle2(m5_ll, start=list(u_15 = 0.0001,
                                      u_20 = 0.0001,
@@ -892,51 +804,51 @@ viz_summ %<>% left_join(., length_summ)
 
 ```{r}
 m1_coef <- coef(m1_u_f_fit)
-m1_f <- as.numeric(m1_coef[1])
-m1_u <- as.numeric(m1_coef[2])
+m1_u <- as.numeric(m1_coef[1])
+m1_f <- as.numeric(m1_coef[2])
 m1_arr <- as.numeric(m1_coef[3])
 m1_h <- as.numeric(m1_coef[4])
 m1_w <- as.numeric(m1_coef[5])
 
 data_summ %<>% mutate(m1_rate = (m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m1_h*exp(m1_w*temp)*resource*fora_vol/1000),
+                        (1+m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m1_h*exp(m1_w*temp)*resource/1000),
                       m1_u = m1_u)
 ```
 
 ```{r}
 m2_coef <- coef(m2_u_f_fit)
-m2_u <- as.numeric(m2_coef[1])
-m2_f <- as.numeric(m2_coef[2])
+m2_f <- as.numeric(m2_coef[1])
+m2_u <- as.numeric(m2_coef[2])
 m2_arr <- as.numeric(m2_coef[3])
 m2_arr_u <- as.numeric(m2_coef[4])
-m2_h <- as.numeric(m2_coef[4])
-m2_w <- as.numeric(m2_coef[4])
+m2_h <- as.numeric(m2_coef[5])
+m2_w <- as.numeric(m2_coef[6])
 
 
 data_summ %<>% mutate(m2_rate = (m2_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m2_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m2_h*exp(m2_w*temp)*resource*fora_vol/1000),
+                        (1+m2_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m2_h*exp(m2_w*temp)*resource/1000),
                       m2_u = m2_u*exp(m2_arr_u*(1/ref_t - 1/temp)))
 ```
 
 ```{r}
 m3_coef <- coef(m3_u_f_fit)
-m3_u <- as.numeric(m3_coef[1])
-m3_f <- as.numeric(m3_coef[2])
+m3_f <- as.numeric(m3_coef[1])
+m3_u <- as.numeric(m3_coef[2])
 m3_arr <- as.numeric(m3_coef[3])
 m3_h <- as.numeric(m3_coef[4])
 m3_w <- as.numeric(m3_coef[5])
 m3_rho <- as.numeric(m3_coef[6])
 
 data_summ %<>% mutate(m3_rate = (m3_f*exp(m3_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m3_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m3_h*exp(m3_w*temp)*resource*fora_vol/1000),
+                        (1+m3_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m3_h*exp(m3_w*temp)*resource/1000),
                       m3_u = m3_u*exp(m3_rho*temp))
 ```
 
 
 ```{r}
 m4_coef <- coef(m4_u_f_fit)
-m4_u <- as.numeric(m4_coef[1])
-m4_f <- as.numeric(m4_coef[2])
+m4_f <- as.numeric(m4_coef[1])
+m4_u <- as.numeric(m4_coef[2])
 m4_arr <- as.numeric(m4_coef[3])
 m4_arr_u <- as.numeric(m4_coef[4])
 m4_h <- as.numeric(m4_coef[5])
@@ -944,17 +856,17 @@ m4_w <- as.numeric(m4_coef[6])
 m4_rho <- as.numeric(m4_coef[7])
 
 data_summ %<>% mutate(m4_rate = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m4_h*exp(m4_w*temp)*resource*fora_vol/1000),
+                        (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m4_h*exp(m4_w*temp)*resource/1000),
                       m4_u = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp))*exp(m4_rho*temp))
 ```
 
 
 ```{r}
 m5_coef <- coef(m5_u_f_fit)
-m5_u_15 <- as.numeric(m5_coef[1])
-m5_u_20 <- as.numeric(m5_coef[2])
-m5_u_25 <- as.numeric(m5_coef[3])
-m5_f <- as.numeric(m5_coef[4])
+m5_f <- as.numeric(m5_coef[1])
+m5_u_15 <- as.numeric(m5_coef[2])
+m5_u_20 <- as.numeric(m5_coef[3])
+m5_u_25 <- as.numeric(m5_coef[4])
 m5_arr <- as.numeric(m5_coef[5])
 m5_h <- as.numeric(m5_coef[6])
 m5_w <- as.numeric(m5_coef[7])
@@ -963,10 +875,10 @@ m5_rho_20 <- as.numeric(m5_coef[9])
 m5_rho_25 <- as.numeric(m5_coef[10])
 
 data_summ %<>% mutate(m5_rate = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m5_h*exp(m5_w*temp)*resource*fora_vol/1000),
-                      m5_u = case_when(temp == 15 ~ m5_u_15*exp(m5_rho_15*temp),
-                                       temp == 20 ~ m5_u_20*exp(m5_rho_20*temp),
-                                       temp == 25 ~ m5_u_25*exp(m5_rho_25*temp)))
+                        (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m5_h*exp(m5_w*temp)*resource/1000),
+                      m5_u = case_when(temp == 15 ~ m5_u_15*exp(m5_rho_15*resource),
+                                       temp == 20 ~ m5_u_20*exp(m5_rho_20*resource),
+                                       temp == 25 ~ m5_u_25*exp(m5_rho_25*resource)))
 
 ```
 
@@ -979,7 +891,7 @@ data_summ %<>% mutate(rate_mean_ml_day=rate_len_mean*60*24,
 
 ```{r}
 viz_summ %<>% mutate(m1_I_end = mapply(m1_sim, 
-                                       R=resource*fora_vol/1000, 
+                                       R=resource*life_vol/1000, 
                                        time=1, 
                                        f=m1_f/life_vol, 
                                        u = m1_u, 
@@ -988,8 +900,7 @@ viz_summ %<>% mutate(m1_I_end = mapply(m1_sim,
                                        Z=200*life_vol,
                                        ref_t = ref_t,
                                        arr_t_f = m1_arr,
-                                       h = m1_h,
-                                       w = m1_w,
+                                       h = m1_h*exp(m1_w*resource),
                                        temp = temp))
 
 ```
@@ -997,7 +908,7 @@ viz_summ %<>% mutate(m1_I_end = mapply(m1_sim,
 
 ```{r}
 viz_summ %<>% mutate(m2_I_end = mapply(m2_sim, 
-                                       R=resource*fora_vol/1000,
+                                       R=resource*life_vol/1000,
                                        time=1,
                                        f=m2_f/life_vol,
                                        u = m2_u,
@@ -1014,7 +925,7 @@ viz_summ %<>% mutate(m2_I_end = mapply(m2_sim,
 
 ```{r}
 viz_summ %<>% mutate(m3_I_end = mapply(m3_sim, 
-                                       R=resource*fora_vol/1000,
+                                       R=resource*life_vol/1000,
                                        time=1,
                                        f=m3_f/life_vol,
                                        u = m3_u*exp(m3_rho*resource),
@@ -1030,7 +941,7 @@ viz_summ %<>% mutate(m3_I_end = mapply(m3_sim,
 
 ```{r}
 viz_summ %<>% mutate(m4_I_end = mapply(m4_sim, 
-                                       R=resource*fora_vol/1000, 
+                                       R=resource*life_vol/1000, 
                                        time=1, 
                                        f=m4_f/life_vol, 
                                        u = m4_u*exp(m4_rho*resource), 
@@ -1040,16 +951,16 @@ viz_summ %<>% mutate(m4_I_end = mapply(m4_sim,
                                        ref_t = ref_t,
                                        arr_t_f = m4_arr,
                                        arr_t_u = m4_arr_u,
-                                       h = m4_h*exp(m4_h*temp),
+                                       h = m4_h*exp(m4_w*temp),
                                        temp = temp))
 ```
 
 
 ```{r}
-viz_summ %<>% mutate(m5_I_end = mapply(m5_sim, 
-                                       R=resource*fora_vol/1000, 
+viz_summ %<>% mutate(m5_I_end = mapply(m3_sim, 
+                                       R=resource*life_vol/1000, 
                                        time=1, 
-                                       f=m4_f/life_vol, 
+                                       f=m5_f/life_vol, 
                                        u = case_when(temp == 15 ~ m5_u_15*exp(m5_rho_15*resource),
                                                      temp == 20 ~ m5_u_20*exp(m5_rho_20*resource),
                                                      temp == 25 ~ m5_u_25*exp(m5_rho_25*resource)), 
@@ -1058,7 +969,7 @@ viz_summ %<>% mutate(m5_I_end = mapply(m5_sim,
                                        Z=200*life_vol,
                                        ref_t = ref_t,
                                        arr_t_f = m5_arr,
-                                       h = m5_h*exp(m5_h*temp),
+                                       h = m5_h*exp(m5_w*temp),
                                        temp = temp))
 ```
 
@@ -1082,19 +993,25 @@ viz_summ %>% ggplot(.,aes(x=resource, y=m2_I_end, color=as.factor(temp))) + geom
 viz_summ %>% ggplot(.,aes(x=resource, y=m3_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
   new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="resource-dependent model")
 
-viz_summ %>% ggplot(.,aes(x=resource, y=m4_I_end, color=as.factor(temp))) + 
-  geom_point(size = 4, shape=2) +
-  new_scale_color() + 
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
-  labs(title="full model")
+viz_summ %>% ggplot(.,aes(x=resource, y=m4_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="full model")
 
-viz_summ %>% ggplot(.,aes(x=resource, y=m5_I_end, color=as.factor(temp))) + 
-  geom_point(size = 4, shape=2) +
-  new_scale_color() + 
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
-  labs(title="interaction model")
+viz_summ %>% ggplot(.,aes(x=resource, y=m5_I_end, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
+  new_scale_color() + geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + labs(title="interation model")
+
+# viz_summ %>% ggplot(.,aes(x=resource, y=m4_I_end, color=as.factor(temp))) + 
+#   geom_point(size = 4, shape=2) +
+#   new_scale_color() + 
+#   geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
+#   geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
+#   labs(title="full model")
+# 
+# viz_summ %>% ggplot(.,aes(x=resource, y=m5_I_end, color=as.factor(temp))) + 
+#   geom_point(size = 4, shape=2) +
+#   new_scale_color() + 
+#   geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
+#   geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
+#   labs(title="interaction model")
 
 ```
 
@@ -1112,13 +1029,13 @@ data_summ %>% ggplot(.,aes(x=resource, y=m4_rate, color=as.factor(temp))) + geom
   new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="full model")
 
 data_summ %>% ggplot(.,aes(x=resource, y=m5_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="full model")
+  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="interaction model")
 ```
 
 ```{r, eval=F}
 data_summ %>% ggplot(.,aes(x=resource, y=m1_u, color=as.factor(temp))) + geom_point()
-# data_summ %>% ggplot(.,aes(x=resource, y=m2_u, color=as.factor(temp))) + geom_point()
-# data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=m2_u, color=as.factor(temp))) + geom_point()
+data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=m4_u, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=m5_u, color=as.factor(temp))) + geom_point()
 ```

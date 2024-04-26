@@ -52,7 +52,8 @@ data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
 m4_num_sol <- function(t, x, params){
   R <- x[1]
   with(as.list(params),{
-    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))
+    dR <- -(f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/
+              (1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R)
     res <- c(dR)
     list(res)}
     )
@@ -90,7 +91,7 @@ m6c_ll <- function(f, arr_t, h, w){
                                  h=h*exp(w*data$temp)))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
-  data %<>% mutate(resid = log(end) - log(amt_rem_tot/1000))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
