@@ -553,7 +553,7 @@ u_plot <- function(var){
 ```{r}
 susc_plot <- u_plot("m5_u") + labs(title="")
 susc_plot
-ggsave("susc_plot.png", all_fits, path=here("mle/fit_plots"))
+ggsave("susc_plot.png", susc_plot, path=here("mle/fit_plots"))
 ```
 
 
