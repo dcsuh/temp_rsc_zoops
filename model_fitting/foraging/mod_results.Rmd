@@ -152,13 +152,15 @@ saveRDS(aic_table, file=here("mle/aic_table.rds"))
 
 
 ```{r}
-model_list <- list(m0, m1, m2, m3, m4, m6c)
-mod_names <- c("m0", "m1", "m2", "m3", "m4", "m6c")
-mod_names_descriptive <- c("base", "size", "temp", "rsc", "full", "h(T)~EXP")
+model_list <- list(m1, m2, m3, m4, m6c)
+mod_names <- c("m1", "m2", "m3", "m4", "m5")
+mod_names_descriptive <- c("size", "temp", "rsc", "add", "inter")
 mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
 #tibble(mod_names, mod_names_descriptive) #check to make sure names line up
 
 aic_table_final <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
+
+aic_table_final
 
 saveRDS(aic_table_final, file=here("mle/aic_table_f_final.rds"))
 ```

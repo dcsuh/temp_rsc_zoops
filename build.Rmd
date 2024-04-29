@@ -11,49 +11,39 @@ library(here)
 ```
 
 
-# Effects of temperature and resources on prevalence
 
- - Probability of infection is consistent across resources at high temperature
- - Prob. of inf. decreases with increasing resources at 20 degrees but increases with increasing resources at 15 degrees
+# AIC Tables
 
-![](figures/prob_inf.png)
+We compared 5 models describing foraging rate patterns of daphnia under different temperature and resource conditions
+(1) size-dependent effect only -- foraging rate is moderated by body size of the host according to a scaling exponent. All subsequent models include this effect.
+(2) temperature-dependent effect -- foraging rate is altered by temperature according to an Arrhenius function
+(3) resource-dependent effect -- foraging rate is altered by resource concentration according to a type-II functional response
+(4) additive effect -- foraging rate is altered by both temperature and resource effects
+(5) interactive effect -- foraging rate is altered by both temperature and resource effects and the resource effect changes as an exponential function of resources
+```{r}
+readRDS(here("mle", "aic_table_f_final.rds"))
+```
 
-
-
-# Effects of temperature and resources on host net reproductive rate
-
- - Temperature and Resource availability have a positive effect on host net reproductive rate
- - In some cases, increases due to temperature can compensate for low resource availability
- - In some cases, resource availability appears to limit reproductive rates at higher temperatures
-    - This appears to be the case when going from mid to high food at 20 degrees and low to mid food at 25 degrees
-
-![](figures/little_r.png)
-
-
-
-
-# Effects of resource and temperature on length and spore yield
-
- - Temperature and Resource concentration contributes to greater lengths and spore yields
- - Spore yield correlates with larger body sizes
-
-![](figures/spores_length.png)
+We estimated the prevalence of infection from an infection assay as a function of foraging rate and per-spore susceptibility under the same temperature and resource conditions. We compared 5 models. Each incorporates the best fitting foraging rate model.
+(1) constant -- per-spore susceptibility is constant across all temperature and resource conditions
+(2) temperature-dependent effect -- foraging rate is altered by temperature according to an Arrhenius function
+(3) resource-dependent effect -- foraging rate is altered by initial resource concentration as an exponential function
+(4) additive effect -- foraging rate is altered by both temperature and resource effects
+(5) interactive effect -- foraging rate is altered by resource effects and is evaluated at each temperature
+```{r}
+readRDS(here("mle", "aic_table_combined_final.rds"))
+```
 
 
+# Foraging rate fits
 
-# Effects of temperature and resources on parasite basic reproductive number
+![](mle/fit_plots/f_fits_final.png)
 
- - Temperature and resources combine to enhance the invasion potential of the parasite
- - At 20 degrees, higher resource concentration may reduce invasion potential
- - At 25 degrees, higher resource concentration enhances invasion potential
- 
-![](figures/R0.png)
-![](figures/R0_temp.png)
 
-# Sensitivity of R0 to different parameters
+# Prevalence fits
 
- - R0 is most sensitive to changes in transmission rates
- - Temperature may have a negative effect on R0 via reductions in transmission rates 
 
-![](figures/sensitivity.png)
+
+
+
 
