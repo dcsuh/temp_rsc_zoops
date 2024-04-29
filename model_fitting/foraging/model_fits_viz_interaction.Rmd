@@ -472,49 +472,94 @@ ggsave("best_three_fit.png", best_three_fit, path=here("mle/fit_plots"))
 ```
 
 ```{r}
-all_fits <- seq_data %>% dplyr::select(resource, temp_factor, m2_rate, m3_rate, m4_rate, m6c_rate) %>%
+#all_fits <- 
+seq_data %>% dplyr::select(resource, temp_factor, m2_rate, m4_rate, m6c_rate) %>%
   filter(temp_factor %in% c(15, 20, 25)) %>%
-  mutate("temp-only" = m2_rate, "resource-only" = m3_rate,"additive" = m4_rate, "interactive" = m6c_rate) %>%
-  dplyr::select(-c(m2_rate, m3_rate, m4_rate, m6c_rate)) %>%
-  pivot_longer(cols=c('temp-only', 'resource-only', 'additive', 'interactive')) %>%
+  mutate("temp-only" = m2_rate, "additive" = m4_rate, "interactive" = m6c_rate) %>%
+  dplyr::select(-c(m2_rate, m4_rate, m6c_rate)) %>%
+  pivot_longer(cols=c('temp-only', 'additive', 'interactive')) %>%
   ggplot(.,aes(x=resource, y=value, group = interaction(name, temp_factor),color=temp_factor)) +
   geom_line(aes(linetype=name), size = 0.75) +
-  scale_linetype_manual(values = c(5, 1, 3, 6)) +
+  scale_linetype_manual(values = c(6,1,5)) +
   geom_point(data=data_summ, aes(x=resource, 
                             y=rate_len_mean, 
                             group = as.factor(temp), 
                             color = as.factor(temp)),
              size = 4) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource Conc. (mgC/L)", y="Foraging rate (mL/day)", color="Temp", title = "", linetype="Model") 
-
-all_fits
-
+  labs(x="Resource Conc. (mgC/L)", y="Foraging rate (mL/day)", color="Temp", title = "", linetype="Model")
 ```
 
 
 
 ```{r}
-all_fits <- seq_data %>% dplyr::select(resource, temp_factor, m2_rate, m3_rate, m4_rate, m6c_rate) %>%
+#all_fits <- 
+seq_data %>% dplyr::select(resource, temp_factor, m2_rate, m3_rate, m4_rate, m6c_rate) %>%
   filter(temp_factor %in% c(15, 20, 25)) %>%
   mutate("temp-only" = m2_rate, "resource-only" = m3_rate,"additive" = m4_rate, "interactive" = m6c_rate) %>%
   dplyr::select(-c(m2_rate, m3_rate, m4_rate, m6c_rate)) %>%
   pivot_longer(cols=c('temp-only', 'resource-only', 'additive', 'interactive')) %>%
   ggplot(.,aes(x=resource, y=value, group = interaction(name, temp_factor),color=temp_factor)) +
   geom_line(aes(linetype=name), size = 0.75) +
-  scale_linetype_manual(values = c(5, 1, 3, 6)) +
+  scale_linetype_manual(values = c(6,1,3,5)) +
   geom_point(data=data_summ, aes(x=resource, 
                             y=rate_len_mean, 
                             group = as.factor(temp), 
                             color = as.factor(temp)),
              size = 4) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource Conc. (mgC/L)", y="Foraging rate (mL/day)", color="Temp", title = "", linetype="Model") 
+  labs(x="Resource Conc. (mgC/L)", y="Foraging rate (mL/day)", color="Temp", title = "", linetype="Model")
+```
 
+
+```{r}
 all_fits
 
 ggsave("f_fits_final.png", all_fits, path=here("mle/fit_plots"))
 ```
+
+
+
+
+```{r}
+seq_data %>% dplyr::select(resource, temp, m3_rate, m4_rate, m6c_rate) %>%
+  filter(resource %in% c(0.1, 0.5, 1)) %>%
+  mutate("resource-only" = m3_rate,"additive" = m4_rate, "interactive" = m6c_rate) %>%
+  dplyr::select(-c(m3_rate, m4_rate, m6c_rate)) %>%
+  pivot_longer(cols=c('resource-only', 'additive', 'interactive')) %>%
+  ggplot(.,aes(x=temp, y=value, group = interaction(name, resource),color=as.factor(resource))) +
+  geom_line(aes(linetype=name), size = 0.75) +
+  scale_linetype_manual(values = c(6,1,3)) +
+  geom_point(data=data_summ, aes(x=temp, 
+                            y=rate_len_mean, 
+                            group = as.factor(resource), 
+                            color = as.factor(resource)),
+             size = 4) + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  labs(x="Temperature (C)", y="Foraging rate (mL/day)", color="Resource", title = "", linetype="Model")
+```
+
+```{r}
+seq_data %>% dplyr::select(resource, temp, m2_rate, m3_rate, m4_rate, m6c_rate) %>%
+  filter(resource %in% c(0.1, 0.5, 1)) %>%
+  mutate("temp-only" = m2_rate, "resource-only" = m3_rate,"additive" = m4_rate, "interactive" = m6c_rate) %>%
+  dplyr::select(-c(m2_rate, m3_rate, m4_rate, m6c_rate)) %>%
+  pivot_longer(cols=c('temp-only', 'resource-only', 'additive', 'interactive')) %>%
+  ggplot(.,aes(x=temp, y=value, group = interaction(name, resource),color=as.factor(resource))) +
+  geom_line(aes(linetype=name), size = 0.75) +
+  scale_linetype_manual(values = c(6,1,3,5)) +
+  geom_point(data=data_summ, aes(x=temp, 
+                            y=rate_len_mean, 
+                            group = as.factor(resource), 
+                            color = as.factor(resource)),
+             size = 4) + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  labs(x="Temperature (C)", y="Foraging rate (mL/day)", color="Resource", title = "", linetype="Model")
+```
+
+
+
+
 
 
 
@@ -917,29 +962,6 @@ seq_data %>% dplyr::select(resource, temp_factor, amt_rem_mean, amt_rem_se, m2_R
   labs(x="Resource Conc. (mgC/L)", y="Foraging rate (mL/day)", color="Temp", title = "", linetype="Model") 
 ```
 
-
-
-```{r}
-all_fits <- seq_data %>% dplyr::select(resource, temp_factor, amt_rem, m2_R_end, m3_R_end, m4_R_end, m6c_R_end) %>%
-  filter(temp_factor %in% c(15, 20, 25)) %>%
-  mutate("temp-only" = m2_R_end, "resource-only" = m3_R_end,"additive" = m4_R_end, "interactive" = m6c_R_end) %>%
-  dplyr::select(-c(m2_R_end, m3_R_end, m4_R_end, m6c_R_end)) %>%
-  pivot_longer(cols=c('temp-only', 'resource-only', 'additive', 'interactive')) %>%
-  ggplot(.,aes(x=resource, y=value*1000/15, group = interaction(name, temp_factor),color=temp_factor)) +
-  geom_line(aes(linetype=name), size = 0.75) +
-  scale_linetype_manual(values = c(5, 1, 3, 6)) +
-  geom_point(data=data_summ, aes(x=resource, 
-                            y=amt_rem*1000/15, 
-                            group = as.factor(temp), 
-                            color = as.factor(temp)),
-             size = 4) + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource Conc. (mgC/L)", y="Foraging rate (mL/day)", color="Temp", title = "", linetype="Model") 
-
-all_fits
-
-ggsave("f_fits_final.png", all_fits, path=here("mle/fit_plots"))
-```
 
 
 
