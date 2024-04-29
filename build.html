@@ -369,29 +369,9 @@ a type-II functional response (4) additive effect – foraging rate is
 altered by both temperature and resource effects (5) interactive effect
 – foraging rate is altered by both temperature and resource effects and
 the resource effect changes as an exponential function of resources</p>
-<pre class="r"><code>readRDS(here(&quot;mle&quot;, &quot;aic_table_f_final.rds&quot;))</code></pre>
-<pre><code>## $logLik
-## [1]  -86.16715  -89.53153 -134.33770 -174.68970 -193.28754
-## 
-## $AIC
-## [1] 180.3343 185.0631 272.6754 353.3794 388.5751
-## 
-## $dLogLik
-## [1] 107.12038 103.75600  58.94984  18.59784   0.00000
-## 
-## $dAIC
-## [1]   0.000000   4.728767  92.341096 173.045096 208.240770
-## 
-## $df
-## [1] 4 3 2 2 1
-## 
-## $weight
-## [1] 9.140707e-01 8.592927e-02 8.116442e-21 2.425016e-38 5.521680e-46
-## 
-## attr(,&quot;row.names&quot;)
-## [1] &quot;m5_inter&quot; &quot;m4_add&quot;   &quot;m3_rsc&quot;   &quot;m2_temp&quot;  &quot;m1_size&quot; 
-## attr(,&quot;class&quot;)
-## [1] &quot;ICtab&quot;</code></pre>
+<pre class="r"><code>aic_f &lt;- readRDS(here(&quot;mle&quot;, &quot;aic_table_f_final.rds&quot;))
+# aic_f_table &lt;- kable(as.data.frame(aic_f))
+# aic_f_table</code></pre>
 <p>We estimated the prevalence of infection from an infection assay as a
 function of foraging rate and per-spore susceptibility under the same
 temperature and resource conditions. We compared 5 models. Each
@@ -404,29 +384,8 @@ an exponential function (4) additive effect – foraging rate is altered
 by both temperature and resource effects (5) interactive effect –
 foraging rate is altered by resource effects and is evaluated at each
 temperature</p>
-<pre class="r"><code>readRDS(here(&quot;mle&quot;, &quot;aic_table_combined_final.rds&quot;))</code></pre>
-<pre><code>## $logLik
-## [1] -178.3979 -176.4816 -181.3710 -183.9032 -188.4187
-## 
-## $AIC
-## [1] 370.7959 372.9631 374.7419 379.8065 386.8374
-## 
-## $dLogLik
-## [1] 10.020772 11.937142  7.047752  4.515464  0.000000
-## 
-## $dAIC
-## [1]  0.000000  2.167261  3.946041  9.010616 16.041545
-## 
-## $df
-## [1]  7 10  6  6  5
-## 
-## $weight
-## [1] 0.6716909680 0.2272766144 0.0933894125 0.0074223102 0.0002206949
-## 
-## attr(,&quot;row.names&quot;)
-## [1] &quot;m4_add&quot;   &quot;m5_inter&quot; &quot;m2_temp&quot;  &quot;m3_rsc&quot;   &quot;m1_size&quot; 
-## attr(,&quot;class&quot;)
-## [1] &quot;ICtab&quot;</code></pre>
+<pre class="r"><code>aic_both &lt;- readRDS(here(&quot;mle&quot;, &quot;aic_table_combined_final.rds&quot;))
+#kable(aic_both)</code></pre>
 </div>
 <div id="foraging-rate-fits" class="section level1">
 <h1>Foraging rate fits</h1>

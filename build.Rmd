@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(here)
+library(knitr)
 ```
 
 
@@ -21,7 +22,9 @@ We compared 5 models describing foraging rate patterns of daphnia under differen
 (4) additive effect -- foraging rate is altered by both temperature and resource effects
 (5) interactive effect -- foraging rate is altered by both temperature and resource effects and the resource effect changes as an exponential function of resources
 ```{r}
-readRDS(here("mle", "aic_table_f_final.rds"))
+aic_f <- readRDS(here("mle", "aic_table_f_final.rds"))
+# aic_f_table <- kable(as.data.frame(aic_f))
+# aic_f_table
 ```
 
 We estimated the prevalence of infection from an infection assay as a function of foraging rate and per-spore susceptibility under the same temperature and resource conditions. We compared 5 models. Each incorporates the best fitting foraging rate model.
@@ -31,7 +34,8 @@ We estimated the prevalence of infection from an infection assay as a function o
 (4) additive effect -- foraging rate is altered by both temperature and resource effects
 (5) interactive effect -- foraging rate is altered by resource effects and is evaluated at each temperature
 ```{r}
-readRDS(here("mle", "aic_table_combined_final.rds"))
+aic_both <- readRDS(here("mle", "aic_table_combined_final.rds"))
+#kable(aic_both)
 ```
 
 
