@@ -575,7 +575,7 @@ m6_range %<>% mutate(h = m4_h,
 
 h_plot <- m6_range %>% ggplot(., aes(x=temp, y=h_c)) + 
   geom_line(size=2) +
-  labs(x = "Temp (C)", y = "Handling time (days/mgC)", title = "Temperature effect on handling time")
+  labs(x = "Temp (C)", y = "Handling time (days/mgC)", title = "")
 
 ggsave("h_plot.png", h_plot, path=here("mle/fit_plots"))
 
