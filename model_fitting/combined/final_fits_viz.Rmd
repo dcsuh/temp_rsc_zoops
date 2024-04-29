@@ -551,7 +551,7 @@ u_plot <- function(var){
 ```
 
 ```{r}
-susc_plot <- u_plot("m5_u") + labs(title = "Per-Temperature Resource Effect")
+susc_plot <- u_plot("m5_u") + labs(title="")
 susc_plot
 ggsave("susc_plot.png", all_fits, path=here("mle/fit_plots"))
 ```
