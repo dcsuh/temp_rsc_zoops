@@ -262,7 +262,8 @@ seq_data %<>% mutate(m3_rate=((m3_f)/(1+m3_f*m3_h*resource)))
 
 ```{r}
 get_rate <- function(f, arr, temp, h, resource){
-  ((f*exp(arr*(1/ref_t - 1/temp)))/(1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
+  ((f*exp(arr*(1/ref_t - 1/temp)))/
+     (1+f*exp(arr*(1/ref_t - 1/temp))*h*resource))
 }
 ```
 
@@ -310,17 +311,19 @@ m6b_arr <- as.numeric(m6b_coef[2])
 m6b_h <- as.numeric(m6b_coef[3])
 m6b_w <- as.numeric(m6b_coef[4])
 
-data_summ %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr, h=(m6b_h + m6b_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m6b_rate = mapply(get_rate, f=m5c_f, arr=m6b_arr, h=(m6b_h + m6b_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+data_summ %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr, h=(m6b_h + m6b_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource/1000))
+  seq_data %<>% mutate(m6b_rate = mapply(get_rate, f=m6b_f, arr=m6b_arr, h=(m6b_h + m6b_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource/1000))
   
 m6c_coef
 m6c_f <- as.numeric(m6c_coef[1])
 m6c_arr <- as.numeric(m6c_coef[2])
-m6c_h <- as.numeric(m6c_coef[3])/15
+m6c_h <- as.numeric(m6c_coef[3])
 m6c_w <- as.numeric(m6c_coef[4])
 
-  data_summ %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource))
-  seq_data %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource))
+  data_summ %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*data_summ$temp), temp=data_summ$temp, resource=data_summ$resource/1000))
+  seq_data %<>% mutate(m6c_rate = mapply(get_rate, f=m6c_f, arr=m6c_arr, h=m6c_h*exp(m6c_w*seq_data$temp), temp=seq_data$temp, resource=seq_data$resource/1000))
+
+
 ```
 
 
@@ -518,9 +521,9 @@ ggsave("m5_arr_plot.png", m5_arr_plot, path=here("mle/fit_plots"))
 ```{r}
 m6_range <- tibble(temp = temp_range)
 
-m6_range %<>% mutate(h = m4_h*15,
-                     h_b = (m6b_h*15 + m6b_w*temp),
-                     h_c = (m6c_h*15*exp(m6c_w*temp)))
+m6_range %<>% mutate(h = m4_h,
+                     h_b = (m6b_h + m6b_w*temp),
+                     h_c = (m6c_h*exp(m6c_w*temp)))
 
 m6_range %<>% pivot_longer(cols=c(h, h_b, h_c))
 

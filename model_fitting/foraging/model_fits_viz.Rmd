@@ -443,7 +443,7 @@ m0_sim <- function(f, R, temp){
       )
     }
   times <- seq(0,mean_time,by=0.01)
-  params <- c(f=m0_f/vol)
+  params <- c(f=f/vol)
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m0_num_sol, params))
   r_end <- slice_max(output, time)[,2]
@@ -470,7 +470,7 @@ m1_sim <- function(f, R, temp, length, gamma){
       )
   }
   times <- seq(0,mean_time,by=0.01)
-  params <- c(f=m0_f/vol,
+  params <- c(f=f/vol,
               length=length,
               gamma=gamma)
   xstart <- c(R=R)
@@ -504,7 +504,7 @@ m2_sim <- function(f, R, temp, length, gamma, arr_t, ref_t){
       )
   }
   times <- seq(0,mean_time,by=0.01)
-  params <- c(f=m0_f/vol,
+  params <- c(f=f/vol,
               length=length,
               gamma=gamma,
               arr_t=arr_t,
@@ -543,10 +543,10 @@ m3_sim <- function(f, R, temp, length, gamma, h){
       )
   }
   times <- seq(0,mean_time,by=0.01)
-  params <- c(f=m0_f/vol,
+  params <- c(f=f/vol,
               length=length,
               gamma=gamma,
-              h=h*vol)
+              h=h)
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m3_num_sol, params))
   r_end <- slice_max(output, time)[,2]
@@ -578,7 +578,7 @@ m3a_sim <- function(f, R, temp, length, gamma, k){
       )
   }
   times <- seq(0,mean_time,by=0.01)
-  params <- c(f=m0_f/vol,
+  params <- c(f=f/vol,
               length=length,
               gamma=gamma,
               k=k)
@@ -614,12 +614,12 @@ m4_sim <- function(f, R, temp, length, gamma, arr_t, ref_t, h){
       )
   }
   times <- seq(0,mean_time,by=0.01)
-  params <- c(f=m0_f/vol,
+  params <- c(f=f/vol,
               length=length,
               gamma=gamma,
               arr_t=arr_t,
               ref_t=ref_t,
-              h=h*vol)
+              h=h)
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
   r_end <- slice_max(output, time)[,2]
@@ -670,7 +670,7 @@ m7_sim <- function(f, R, temp, length, gamma, arr_t, ref_t, h){
               gamma=gamma,
               arr_t=arr_t,
               ref_t=ref_t,
-              h=h*vol)
+              h=h)
   xstart <- c(R=R)
   output <- as.data.frame(lsoda(xstart, times, m4_num_sol, params))
   r_end <- slice_max(output, time)[,2]

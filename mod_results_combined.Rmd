@@ -1,5 +1,5 @@
 ---
-title: "model results"
+title: "mod_results_combined"
 output: html_document
 date: "`r Sys.Date()`"
 ---
@@ -48,108 +48,11 @@ m7d <- readRDS(here("mle","m7d_f_fit.rds")) # LINEAR-EXP
 m7e <- readRDS(here("mle","m7e_f_fit.rds")) # EXP-LINEAR
 ```
 
-# Coefficients
-
-```{r}
-m0@coef
-m1@coef
-m2@coef
-m3@coef
-# m3a@coef
-m4@coef
-# m4a@coef
-```
-
-
-```{r}
-# m5@coef
-# m5a@coef
-m5b@coef
-m5c@coef
-```
-
-
-```{r}
-# m6@coef
-# m6a@coef
-m6b@coef
-m6c@coef
-```
-
-
-```{r}
-# m7@coef
-# m7a@coef
-m7b@coef
-m7c@coef
-m7d@coef
-m7e@coef
-```
-
-
-
-# get AIC
-
 ```{r}
 getAIC <- function(model){
   return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
 }
 ```
-
-
-```{r}
-getAIC(m0)
-getAIC(m1)
-getAIC(m2)
-getAIC(m3)
-# getAIC(m3a)
-getAIC(m4)
-# getAIC(m4a)
-```
-
-
-```{r}
-getAIC(m4)
-
-# getAIC(m5)
-# getAIC(m5a)
-getAIC(m5b)
-getAIC(m5c)
-```
-
-```{r}
-getAIC(m4)
-
-# getAIC(m6)
-# getAIC(m6a)
-getAIC(m6b)
-getAIC(m6c)
-```
-
-```{r}
-getAIC(m4)
-
-# getAIC(m7)
-# getAIC(m7a)
-getAIC(m7b)
-getAIC(m7c)
-getAIC(m7d)
-getAIC(m7e)
-```
-# AIC table
-
-```{r}
-model_list <- list(m0, m1, m2, m3, m4, m5b, m5c, m6b, m6c, m7b, m7c, m7d, m7e)
-mod_names <- c("m0", "m1", "m2", "m3", "m4", "m5b", "m5c", "m6b", "m6c", "m7b", "m7c", "m7d", "m7e")
-mod_names_descriptive <- c("base", "size", "temp", "rsc", "full", "arr(R)~LIN", "arr(R)~EXP", "h(T)~LIN", "h(T)~EXP", "LIN-LIN", "EXP_EXP", "LIN_EXP", "EXP_LIN")
-mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
-#tibble(mod_names, mod_names_descriptive) #check to make sure names line up
-
-aic_table <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
-
-saveRDS(aic_table, file=here("mle/aic_table.rds"))
-```
-
 
 ```{r}
 model_list <- list(m0, m1, m2, m3, m4, m6c)
@@ -162,6 +65,3 @@ aic_table_final <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, w
 
 saveRDS(aic_table_final, file=here("mle/aic_table_f_final.rds"))
 ```
-
-
-
