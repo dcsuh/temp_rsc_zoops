@@ -420,23 +420,24 @@ viz_summ %>% ggplot(.,aes(x=resource, y=m5_I_end, color=as.factor(temp), group=a
 ```
 
 ```{r}
-all_fits <- seq_data %>% dplyr::select(resource, temp, prev, m2_I_end, m3_I_end, m4_I_end, m5_I_end) %>%
+all_fits <- seq_data %>% mutate(upper = conf$upper, lower = conf$lower) %>% 
+  dplyr::select(resource, temp, prev, upper, lower, m2_I_end, m3_I_end, m4_I_end, m5_I_end) %>%
   filter(temp %in% c(15, 20, 25)) %>%
   mutate("temp-only" = m2_I_end, "resource-only" = m3_I_end, "additive" = m4_I_end) %>%
   dplyr::select(-c(m2_I_end, m3_I_end, m4_I_end)) %>%
   pivot_longer(cols=c('temp-only', 'resource-only', 'additive')) %>%
-  ggplot(.,aes(x=resource, y=value, group = interaction(name, as.factor(temp)),color=as.factor(temp))) +
+  ggplot(.,aes(x=resource, y=value, group = interaction(name, as.factor(temp)), color=as.factor(temp))) +
   geom_line(aes(linetype=name)) +
   scale_linetype_manual(values = c(5, 1, 3)) +
-  geom_point(aes(x=resource, y=m5_I_end, color = as.factor(temp)), size=4, shape = 2) + 
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  #geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
+  geom_point(aes(x=resource, y=m5_I_end, color = as.factor(temp), shape="Interactive Model Estimate"), size=4) + 
+  geom_point(aes(x=resource, y=prev, color=as.factor(temp), shape="Experimental Data"), size=4) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource Conc. (mgC/L)", y="Probability of Infection", color="Temp", shape="Temp", title = "", linetype="Model") 
+  geom_linerange(aes(ymin = lower, ymax=upper, color=as.factor(temp))) +
+  labs(x="Resource Conc. (mgC/L)", y="Probability of Infection", color="Temp", shape="Data", title = "", linetype="Model") 
 
 all_fits
 
-ggsave("prev_fits_final.png", all_fits, path=here("mle/fit_plots"))
+ggsave("prev_fits_final.png", all_fits, path=here("mle/fit_plots"), width = outwidth[1], height = outwidth[1]/golden)
 ```
 
 
