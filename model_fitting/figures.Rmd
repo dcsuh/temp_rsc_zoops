@@ -22,7 +22,7 @@ data_summ <- readRDS(here("processed_data", "foraging.rds"))
 beta_summ <- readRDS(here("processed_data", "beta_summary.rds"))
 beta_summ %<>% filter(temp %in% const_temp) %>% filter(species == "D") %>% mutate(temp = as.numeric(temp))
 
-
+m0 <- readRDS(here("mle", "m0_f_fit.rds"))
 m1 <- readRDS(here("mle", "update", "m1_fit.rds")) #updated version from dynamic u method
 m2 <- readRDS(here("mle", "update", "m2_fit.rds"))
 m3 <- readRDS(here("mle", "update", "m3_fit.rds"))
@@ -55,7 +55,7 @@ temp_range <- seq(15,25,by=0.1)
 resource_range <- seq(0.1,1,by=0.01)
 
 seq_data <- tibble(temp=c(),
-                   resourece=c())
+                   resource=c())
 
 for (i in 1:length(temp_range)){
   tmp <- tibble(temp = temp_range[i],
@@ -187,25 +187,25 @@ m1_u <- as.numeric(m1_coef[2])
 
 
 ```{r}
-m3b_coef <- coef(m3b)
-m3b_f <- as.numeric(m3b_coef[1])
-m3b_h <- as.numeric(m3b_coef[2])
-m3b_u <- as.numeric(m3b_coef[3])
-m3b_k <- as.numeric(m3b_coef[4])*10000
-
-data_summ %<>% mutate(m3b_rate = ((m3b_f)/(1+m3b_f*m3b_h*resource)))
-
-seq_data %<>% mutate(m3b_rate = ((m3b_f)/(1+m3b_f*m3b_h*resource)),
-                     m3b_prev = 1-exp(-m3b_f*(m3b_u*exp(m3b_k*resource))*z),
-                     m3b_u_k = m3b_u*exp(m3b_k*resource))
-
-m3b_rate_plot <- seq_plot("m3b_rate")
-m3b_prev_plot <- seq_plot_prev("m3b_prev")
-
-m3b_rate_plot
-m3b_prev_plot
-
-seq_data %>% ggplot(.,aes(x=resource, y=m3b_u_k)) + geom_line()
+# m3b_coef <- coef(m3b)
+# m3b_f <- as.numeric(m3b_coef[1])
+# m3b_h <- as.numeric(m3b_coef[2])
+# m3b_u <- as.numeric(m3b_coef[3])
+# m3b_k <- as.numeric(m3b_coef[4])*10000
+# 
+# data_summ %<>% mutate(m3b_rate = ((m3b_f)/(1+m3b_f*m3b_h*resource)))
+# 
+# seq_data %<>% mutate(m3b_rate = ((m3b_f)/(1+m3b_f*m3b_h*resource)),
+#                      m3b_prev = 1-exp(-m3b_f*(m3b_u*exp(m3b_k*resource))*z),
+#                      m3b_u_k = m3b_u*exp(m3b_k*resource))
+# 
+# m3b_rate_plot <- seq_plot("m3b_rate")
+# m3b_prev_plot <- seq_plot_prev("m3b_prev")
+# 
+# m3b_rate_plot
+# m3b_prev_plot
+# 
+# seq_data %>% ggplot(.,aes(x=resource, y=m3b_u_k)) + geom_line()
 ```
 
 
@@ -249,68 +249,68 @@ seq_plot_prev_temp("m4_prev")
 
 
 ```{r}
-m4b_coef <- coef(m4b)
-m4b_f <- as.numeric(m4b_coef[1])
-m4b_arr <- as.numeric(m4b_coef[2])
-m4b_h <- as.numeric(m4b_coef[3])
-m4b_u <- as.numeric(m4b_coef[4])
-m4b_arr_u <- as.numeric(m4b_coef[5])
-m4b_k <- as.numeric(m4b_coef[6])*10
-
-data_summ %<>% mutate(m4b_rate = mapply(get_rate, f=m4b_f, arr=m4b_arr, temp=data_summ$temp, h=m4b_h, resource=data_summ$resource))
-
-seq_data %<>% mutate(m4b_rate = mapply(get_rate, f=m4b_f, arr=m4b_arr, temp=seq_data$temp, h=m4b_h, resource=seq_data$resource),
-                     m4b_prev = 1-exp(-m4b_f*(m4b_u*exp(m4b_arr*(1/ref_t-1/temp))*exp(m4b_k*resource)*z)),
-                     m4b_u_k = m4b_u*exp(m4b_arr*(1/ref_t-1/temp))*exp(m4b_k*resource))
-
-seq_plot("m4b_rate")
-seq_plot_prev("m4b_prev")
-
-seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
-  ggplot(.) +
-  geom_line(aes(x=resource, 
-                y=m4b_u_k,
-                group=temp,
-                color=as.factor(temp)))
+# m4b_coef <- coef(m4b)
+# m4b_f <- as.numeric(m4b_coef[1])
+# m4b_arr <- as.numeric(m4b_coef[2])
+# m4b_h <- as.numeric(m4b_coef[3])
+# m4b_u <- as.numeric(m4b_coef[4])
+# m4b_arr_u <- as.numeric(m4b_coef[5])
+# m4b_k <- as.numeric(m4b_coef[6])*10
+# 
+# data_summ %<>% mutate(m4b_rate = mapply(get_rate, f=m4b_f, arr=m4b_arr, temp=data_summ$temp, h=m4b_h, resource=data_summ$resource))
+# 
+# seq_data %<>% mutate(m4b_rate = mapply(get_rate, f=m4b_f, arr=m4b_arr, temp=seq_data$temp, h=m4b_h, resource=seq_data$resource),
+#                      m4b_prev = 1-exp(-m4b_f*(m4b_u*exp(m4b_arr*(1/ref_t-1/temp))*exp(m4b_k*resource)*z)),
+#                      m4b_u_k = m4b_u*exp(m4b_arr*(1/ref_t-1/temp))*exp(m4b_k*resource))
+# 
+# seq_plot("m4b_rate")
+# seq_plot_prev("m4b_prev")
+# 
+# seq_data %>% filter(temp %in% c(15, 20, 25)) %>%
+#   ggplot(.) +
+#   geom_line(aes(x=resource, 
+#                 y=m4b_u_k,
+#                 group=temp,
+#                 color=as.factor(temp)))
 ```
 
 ```{r}
-m4_sep_coef <- coef(m4_sep)
-m4_sep_f <- as.numeric(m4_sep_coef[1])
-m4_sep_arr <- as.numeric(m4_sep_coef[2])
-m4_sep_h <- as.numeric(m4_sep_coef[3])
-m4_sep_u <- as.numeric(m4_sep_coef[4])
-m4_sep_arr_u <- as.numeric(m4_sep_coef[5])
-m4_sep_k_15 <- as.numeric(m4_sep_coef[6])
-m4_sep_k_20 <- as.numeric(m4_sep_coef[7])
-m4_sep_k_25 <- as.numeric(m4_sep_coef[8])
+# m4_sep_coef <- coef(m4_sep)
+# m4_sep_f <- as.numeric(m4_sep_coef[1])
+# m4_sep_arr <- as.numeric(m4_sep_coef[2])
+# m4_sep_h <- as.numeric(m4_sep_coef[3])
+# m4_sep_u <- as.numeric(m4_sep_coef[4])
+# m4_sep_arr_u <- as.numeric(m4_sep_coef[5])
+# m4_sep_k_15 <- as.numeric(m4_sep_coef[6])
+# m4_sep_k_20 <- as.numeric(m4_sep_coef[7])
+# m4_sep_k_25 <- as.numeric(m4_sep_coef[8])
 ```
 
 ```{r}
-seq_data %<>% mutate(m4_sep_rate = mapply(get_rate, f=m4_sep_f, arr=m4_sep_arr, temp=seq_data$temp, h=m4_sep_h, resource=seq_data$resource))
-
-m4_sep_data <- seq_data %>% filter(temp %in% c(15,20,25)) %>% mutate(
-                     m4_sep_prev = case_when(temp == 15 ~ 1-exp(-m4_sep_f*(m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_15*resource)*z)),
-                                             temp == 20 ~ 1-exp(-m4_sep_f*(m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_20*resource)*z)),
-                                             temp == 25 ~ 1-exp(-m4_sep_f*(m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_25*resource)*z))),
-                     m4_u_k = case_when(temp == 15 ~ m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_15*resource),
-                                        temp == 20 ~ m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_20*resource),
-                                        temp == 25 ~ m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_25*resource)))
+# seq_data %<>% mutate(m4_sep_rate = mapply(get_rate, f=m4_sep_f, arr=m4_sep_arr, temp=seq_data$temp, h=m4_sep_h, resource=seq_data$resource))
+# 
+# m4_sep_data <- seq_data %>% filter(temp %in% c(15,20,25)) %>% mutate(
+#                      m4_sep_prev = case_when(temp == 15 ~ 1-exp(-m4_sep_f*(m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_15*resource)*z)),
+#                                              temp == 20 ~ 1-exp(-m4_sep_f*(m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_20*resource)*z)),
+#                                              temp == 25 ~ 1-exp(-m4_sep_f*(m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_25*resource)*z))),
+#                      m4_u_k = case_when(temp == 15 ~ m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_15*resource),
+#                                         temp == 20 ~ m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_20*resource),
+#                                         temp == 25 ~ m4_sep_u*exp(m4_sep_arr*(1/ref_t-1/temp))*exp(m4_sep_k_25*resource)))
 ```
 
 ```{r}
-m4_sep_data %>% filter(temp %in% c(15, 20, 25)) %>%
-  ggplot(.) +
-  geom_line(aes(x=resource, 
-                y=m4_sep_prev,
-                group=temp,
-                color=as.factor(temp)))
-m4_sep_data %>% filter(temp %in% c(15, 20, 25)) %>%
-  ggplot(.) +
-  geom_line(aes(x=resource, 
-                y=m4_u_k,
-                group=temp,
-                color=as.factor(temp)))
+# m4_sep_data %>% filter(temp %in% c(15, 20, 25)) %>%
+#   ggplot(.) +
+#   geom_line(aes(x=resource, 
+#                 y=m4_sep_prev,
+#                 group=temp,
+#                 color=as.factor(temp)))
+# m4_sep_data %>% filter(temp %in% c(15, 20, 25)) %>%
+#   ggplot(.) +
+#   geom_line(aes(x=resource, 
+#                 y=m4_u_k,
+#                 group=temp,
+#                 color=as.factor(temp)))
 ```
 
 

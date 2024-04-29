@@ -92,10 +92,10 @@ m0_sim <- function(R, time, f){
 ```{r, m0_ll}
 m0_ll <- function(f){
   data <- tmp
-  m0_end <- as.data.frame(mapply(m0_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol))
+  m0_end <- as.data.frame(mapply(m0_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol))
   colnames(m0_end) <- "m0_end"
   data$end <- m0_end$m0_end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -168,11 +168,11 @@ m1_sim <- function(R, time, f, length, gamma){
 ```{r, m1_ll}
 m1_ll <- function(f){
   data <- tmp
-  m1_end <- as.data.frame(mapply(m1_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+  m1_end <- as.data.frame(mapply(m1_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2))
   colnames(m1_end) <- "m1_end"
   data$end <- m1_end$m1_end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -248,11 +248,11 @@ m2_sim <- function(R, time, f, length, gamma, ref_t, arr_t, temp){
 ```{r, m2_ll}
 m2_ll <- function(f, arr_t){
   data <- tmp
-  m2_end <- as.data.frame(mapply(m2_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+  m2_end <- as.data.frame(mapply(m2_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp))
   colnames(m2_end) <- "m2_end"
   data$end <- m2_end$m2_end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -340,11 +340,11 @@ m3_sim <- function(R, time, f, length, gamma, h){
 ```{r, m3_ll}
 m3_ll <- function(f, h){
   data <- tmp
-  output <- as.data.frame(mapply(m3_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, h=h*data$vol))
+  output <- as.data.frame(mapply(m3_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, h=h))
   colnames(output) <- "end"
   data$end <- output$end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -426,11 +426,11 @@ m3a_sim <- function(R, time, f, length, gamma, k){
 ```{r, m3a_ll}
 m3a_ll <- function(f, k){
   data <- tmp
-  output <- as.data.frame(mapply(m3a_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+  output <- as.data.frame(mapply(m3a_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, k=k))
   colnames(output) <- "end"
   data$end <- output$end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -511,11 +511,11 @@ m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
 ```{r, m4_ll}
 m4_ll <- function(f, arr_t, h){
   data <- tmp
-  m4_end <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
+  m4_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h))
   colnames(m4_end) <- "m4_end"
   data$end <- m4_end$m4_end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -595,11 +595,11 @@ m4a_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, k){
 ```{r, m4_ll}
 m4a_ll <- function(f, arr_t, k){
   data <- tmp
-  output <- as.data.frame(mapply(m4a_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
+  output <- as.data.frame(mapply(m4a_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, k=k))
   colnames(output) <- "end"
   data$end <- output$end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 

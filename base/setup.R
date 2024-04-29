@@ -21,7 +21,8 @@ pckg_names <- c("tidyverse",
                 "rstatix",
                 "lhs",
                 "deSolve",
-                "bbmle")
+                "bbmle",
+                "ggnewscale")
 
 # load/install packages
 lapply(pckg_names, 

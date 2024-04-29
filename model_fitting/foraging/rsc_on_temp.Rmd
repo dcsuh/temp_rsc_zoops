@@ -89,11 +89,11 @@ m5_ll <- function(f, arr_t_0.1, arr_t_0.5, arr_t_1, h){
   nll_vec <- c()
   for (i in 1:length(resource_IDs)){
   data <- tmp %>% filter(resource == resource_IDs[i])
-  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=arr_t_vec[i], ref_t=15, temp=data$temp, h=h*data$vol))
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t_vec[i], ref_t=15, temp=data$temp, h=h))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -136,11 +136,11 @@ This model uses a resource-dependent Arrhenius coefficient for each resource lev
 m5a_ll <- function(f, arr_t, h){
 
   data <- tmp
-  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=data$resource*arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=data$resource*arr_t, ref_t=15, temp=data$temp, h=h))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -180,11 +180,11 @@ This model uses a resource-dependent Arrhenius coefficient for each resource lev
 m5b_ll <- function(f, arr_t, h, p){
 
   data <- tmp
-  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=data$resource*p + arr_t, ref_t=15, temp=data$temp, h=h*data$vol))
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=data$resource*p + arr_t, ref_t=15, temp=data$temp, h=h))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -224,11 +224,11 @@ This model uses a resource-dependent Arrhenius coefficient for each resource lev
 m5c_ll <- function(f, arr_t, h, p){
 
   data <- tmp
-  output <- as.data.frame(mapply(m4_sim, R=data$amt_init, time=data$time/60/24, f=f/data$vol,
-                                 length=data$mm, gamma=2, arr_t=arr_t*exp(p*data$resource), ref_t=15, temp=data$temp, h=h*data$vol))
+  output <- as.data.frame(mapply(m4_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
+                                 length=data$mm, gamma=2, arr_t=arr_t*exp(p*data$resource), ref_t=15, temp=data$temp, h=h))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
