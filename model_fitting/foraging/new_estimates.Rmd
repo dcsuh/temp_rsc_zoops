@@ -210,6 +210,10 @@ summary(readRDS(here("mle","m1_f_fit.rds")))
 
 $$
 \frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\
+
+\frac{1}{RS}\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\frac{1}{RS}\\
+
+-L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)}\\
 $$
 
 
@@ -302,6 +306,10 @@ I try to incorporate resource-dependence by using an equation for the type II fu
 
 $$
 \frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR} \\
+
+\frac{1}{RS}\frac{dR}{dt} = - \frac{fL^{\gamma}R}{1 + fL^{\gamma}hR} \frac{1}{RS}\\
+
+per-capita f = - \frac{fL^{\gamma}}{1 + fL^{\gamma}hR} \\
 $$
 
 

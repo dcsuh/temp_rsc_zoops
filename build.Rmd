@@ -42,6 +42,17 @@ readRDS(here("mle", "aic_table_combined_final.rds"))
 
 # Prevalence fits
 
+![](mle/fit_plots/prev_fits_final.png)
+
+
+# per-spore susceptibility across temperature
+
+![](mle/fit_plots/susc_plot.png)
+
+# Temperature-dependent handling time
+
+![](mle/fit_plots/h_plot.png)
+
 
 
 

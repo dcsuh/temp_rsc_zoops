@@ -573,6 +573,13 @@ m6_range %<>% mutate(h = m4_h,
                      h_b = (m6b_h + m6b_w*temp),
                      h_c = (m6c_h*exp(m6c_w*temp)))
 
+h_plot <- m6_range %>% ggplot(., aes(x=temp, y=h_c)) + 
+  geom_line(size=2) +
+  labs(x = "Temp (C)", y = "Handling time (days/mgC)", title = "Temperature effect on handling time")
+
+ggsave("h_plot.png", h_plot, path=here("mle/fit_plots"))
+
+
 m6_range %<>% pivot_longer(cols=c(h, h_b, h_c))
 
 h_labels <- c(h = "constant",
@@ -589,6 +596,8 @@ m6_h_plot
 
 
 ggsave("m6_h_plot.png", m6_h_plot, path=here("mle/fit_plots"))
+
+
 
 ```
 
