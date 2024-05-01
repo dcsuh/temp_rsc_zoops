@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(here)
 source(here("base","src.R"))
 library(ggnewscale)
+library(patchwork)
 ```
 
 # Note!!
@@ -991,17 +992,139 @@ seq_data %>% filter(temp %in% const_temp) %>%
 ```
 
 ```{r}
-algae_plot("m1_consumed") + labs("Size")
-algae_plot("m2_consumed") + labs("Temp")
-algae_plot("m3_consumed") + labs("Resource")
-algae_plot("m4_consumed") + labs("Additive")
-algae_plot("m6c_consumed") + labs("Interactive")
+theme_set(theme_bw(base_size = 8))
+
+
+a1 <- algae_plot("m1_consumed") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + 
+  labs("Size")
+a2 <- algae_plot("m2_consumed") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + labs("Temp")
+a3 <- algae_plot("m3_consumed") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + labs("Resource")
+a4 <- algae_plot("m4_consumed") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + labs("Additive")
+
+a5 <- algae_plot("m6c_consumed") +
+  theme(axis.title.x = element_blank(),,
+        axis.title.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + labs("Interactive")
+
+algae_fig <- a2 / a3 / a4 / a5
+
+ggsave("algae_plot.png", algae_fig, units = "in", height = 4.5, width = 1.5)
 ```
 
 
 ```{r}
-m1_plot
+seq_plot <- function(rate){
+  seq_data %>% filter(temp %in% c(15,20,25)) %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(rate),
+                group=temp_factor,
+                color=as.factor(temp_factor))) +
+  geom_point(aes(x=resource, 
+                  y=rate_len_mean, 
+                  group = as.factor(temp), 
+                  color = as.factor(temp),
+                  shape = as.factor(temp)),
+             size=1.5) + 
+    geom_linerange(aes(x=resource, 
+                       ymin=rate_len_mean-rate_len_mean_se,
+                       ymax=rate_len_mean+rate_len_mean_se,
+                       color=as.factor(temp))) +
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+}
+```
 
+
+
+
+```{r}
+theme_set(theme_bw(base_size = 8))
+
+p1 <- seq_plot("m1_rate") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none")
+
+p2 <- seq_plot("m2_rate") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none")
+
+p3 <- seq_plot("m3_rate") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none")
+
+p4 <- seq_plot("m4_rate") +
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none")
+
+p5 <- seq_plot("m6c_rate") +
+  theme(plot.title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = "none")
+
+
+rate_plot <- p2 / p3 / p4 / p5
+
+ggsave("rate_plot.png", plot = rate_plot, units = "in", height = 4.5, width = 1.5)
 ```
 
 

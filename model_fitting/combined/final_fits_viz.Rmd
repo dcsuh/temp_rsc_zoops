@@ -503,11 +503,11 @@ p4 <- prev_plot("m5_I_end") + theme(legend.position = "none") + labs(title = "in
 
 prev_fig <- p1 / p2 / p3 / p4
 
-ggsave(here("prev_fig.png"), 
-       prev_fig,
-       width = 4,
-       height = 4*2,
-       units = "in")
+# ggsave(here("prev_fig.png"), 
+#        prev_fig,
+#        width = 4,
+#        height = 4*2,
+#        units = "in")
 
 
 p1 <- prev_plot("m2_I_end") + theme(axis.text.x = element_blank(),
@@ -533,11 +533,11 @@ p4 <- prev_plot("m5_I_end") + theme(axis.text.y = element_blank(),
 
 prev_fig <- p1 / p2 | p3 / p4
 
-ggsave(here("prev_fig.png"), 
-       prev_fig,
-       width = 6,
-       height = 6,
-       units = "in")
+# ggsave(here("prev_fig.png"), 
+#        prev_fig,
+#        width = 6,
+#        height = 6,
+#        units = "in")
 ```
 
 
@@ -558,7 +558,7 @@ all_fits <- seq_data %>% mutate(upper = conf$upper, lower = conf$lower) %>%
 
 all_fits
 
-ggsave("prev_fits_final.png", all_fits, path=here("mle/fit_plots"), width = outwidth[1], height = outwidth[1]/golden)
+# ggsave("prev_fits_final.png", all_fits, path=here("mle/fit_plots"), width = outwidth[1], height = outwidth[1]/golden)
 ```
 
 Make a faceted version
@@ -707,7 +707,7 @@ u_plot <- function(var){
 ```{r}
 susc_plot <- u_plot("m5_u") + labs(title="")
 susc_plot
-ggsave("susc_plot.png", susc_plot, path=here("mle/fit_plots"))
+# ggsave("susc_plot.png", susc_plot, path=here("mle/fit_plots"))
 ```
 
 
