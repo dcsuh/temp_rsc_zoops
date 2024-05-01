@@ -225,7 +225,7 @@ fora_data <- data_summ %>% ggplot(., aes(x=as.factor(resource), y=rate_len_mean,
 
 fora_data 
 
-ggsave("fora_data.png", fora_data, path=here("mle/fit_plots"))
+#ggsave("fora_data.png", fora_data, path=here("mle/fit_plots"))
 
 ```
 
@@ -405,13 +405,13 @@ m4_plot
 m5b_plot
 m5c_plot
 
-ggsave("m1_fit.png", m1_plot, path=here("mle/fit_plots"))
-ggsave("m2_fit.png", m2_plot, path=here("mle/fit_plots"))
-ggsave("m3_fit.png", m3_plot, path=here("mle/fit_plots"))
-ggsave("m4_fit_base.png", m4_plot_base, path=here("mle/fit_plots"))
-ggsave("m4_fit.png", m4_plot, path=here("mle/fit_plots"))
-ggsave("m5b_fit.png", m5b_plot, path=here("mle/fit_plots"))
-ggsave("m5c_fit.png", m5c_plot, path=here("mle/fit_plots"))
+# ggsave("m1_fit.png", m1_plot, path=here("mle/fit_plots"))
+# ggsave("m2_fit.png", m2_plot, path=here("mle/fit_plots"))
+# ggsave("m3_fit.png", m3_plot, path=here("mle/fit_plots"))
+# ggsave("m4_fit_base.png", m4_plot_base, path=here("mle/fit_plots"))
+# ggsave("m4_fit.png", m4_plot, path=here("mle/fit_plots"))
+# ggsave("m5b_fit.png", m5b_plot, path=here("mle/fit_plots"))
+# ggsave("m5c_fit.png", m5c_plot, path=here("mle/fit_plots"))
 ```
 
 ```{r, eval=F}
@@ -422,8 +422,8 @@ m6b_plot
 m6c_plot
 
 
-ggsave("m6b_fit.png", m6b_plot, path=here("mle/fit_plots"))
-ggsave("m6c_fit.png", m6c_plot, path=here("mle/fit_plots"))
+# ggsave("m6b_fit.png", m6b_plot, path=here("mle/fit_plots"))
+# ggsave("m6c_fit.png", m6c_plot, path=here("mle/fit_plots"))
 
 ```
 
@@ -440,10 +440,10 @@ m7d_plot
 m7e_plot
 
 
-ggsave("m7b_fit.png", m7b_plot, path=here("mle/fit_plots"))
-ggsave("m7c_fit.png", m7c_plot, path=here("mle/fit_plots"))
-ggsave("m7d_fit.png", m7d_plot, path=here("mle/fit_plots"))
-ggsave("m7e_fit.png", m7e_plot, path=here("mle/fit_plots"))
+# ggsave("m7b_fit.png", m7b_plot, path=here("mle/fit_plots"))
+# ggsave("m7c_fit.png", m7c_plot, path=here("mle/fit_plots"))
+# ggsave("m7d_fit.png", m7d_plot, path=here("mle/fit_plots"))
+# ggsave("m7e_fit.png", m7e_plot, path=here("mle/fit_plots"))
 
 ```
 
@@ -468,7 +468,7 @@ best_three_fit <- seq_data %>% dplyr::select(resource, temp_factor, m7c_rate, m6
 
 best_three_fit
 
-ggsave("best_three_fit.png", best_three_fit, path=here("mle/fit_plots"))
+#ggsave("best_three_fit.png", best_three_fit, path=here("mle/fit_plots"))
 ```
 
 ```{r}
@@ -513,9 +513,7 @@ seq_data %>% dplyr::select(resource, temp_factor, m2_rate, m3_rate, m4_rate, m6c
 
 
 ```{r}
-all_fits
-
-ggsave("f_fits_final.png", all_fits, path=here("mle/fit_plots"))
+#ggsave("f_fits_final.png", all_fits, path=here("mle/fit_plots"))
 ```
 
 
@@ -620,7 +618,7 @@ m5_arr_plot <- m5_range %>% ggplot(., aes(x=resource, y=value, group=name, color
 
 m5_arr_plot
 
-ggsave("m5_arr_plot.png", m5_arr_plot, path=here("mle/fit_plots"))
+#ggsave("m5_arr_plot.png", m5_arr_plot, path=here("mle/fit_plots"))
 
 
 ```
@@ -636,7 +634,7 @@ h_plot <- m6_range %>% ggplot(., aes(x=temp, y=h_c)) +
   geom_line(size=2) +
   labs(x = "Temp (C)", y = "Handling time (days/mgC)", title = "")
 
-ggsave("h_plot.png", h_plot, path=here("mle/fit_plots"))
+#ggsave("h_plot.png", h_plot, path=here("mle/fit_plots"))
 
 
 m6_range %<>% pivot_longer(cols=c(h, h_b, h_c))
@@ -654,7 +652,7 @@ m6_h_plot <- m6_range %>% ggplot(., aes(x=temp, y=value, group=name, color=name)
 m6_h_plot
 
 
-ggsave("m6_h_plot.png", m6_h_plot, path=here("mle/fit_plots"))
+#ggsave("m6_h_plot.png", m6_h_plot, path=here("mle/fit_plots"))
 
 
 
@@ -704,7 +702,7 @@ m7_arr_plot <- m7_arr_t_range %>% ggplot(.,aes(x=resource, y=value, group=name, 
 
 m7_arr_plot
 
-ggsave("m7_arr_plot.png", m7_arr_plot, path=here("mle/fit_plots"))
+# ggsave("m7_arr_plot.png", m7_arr_plot, path=here("mle/fit_plots"))
 ```
 
 
@@ -720,7 +718,7 @@ m7_h_plot <- m7_h_range %>% ggplot(.,aes(x=temp, y=value, group=name, color=name
 
 m7_h_plot
 
-ggsave("m7_h_plot.png", m7_h_plot, path=here("mle/fit_plots"))
+# ggsave("m7_h_plot.png", m7_h_plot, path=here("mle/fit_plots"))
 ```
 
 
@@ -940,7 +938,7 @@ seq_data %>% dplyr::select(resource, temp_factor, amt_rem_mean, amt_rem_se, m4_R
                             color = as.factor(temp))) + 
   geom_linerange(aes(ymin = (amt_rem_mean-amt_rem_se), ymax=(amt_rem_mean+amt_rem_se), color=temp_factor)) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource Conc. (mgC/L)", y="Foraging rate (mL/day)", color="Temp", title = "", linetype="Model") 
+  labs(x="Resource Conc. (mgC/L)", y="Final Resource Conc. (mgC/L)", color="Temp", title = "", linetype="Model") 
 ```
 
 ```{r}
@@ -959,9 +957,52 @@ seq_data %>% dplyr::select(resource, temp_factor, amt_rem_mean, amt_rem_se, m2_R
                             color = as.factor(temp))) + 
   geom_linerange(aes(ymin = (amt_rem_mean-amt_rem_se), ymax=(amt_rem_mean+amt_rem_se), color=temp_factor)) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource Conc. (mgC/L)", y="Foraging rate (mL/day)", color="Temp", title = "", linetype="Model") 
+  labs(x="Resource Conc. (mgC/L)", y="Final Resource Conc. (mgC/L)", color="Temp", title = "", linetype="Model") 
 ```
 
+
+
+things to make:
+
+final version of final resource concentration
+
+resources consumed 
+
+
+```{r}
+seq_data %<>% 
+  mutate(m1_consumed = resource*15/1000 - m1_R_end,
+         m2_consumed = resource*15/1000 - m2_R_end,
+         m3_consumed = resource*15/1000 - m3_R_end,
+         m4_consumed = resource*15/1000 - m4_R_end,
+         m6c_consumed = resource*15/1000 - m6c_R_end)
+```
+
+```{r}
+algae_plot <- function(var){
+seq_data %>% filter(temp %in% const_temp) %>% 
+  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
+  geom_line() + 
+  labs(x = "Resource (mgC/L)", 
+       y = "Algae consumed (mgC)",
+       color = "Temp") + 
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+}
+```
+
+```{r}
+algae_plot("m1_consumed") + labs("Size")
+algae_plot("m2_consumed") + labs("Temp")
+algae_plot("m3_consumed") + labs("Resource")
+algae_plot("m4_consumed") + labs("Additive")
+algae_plot("m6c_consumed") + labs("Interactive")
+```
+
+
+```{r}
+m1_plot
+
+```
 
 
 
