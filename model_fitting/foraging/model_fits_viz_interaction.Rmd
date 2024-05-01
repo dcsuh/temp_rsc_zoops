@@ -1034,14 +1034,14 @@ a4 <- algae_plot("m4_consumed") +
         legend.position = "none") + labs("Additive")
 
 a5 <- algae_plot("m6c_consumed") +
-  theme(axis.title.x = element_blank(),,
+  theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         plot.title = element_blank(),
         legend.position = "none") + labs("Interactive")
 
 algae_fig <- a2 / a3 / a4 / a5
 
-ggsave("algae_plot.png", algae_fig, units = "in", height = 4.5, width = 1.5)
+#ggsave("algae_plot.png", algae_fig, units = "in", height = 4.5, width = 1.5)
 ```
 
 
@@ -1124,10 +1124,294 @@ p5 <- seq_plot("m6c_rate") +
 
 rate_plot <- p2 / p3 / p4 / p5
 
-ggsave("rate_plot.png", plot = rate_plot, units = "in", height = 4.5, width = 1.5)
+#ggsave("rate_plot.png", plot = rate_plot, units = "in", height = 4.5, width = 1.5)
 ```
 
 
+now for spores consumed over time for each model specification
+
+
+
+# Spores consumed
+
+```{r, m1_num_sol}
+m1_num_sol <- function(t, x, params){
+  R <- x[1]
+  Z <- x[2]
+  with(as.list(params),{
+    dR <- -(length^gamma)*f*R
+    dZ <- -(length^gamma)*f*Z
+    res <- c(dR, dZ)
+    list(res)}
+    )
+}
+
+```
+
+```{r, m1_sim}
+m1_sim <- function(R, time, f, length, gamma, Z){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              Z=Z)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma)
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  
+  end <- slice_min(output, time)[,3] - slice_max(output, time)[,3]
+  
+
+  return(end)
+}
+```
+
+
+```{r, m2_num_sol}
+m2_num_sol <- function(t, x, params){
+  R <- x[1]
+  Z <- x[2]
+  with(as.list(params),{
+    dR <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*R
+    dZ <- -(length^gamma)*f*exp(arr_t*(1/ref_t - 1/temp))*Z
+    res <- c(dR, dZ)
+    list(res)}
+    )
+}
+```
+
+```{r, m2_sim}
+m2_sim <- function(R, time, f, length, gamma, ref_t, arr_t, temp, Z){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              Z=Z)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma,
+              arr_t=arr_t,
+              ref_t=ref_t,
+              temp=temp)
+  output <- as.data.frame(lsoda(y=xstart, times, m2_num_sol, params))
+  
+  end <- slice_min(output, time)[,3] - slice_max(output, time)[,3]
+  
+
+  return(end)
+}
+```
+
+
+```{r, m3_num_sol}
+m3_num_sol <- function(t, x, params){
+  R <- x[1]
+  Z <- x[2]
+  with(as.list(params),{
+    dR <- -((f*length^gamma*R)/(1+f*(length^gamma)*h*R))
+    dZ <- -((f*length^gamma*Z)/(1+f*(length^gamma)*h*R))
+    res <- c(dR, dZ)
+    list(res)}
+    )
+}
+```
+
+
+```{r, m3_sim}
+m3_sim <- function(R, time, f, length, gamma, h, Z){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              Z=Z)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma,
+              h=h)
+  output <- as.data.frame(lsoda(y=xstart, times, m3_num_sol, params))
+  
+  end <- slice_min(output, time)[,3] - slice_max(output, time)[,3]
+  
+
+  return(end)
+}
+```
+
+
+
+```{r, m4_num_sol}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  Z <- x[2]
+  with(as.list(params),{
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/
+              (1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))
+    dZ <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))*Z
+    res <- c(dR, dZ)
+    list(res)}
+    )
+}
+```
+
+```{r, m4_sim}
+m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h, Z){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              Z=Z)
+  params <- c(f=f,
+              length=length,
+              gamma=gamma,
+              arr_t=arr_t,
+              ref_t=ref_t,
+              temp=temp,
+              h=h)
+  output <- as.data.frame(lsoda(y=xstart, times, m4_num_sol, params))
+  
+  end <- slice_min(output, time)[,3] - slice_max(output, time)[,3]
+  
+
+  return(end)
+}
+```
+
+
+
+
+```{r}
+exposure <- 200
+life_vol <- 50
+
+seq_data %<>% mutate(m1_Z_end = mapply(m1_sim,
+                                       R = resource*life_vol/1000,
+                                       time = 1,
+                                       f=m1_f/life_vol,
+                                       length = length,
+                                       gamma = 2,
+                                       Z = exposure*life_vol))
+```
+
+```{r}
+seq_data %<>% mutate(m2_Z_end = mapply(m2_sim,
+                                       R = resource*life_vol/1000,
+                                       time = 1,
+                                       f=m2_f/life_vol,
+                                       length = length,
+                                       gamma = 2,
+                                       ref_t = 15,
+                                       arr_t = m2_arr,
+                                       temp = temp,
+                                       Z = exposure*life_vol))
+```
+
+```{r}
+seq_data %<>% mutate(m3_Z_end = mapply(m3_sim,
+                                       R = resource*life_vol/1000,
+                                       time = 1,
+                                       f=m3_f/life_vol,
+                                       length = length,
+                                       gamma = 2,
+                                       h = m3_h,
+                                       Z = exposure*life_vol))
+```
+
+```{r}
+seq_data %<>% mutate(m4_Z_end = mapply(m4_sim,
+                                       R = resource*life_vol/1000,
+                                       time = 1,
+                                       f=m4_f/life_vol,
+                                       length = length,
+                                       gamma = 2,
+                                       ref_t = 15,
+                                       arr_t = m4_arr,
+                                       temp = temp,
+                                       h = m4_h,
+                                       Z = exposure*life_vol))
+```
+
+```{r}
+seq_data %<>% mutate(m6c_Z_end = mapply(m4_sim,
+                                       R = resource*life_vol/1000,
+                                       time = 1,
+                                       f=m6c_f/life_vol,
+                                       length = length,
+                                       gamma = 2,
+                                       ref_t = 15,
+                                       arr_t = m6c_arr,
+                                       temp = temp,
+                                       h = m6c_h*exp(m6c_w*temp),
+                                       Z = exposure*life_vol))
+```
+
+
+```{r}
+spores_plot <- function(var){
+seq_data %>% filter(temp %in% const_temp) %>% 
+  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
+  geom_line() + 
+  labs(x = "Resource (mgC/L)", 
+       y = "Spores consumed",
+       color = "Temp") + 
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+}
+```
+
+```{r}
+spores_plot("m1_Z_end")
+spores_plot("m2_Z_end")
+spores_plot("m3_Z_end")
+spores_plot("m4_Z_end")
+spores_plot("m6c_Z_end")
+```
+
+
+```{r}
+theme_set(theme_bw(base_size = 8))
+
+
+s1 <- spores_plot("m1_Z_end") + 
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + 
+  labs("Size")
+s2 <- spores_plot("m2_Z_end") + 
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + labs("Temp")
+s3 <- spores_plot("m3_Z_end") + 
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + labs("Resource")
+s4 <- spores_plot("m4_Z_end") + 
+  theme(axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        axis.title.y = element_blank(),
+        # axis.text.y = element_blank(),
+        # axis.ticks.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + labs("Additive")
+
+s5 <- spores_plot("m6c_Z_end") + 
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        plot.title = element_blank(),
+        legend.position = "none") + labs("Interactive")
+
+spores_fig <- s2 / s3 / s4 / s5
+
+ggsave("spores_plot.png", spores_fig, units = "in", height = 4.5, width = 1.5)
+```
 
 
 

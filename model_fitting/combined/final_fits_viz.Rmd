@@ -12,7 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(here)
 source(here("base","src.R")) #packages
-source(here("model_fitting", "combined", "final_prep.R")) #data, global variables and fu
+source(here("model_fitting", "combined", "final_prep.R")) #data, global variables and functions
+
+library(patchwork)
 ```
 
 
