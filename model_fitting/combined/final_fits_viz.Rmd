@@ -725,6 +725,29 @@ data_summ %>% ggplot(.,aes(x=resource, y=m5_u, color=as.factor(temp))) + geom_po
 
 
 
+```{r}
+data_summ %<>% left_join(., length_summ)
+```
+
+
+Length - per-spore susceptibility connection
+```{r}
+
+data_summ %>% ggplot(., aes(x = mm_mean, y = m5_u)) + geom_point(aes(color = as.factor(temp), shape = as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "final lengths")
+
+
+data_summ %>% ggplot(., aes(x = life_mm, y = m5_u)) + geom_point(aes(color = as.factor(temp), shape = as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "day 5 lengths")
+
+
+data_summ %>% filter(temp == 15) %>% ggplot(., aes(x = life_mm, y = m5_u)) + geom_point(aes(shape=as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "day 5 lengths - 15C")
+
+data_summ %>% filter(temp == 20) %>% ggplot(., aes(x = life_mm, y = m5_u)) + geom_point(aes(shape=as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "day 5 lengths - 20C")
+
+data_summ %>% filter(temp == 25) %>% ggplot(., aes(x = life_mm, y = m5_u)) + geom_point(aes(shape=as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "day 5 lengths - 25C")
+
+```
+
+
 
 
 
