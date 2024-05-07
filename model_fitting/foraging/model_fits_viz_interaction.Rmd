@@ -1239,8 +1239,7 @@ m4_num_sol <- function(t, x, params){
   R <- x[1]
   Z <- x[2]
   with(as.list(params),{
-    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/
-              (1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))
+    dR <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*R)/(1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))
     dZ <- -((f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma))/
               (1+f*exp(arr_t*(1/ref_t - 1/temp))*(length^gamma)*h*R))*Z
     res <- c(dR, dZ)

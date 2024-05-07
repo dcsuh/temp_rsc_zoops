@@ -1,0 +1,112 @@
+---
+title: "temp_fig"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(here)
+source(here("base","src.R"))
+library(ggnewscale)
+library(patchwork)
+```
+
+
+
+```{r}
+f_seq <- readRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
+u_seq <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
+```
+
+```{r}
+seq_plot <- function(seq_data, rate){
+  seq_data %>% filter(temp %in% c(15,20,25)) %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(rate),
+                group=temp_factor,
+                color=as.factor(temp_factor))) +
+  geom_point(aes(x=resource, 
+                  y=rate_len_mean, 
+                  group = as.factor(temp), 
+                  color = as.factor(temp),
+                  shape = as.factor(temp)),
+             size=3) + 
+    geom_linerange(aes(x=resource, 
+                       ymin=rate_len_mean-rate_len_mean_se,
+                       ymax=rate_len_mean+rate_len_mean_se,
+                       color=as.factor(temp))) +
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+}
+
+seq_plot_temp <- function(seq_data, rate){
+  seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
+  ggplot(.) +
+  geom_line(aes(x=temp, 
+                y=!!sym(rate),
+                group=resource,
+                color=as.factor(resource))) +
+  geom_point(aes(x=temp, 
+                  y=rate_len_mean, 
+                  group = as.factor(resource), 
+                  color = as.factor(resource),
+                  shape = as.factor(resource))) +
+        geom_linerange(aes(x=temp, 
+                       ymin=rate_len_mean-rate_len_mean_se,
+                       ymax=rate_len_mean+rate_len_mean_se,
+                       color=as.factor(resource))) + 
+    scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  labs(x="Temperature", y="Foraging rate (mL/day)", color="", shape="", title = "") 
+}
+
+
+spores_plot <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>% 
+  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
+  geom_line() + 
+  labs(x = "Resource (mgC/L)", 
+       y = "Spores consumed",
+       color = "Temp") + 
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+}
+
+
+prev_plot <- function(seq_data, var){
+  seq_data %>% filter(temp %in% const_temp) %>% 
+    ggplot(.,aes(x=resource, 
+                 y=!!sym(var), 
+                 color=as.factor(temp))) + 
+    geom_line() +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    new_scale_color() + 
+    geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
+    geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    labs(x="Resource", y="Probability of Infection", color="Temperature", title = "")
+}
+
+
+rate_plot <- function(seq_data, var){
+  seq_data %>% filter(temp %in% const_temp) %>% 
+    ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
+      geom_line() +
+      new_scale_color() + 
+      geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=3, shape = 1) + 
+      labs(x = "resource", y = "Foraging rate (mL/day)", title="")
+}
+```
+
+
+```{r}
+
+```
+
+
+

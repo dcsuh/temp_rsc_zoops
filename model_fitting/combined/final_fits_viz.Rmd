@@ -535,6 +535,7 @@ p4 <- prev_plot("m5_I_end") + theme(axis.text.y = element_blank(),
 
 prev_fig <- p1 / p2 | p3 / p4
 
+prev_fig
 # ggsave(here("prev_fig.png"), 
 #        prev_fig,
 #        width = 6,
@@ -713,6 +714,8 @@ susc_plot
 ```
 
 
+# per-spore susceptibility
+
 ```{r, eval=F}
 data_summ %>% ggplot(.,aes(x=resource, y=m1_u, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=m2_u, color=as.factor(temp))) + geom_point()
@@ -720,6 +723,25 @@ data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_po
 data_summ %>% ggplot(.,aes(x=resource, y=m4_u, color=as.factor(temp))) + geom_point()
 data_summ %>% ggplot(.,aes(x=resource, y=m5_u, color=as.factor(temp))) + geom_point()
 ```
+
+
+# Additional figure ideas
+
+ - temp only figures
+    - 4 panel grid. clearance rate, spores consumed, per-spore susceptibility, probability of infection
+    
+```{r}
+
+```
+
+ 
+ - resource only figures
+    - 4 panel grid. clearance rate, spores consumed, per-spore susceptibility, probability of infection
+
+ - all models for probability of infection
+    - clearance rate, per-spore susceptibility, probability of infection
+
+
 
 
 
