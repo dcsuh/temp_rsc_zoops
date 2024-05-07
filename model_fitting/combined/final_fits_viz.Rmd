@@ -79,7 +79,8 @@ for (i in 1:length(temp_range)){
 ```{r}
 lm(mm ~ resource + temp, data = data)
 
-length_coef <- coef(lm(mm ~ resource + as.numeric(temp_id), data = lengths))
+length_coef <- coef(lm(mm ~ resource + temp, data = data)) #lengths from foraging rate experiment
+#length_ceof <- coef(lm(mm ~ resource + as.numeric(temp_id), data = lengths)) #5 day lengths from life table
 
 
 interpolate_length <- function(resource, temp){
@@ -470,7 +471,6 @@ m1_sim_Z <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, h, temp){
               u=0,
               length = length,
               gamma = gamma,
-              Z = Z,
               ref_t = ref_t,
               arr_t_f = arr_t_f,
               h = h,
@@ -485,25 +485,90 @@ m1_sim_Z <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, h, temp){
 ```
 
 ```{r, eval=F}
-seq_data %<>% mutate(spores_consumed = mapply(m1_sim_Z, 
-                                       R=resource*life_vol/1000, 
-                                       time=1, 
-                                       f=f_est/life_vol, 
-                                       u = 0, 
-                                       length=length, 
-                                       gamma=gamma, 
-                                       Z=200*life_vol,
-                                       ref_t = ref_t,
-                                       arr_t_f = arr_f_est,
-                                       h = h_est*exp(w_est*temp),
-                                       temp = temp))
+seq_data %<>% mutate(spores_consumed_m6c = mapply(m1_sim_Z, 
+                                         R=resource*life_vol/1000, 
+                                         time=1, 
+                                         f=f_est/life_vol, 
+                                         u = 0, 
+                                         length=length, 
+                                         gamma=gamma, 
+                                         Z=200*life_vol,
+                                         ref_t = ref_t,
+                                         arr_t_f = arr_f_est,
+                                         h = h_est*exp(w_est*temp),
+                                         temp = temp))
+
+seq_data %<>% mutate(spores_consumed_m1 = mapply(m1_sim_Z, 
+                                         R=resource*life_vol/1000, 
+                                         time=1, 
+                                         f=m1_f/life_vol, 
+                                         u = 0, 
+                                         length=length, 
+                                         gamma=gamma, 
+                                         Z=200*life_vol,
+                                         ref_t = ref_t,
+                                         arr_t_f = m1_arr,
+                                         h = m1_h*exp(m1_w*temp),
+                                         temp = temp))
+
+seq_data %<>% mutate(spores_consumed_m2 = mapply(m1_sim_Z, 
+                                         R=resource*life_vol/1000, 
+                                         time=1, 
+                                         f=m2_f/life_vol, 
+                                         u = 0, 
+                                         length=length, 
+                                         gamma=gamma, 
+                                         Z=200*life_vol,
+                                         ref_t = ref_t,
+                                         arr_t_f = m2_arr,
+                                         h = m2_h*exp(m2_w*temp),
+                                         temp = temp))
+
+seq_data %<>% mutate(spores_consumed_m3 = mapply(m1_sim_Z, 
+                                         R=resource*life_vol/1000, 
+                                         time=1, 
+                                         f=m3_f/life_vol, 
+                                         u = 0, 
+                                         length=length, 
+                                         gamma=gamma, 
+                                         Z=200*life_vol,
+                                         ref_t = ref_t,
+                                         arr_t_f = m3_arr,
+                                         h = m3_h*exp(m3_w*temp),
+                                         temp = temp))
+
+seq_data %<>% mutate(spores_consumed_m4 = mapply(m1_sim_Z, 
+                                         R=resource*life_vol/1000, 
+                                         time=1, 
+                                         f=m4_f/life_vol, 
+                                         u = 0, 
+                                         length=length, 
+                                         gamma=gamma, 
+                                         Z=200*life_vol,
+                                         ref_t = ref_t,
+                                         arr_t_f = m4_arr,
+                                         h = m4_h*exp(m4_w*temp),
+                                         temp = temp))
+
+seq_data %<>% mutate(spores_consumed_m5 = mapply(m1_sim_Z, 
+                                         R=resource*life_vol/1000, 
+                                         time=1, 
+                                         f=m5_f/life_vol, 
+                                         u = 0, 
+                                         length=length, 
+                                         gamma=gamma, 
+                                         Z=200*life_vol,
+                                         ref_t = ref_t,
+                                         arr_t_f = m5_arr,
+                                         h = m5_h*exp(m5_w*temp),
+                                         temp = temp))
 ```
 
 
 
 
 ```{r}
-saveRDS(seq_data, file = here("model_fitting", "combined", "seq_data.rds"))
+#saveRDS(seq_data, file = here("model_fitting", "combined", "seq_data.rds"))
 seq_data <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
 ```
 

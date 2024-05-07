@@ -83,6 +83,10 @@ mean_time <- mean(data$time/60/24)
 ```{r, units}
 data_summ %<>% mutate(rate_len_mean = rate_len_mean*60*24,
                       rate_len_mean_se = rate_len_mean_se*60*24)
+
+mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)
+data %<>% left_join(., mean_length_summ)
+data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
 ```
 
 
@@ -1339,7 +1343,7 @@ seq_data %<>% mutate(m6c_Z_end = mapply(m4_sim,
 
 
 ```{r, eval=F}
-saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
+#saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
 ```
 
 
