@@ -26,6 +26,7 @@ m2_u_f_fit <- readRDS(file = here("mle", "final", "m2_fit.rds"))
 m3_u_f_fit <- readRDS(file = here("mle", "final", "m3_fit.rds"))
 m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
 m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
+m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
 ```
 
 
@@ -36,6 +37,7 @@ getAIC(m2_u_f_fit) #temperature-dependent u
 getAIC(m3_u_f_fit) #rho
 getAIC(m4_u_f_fit) #temperature-dependent u and rho
 getAIC(m5_u_f_fit) #per-temperature u and rho
+getAIC(m5a_u_f_fit)
 ```
 
 
@@ -366,6 +368,67 @@ seq_data %<>% mutate(m5_rate = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(length^gamm
 ```
 
 
+```{r}
+m5a_coef <- coef(m5a_u_f_fit)
+m5a_f <- as.numeric(m5a_coef[1])
+m5a_u <- as.numeric(m5a_coef[2])
+m5a_arr <- as.numeric(m5a_coef[3])
+m5a_arr_u <- as.numeric(m5a_coef[4])
+m5a_h <- as.numeric(m5a_coef[5])
+m5a_w <- as.numeric(m5a_coef[6])
+m5a_rho_15 <- as.numeric(m5a_coef[7])
+m5a_rho_20 <- as.numeric(m5a_coef[8])
+m5a_rho_25 <- as.numeric(m5a_coef[9])
+
+viz_summ %<>% mutate(m5a_I_end = mapply(m4_sim, 
+                                       R=resource*life_vol/1000, 
+                                       time=1, 
+                                       f=m5a_f/life_vol, 
+                                       u = case_when(temp == 15 ~ m5a_u*exp(m5a_rho_15*resource),
+                                                     temp == 20 ~ m5a_u*exp(m5a_rho_20*resource),
+                                                     temp == 25 ~ m5a_u*exp(m5a_rho_25*resource)), 
+                                       length=life_mm, 
+                                       gamma=gamma, 
+                                       Z=200*life_vol,
+                                       ref_t = ref_t,
+                                       arr_t_f = m5a_arr,
+                                       arr_t_u = m5a_arr_u,
+                                       h = m5a_h*exp(m5a_w*temp),
+                                       temp = temp))
+
+data_summ %<>% mutate(m5a_rate = (m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
+                        (1+m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m5a_h*exp(m5a_w*temp)*resource/1000),
+                      m5a_u = case_when(temp == 15 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_15*resource),
+                                       temp == 20 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_20*resource),
+                                       temp == 25 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_25*resource)))
+
+```
+
+```{r, eval=F}
+seq_data %<>% mutate(m5a_I_end = mapply(m4_sim, 
+                                       R=resource*life_vol/1000, 
+                                       time=1, 
+                                       f=m5a_f/life_vol, 
+                                       u = case_when(temp == 15 ~ m5a_u*exp(m5a_rho_15*resource),
+                                                     temp == 20 ~ m5a_u*exp(m5a_rho_20*resource),
+                                                     temp == 25 ~ m5a_u*exp(m5a_rho_25*resource)), 
+                                       length=length, 
+                                       gamma=gamma, 
+                                       Z=200*life_vol,
+                                       ref_t = ref_t,
+                                       arr_t_f = m5a_arr,
+                                       arr_t_u = m5a_arr_u,
+                                       h = m5a_h*exp(m5a_w*temp),
+                                       temp = temp))
+
+seq_data %<>% mutate(m5a_rate = (m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(length^gamma))/
+                        (1+m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(length^gamma)*m5a_h*exp(m5a_w*temp)*resource/1000),
+                      m5a_u = case_when(temp == 15 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_15*resource),
+                                       temp == 20 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_20*resource),
+                                       temp == 25 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_25*resource)))
+```
+
+
 
 ```{r}
 data_summ %<>% mutate(rate_mean_ml_day=rate_len_mean*60*24,
@@ -440,7 +503,7 @@ seq_data %<>% mutate(spores_consumed = mapply(m1_sim_Z,
 
 
 ```{r}
-#saveRDS(seq_data, file = here("model_fitting", "combined", "seq_data.rds"))
+saveRDS(seq_data, file = here("model_fitting", "combined", "seq_data.rds"))
 seq_data <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
 ```
 
@@ -484,6 +547,7 @@ prev_plot("m2_I_end") + labs(title = "temp-dependent model")
 prev_plot("m3_I_end") + labs(title = "resource-dependent model")
 prev_plot("m4_I_end") + labs(title = "full model")
 prev_plot("m5_I_end") + labs(title = "interactive model")
+prev_plot("m5a_I_end") + labs(title = "interactive model alt")
 ```
 
 ```{r}
@@ -666,6 +730,8 @@ rate_plot("m2_rate") + labs(title = "Temperature-dependent model")
 rate_plot("m3_rate") + labs(title = "Resource-dependent model")
 rate_plot("m4_rate") + labs(title = "Temp. + Res. dependent model")
 rate_plot("m5_rate") + labs(title = "Interaction model")
+rate_plot("m5a_rate") + labs(title = "Interaction model alt")
+
 
 ```
 
@@ -780,197 +846,3 @@ data_summ %>% filter(temp == 25) %>% ggplot(., aes(x = life_mm, y = m5_u)) + geo
 
 
 
-How well are the full and independent model estimating f
-
-```{r}
-  data <- tmp
-  R_end <- as.data.frame(mapply(m4_sim, 
-                                R=data$amt_init*fora_vol/1000, 
-                                time=data$time/60/24, 
-                                f=f/fora_vol,
-                                u = 0, 
-                                length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=h*exp(w*data$temp),
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, 
-                                R=exp_data$resource*life_vol/1000, 
-                                time=exp_data$time, 
-                                f=f/life_vol, 
-                                u=u*exp(exp_data$resource*rho), 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=h*exp(w*exp_data$temp),
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-```
-
-
-model 4 - full model
-```{r}
-data <- tmp
-R_end <- as.data.frame(mapply(m4_sim, 
-                              R=data$amt_init*fora_vol/1000, 
-                              time=data$time/60/24, 
-                              f=m4_f/fora_vol,
-                              u = 0, 
-                              length=data$mm, 
-                              gamma=gamma, 
-                              Z=0,
-                              ref_t=ref_t,
-                              arr_t_f=m4_arr,
-                              arr_t_u=m4_arr_u,
-                              h=m4_h*exp(m4_w*data$temp),
-                              temp=data$temp))
-
-colnames(R_end) <- "R_end"
-data$end <- R_end$R_end
-data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-
-  nll <- dnorm(data$resid, 
-               mean = 0, 
-               sd = sd(data$resid, na.rm = T), 
-               log = T)
-  nll_sum_f_m4 <- -sum(nll, na.rm = T)
-
-exp_data <- dataset %>% filter(exposed==TRUE)
-
-I_end <- as.data.frame(mapply(m4_sim, 
-                              R=exp_data$resource*life_vol/1000, 
-                              time=exp_data$time, 
-                              f=m4_f/life_vol, 
-                              u=m4_u*exp(exp_data$resource*rho), 
-                              length=exp_data$life_mm, 
-                              gamma=gamma, 
-                              Z=spore_conc*life_vol,
-                              ref_t=ref_t,
-                              arr_t_f=m4_arr,
-                              arr_t_u=m4_arr_u,
-                              h=m4_h*exp(m4_w*exp_data$temp),
-                              temp=exp_data$temp))
-
-
-colnames(I_end) <- "I_end"
-
-exp_data %<>% cbind(I_end)
-
-exp_data %<>% 
-  mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-nll_sum_u_m4 <- -sum(exp_data$ll)
-```
-
-
-model 5 - interaction model
-
-
-```{r}
-data <- tmp
-R_end <- as.data.frame(mapply(m3_sim, 
-                              R=data$amt_init*fora_vol/1000, 
-                              time=data$time/60/24, 
-                              f=m5_f/fora_vol,
-                              u = 0, 
-                              length=data$mm, 
-                              gamma=gamma, 
-                              Z=0,
-                              ref_t=ref_t,
-                              arr_t_f=m5_arr,
-                              h=m5_h*exp(m5_w*data$temp),
-                              temp=data$temp))
-
-colnames(R_end) <- "R_end"
-data$end <- R_end$R_end
-data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-
-  nll <- dnorm(data$resid, 
-               mean = 0, 
-               sd = sd(data$resid, na.rm = T), 
-               log = T)
-  nll_sum_f_m5 <- -sum(nll, na.rm = T)
-
-  nll_sum_u_m5 <- 0
-  u_vec <- c(m5_u_15, m5_u_20, m5_u_25)
-  rho_vec <- c(m5_rho_15, m5_rho_20, m5_rho_25)
-  
-  for(i in 1:3){
-  exp_data <- dataset %>% filter(exposed==TRUE) %>% filter(temp == temp_IDs[i])
-
-  I_end <- as.data.frame(mapply(m3_sim, 
-                                R=exp_data$resource*life_vol/1000, 
-                                time=exp_data$time, 
-                                f=m5_f/life_vol, 
-                                u=u_vec[i]*exp(exp_data$resource*rho_vec[i]), 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=m5_arr,
-                                h=m5_h*exp(m5_w*exp_data$temp),
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum_u_m5 <- nll_sum_u_m5 + -sum(exp_data$ll)
-  }
-
-```
-
-```{r}
-nll_sum_f_m4
-nll_sum_u_m4
-(nll_sum_f_m4 + nll_sum_u_m4)
-
-nll_sum_f_m5
-nll_sum_u_m5
-(nll_sum_f_m5 + nll_sum_u_m5)
-```
-
-```{r}
-summary(m4_u_f_fit)
-summary(m5_u_f_fit)
-```
-
-
-
-```{r}
-getAIC(m4_u_f_fit)
-getAIC(m5_u_f_fit)
-
-2*length(coef(m4_u_f_fit))
-2*length(coef(m5_u_f_fit))
-
-2*summary(m4_u_f_fit)@m2logL/-2
-2*summary(m5_u_f_fit)@m2logL/-2
-```

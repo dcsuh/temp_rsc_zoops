@@ -36,7 +36,7 @@ seq_plot <- function(seq_data, rate){
                   group = as.factor(temp), 
                   color = as.factor(temp),
                   shape = as.factor(temp)),
-             size=3) + 
+             size=4) + 
     geom_linerange(aes(x=resource, 
                        ymin=rate_len_mean-rate_len_mean_se,
                        ymax=rate_len_mean+rate_len_mean_se,
