@@ -236,7 +236,7 @@ m1_ll <- function(u, f, arr_t_f, h, w){
 
 Testing to see why the new model fits are better than the old.
 
-```{r}
+```{r, eval=F}
 u <- 0.00075
 f <- as.numeric(m6c_coef[1])
 arr_t_f <- as.numeric(m6c_coef[2])
@@ -293,7 +293,7 @@ w <- as.numeric(m6c_coef[4])
 ```
 
 
-```{r}
+```{r, eval=F}
 m1_coef <- coef(m1_u_f_fit)
 u <- m1_coef[1]
 f <- m1_coef[2]
@@ -354,7 +354,7 @@ w <- m1_coef[5]
 
 New algo splits the difference and has a lower log-likelihood overall because it can better match the infection data
 
-```{r}
+```{r, eval=F}
 nll_sum_f_m6c
 nll_sum_u_m6c
 nll_sum_f_m6c + nll_sum_u_m6c

@@ -19,7 +19,7 @@ library(patchwork)
 
 
 ```{r}
-f_seq <- readRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
+f_seq <- readRDS(file=here("model_fitting", "foraging", "rate_fit.rds"))
 u_seq <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
 ```
 
@@ -46,6 +46,11 @@ seq_plot <- function(seq_data, rate){
   labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
 }
 
+seq_plot(f_seq, "m1_rate")
+```
+
+
+```{r}
 seq_plot_temp <- function(seq_data, rate){
   seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
   ggplot(.) +
@@ -66,7 +71,12 @@ seq_plot_temp <- function(seq_data, rate){
   labs(x="Temperature", y="Foraging rate (mL/day)", color="", shape="", title = "") 
 }
 
+seq_plot_temp(f_seq, "m1_rate")
 
+```
+
+
+```{r}
 spores_plot <- function(seq_data, var){
 seq_data %>% filter(temp %in% const_temp) %>% 
   ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
@@ -77,7 +87,22 @@ seq_data %>% filter(temp %in% const_temp) %>%
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
 
+spores_plot_temp <- function(seq_data, var){
+seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>% 
+  ggplot(., aes(x=temp, y=!!sym(var), color=as.factor(resource), group = as.factor(resource))) + 
+  geom_line() + 
+  labs(x = "Temperature (C)", 
+       y = "Spores consumed",
+       color = "Resource") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
+}
 
+spores_plot(f_seq, "m1_Z_end")
+
+```
+
+
+```{r}
 prev_plot <- function(seq_data, var){
   seq_data %>% filter(temp %in% const_temp) %>% 
     ggplot(.,aes(x=resource, 
@@ -92,7 +117,25 @@ prev_plot <- function(seq_data, var){
     labs(x="Resource", y="Probability of Infection", color="Temperature", title = "")
 }
 
+prev_plot_temp <- function(seq_data, var){
+  seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>% 
+    ggplot(.,aes(x=temp, 
+                 y=!!sym(var), 
+                 color=as.factor(resource))) + 
+    geom_line() +
+    scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+    new_scale_color() + 
+    geom_point(aes(x=temp, y=prev, color=as.factor(resource)), size=4) + 
+    geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(resource))) +
+    scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+    labs(x="Temperature (C) ", y="Probability of Infection", color="Resource", title = "")
+}
 
+prev_plot(u_seq, "m1_I_end")
+```
+
+
+```{r}
 rate_plot <- function(seq_data, var){
   seq_data %>% filter(temp %in% const_temp) %>% 
     ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
@@ -101,12 +144,128 @@ rate_plot <- function(seq_data, var){
       geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=3, shape = 1) + 
       labs(x = "resource", y = "Foraging rate (mL/day)", title="")
 }
+
+rate_plot(u_seq, "m1_rate")
+
 ```
 
 
 ```{r}
+u_plot <- function(seq_data, var){
+  seq_data %>% 
+    filter(temp %in% const_temp) %>% 
+    ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
+    geom_line(size = 2) + 
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    labs(x = "Resource (mgC/L)", y = "Per-Spore Susceptibility", color = "Temp", title = "")
+}
 
+u_plot_temp <- function(seq_data, var){
+  seq_data %>% 
+    filter(resource %in% c(0.1, 0.5, 1)) %>% 
+    ggplot(.,aes(x=temp, y=!!sym(var), color=as.factor(resource))) + 
+    geom_line(size = 2) + 
+    scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+    labs(x = "Temperature (C)", y = "Per-Spore Susceptibility", color = "Resource", title = "")
+}
+
+u_plot(u_seq, "m5_u")
 ```
+
+
+```{r}
+seq_plot <- function(seq_data, rate){
+  seq_data %>% filter(temp %in% c(15,20,25)) %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(rate),
+                group=as.factor(temp),
+                color=as.factor(temp))) +
+  geom_point(aes(x=resource, 
+                  y=rate_len_mean, 
+                  group = as.factor(temp), 
+                  color = as.factor(temp),
+                  shape = as.factor(temp)),
+             size=1.5) + 
+    geom_linerange(aes(x=resource, 
+                       ymin=rate_len_mean-rate_len_mean_se,
+                       ymax=rate_len_mean+rate_len_mean_se,
+                       color=as.factor(temp))) +
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+}
+
+seq_plot(f_seq, "m1_rate")
+```
+
+
+```{r}
+algae_plot <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>% 
+  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
+  geom_line() + 
+  labs(x = "Resource (mgC/L)", 
+       y = "Algae consumed (mgC)",
+       color = "Temp") + 
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+}
+
+algae_plot_temp <- function(seq_data, var){
+seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>% 
+  ggplot(., aes(x=temp, y=!!sym(var), color=as.factor(resource), group = as.factor(resource))) + 
+  geom_line() + 
+  labs(x = "Temperature (C)", 
+       y = "Algae consumed (mgC)",
+       color = "Temp") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
+}
+
+algae_plot(f_seq, "m1_consumed")
+```
+
+
+Show temp only models
+
+```{r}
+seq_plot(f_seq, "m2_rate")
+algae_plot(f_seq, "m2_consumed")
+spores_plot(f_seq, "m2_Z_end")
+u_plot(u_seq, "m2_u")
+prev_plot(u_seq, "m2_I_end")
+```
+
+
+
+Show resource only models
+
+```{r}
+seq_plot_temp(f_seq, "m3_rate")
+algae_plot_temp(f_seq, "m3_consumed")
+spores_plot_temp(f_seq, "m3_Z_end")
+u_plot_temp(u_seq, "m3_u")
+prev_plot_temp(u_seq, "m3_I_end")
+```
+
+
+```{r}
+seq_plot(f_seq, "m4_rate")
+algae_plot(f_seq, "m4_consumed")
+spores_plot(f_seq, "m4_Z_end")
+u_plot(u_seq, "m4_u")
+prev_plot(u_seq, "m4_I_end")
+```
+
+```{r}
+seq_plot(f_seq, "m6c_rate")
+algae_plot(f_seq, "m6c_consumed")
+spores_plot(f_seq, "m6c_Z_end")
+u_plot(u_seq, "m5_u")
+prev_plot(u_seq, "m5_I_end")
+```
+
+
+
 
 
 

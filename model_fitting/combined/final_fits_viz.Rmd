@@ -225,7 +225,7 @@ viz_summ %<>% mutate(m3_I_end = mapply(m3_sim,
 
 data_summ %<>% mutate(m3_rate = (m3_f*exp(m3_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
                         (1+m3_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m3_h*exp(m3_w*temp)*resource/1000),
-                      m3_u = m3_u*exp(m3_rho*temp))
+                      m3_u = m3_u*exp(m3_rho*resource))
 ```
 
 
@@ -245,7 +245,7 @@ seq_data %<>% mutate(m3_I_end = mapply(m3_sim,
 
 seq_data %<>% mutate(m3_rate = (m3_f*exp(m3_arr*(1/ref_t - 1/temp))*(length^gamma))/
                         (1+m3_f*exp(m2_arr*(1/ref_t - 1/temp))*(length^gamma)*m3_h*exp(m3_w*temp)*resource/1000),
-                      m3_u = m3_u*exp(m3_rho*temp))
+                      m3_u = m3_u*exp(m3_rho*resource))
 ```
 
 
@@ -279,7 +279,7 @@ viz_summ %<>% mutate(m4_I_end = mapply(m4_sim,
 
 data_summ %<>% mutate(m4_rate = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
                         (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m4_h*exp(m4_w*temp)*resource/1000),
-                      m4_u = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp))*exp(m4_rho*temp))
+                      m4_u = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp))*exp(m4_rho*resource))
 ```
 
 
@@ -300,7 +300,7 @@ seq_data %<>% mutate(m4_I_end = mapply(m4_sim,
 
 seq_data %<>% mutate(m4_rate = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma))/
                         (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma)*m4_h*exp(m4_w*temp)*resource/1000),
-                      m4_u = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp))*exp(m4_rho*temp))
+                      m4_u = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp))*exp(m4_rho*resource))
 ```
 
 
