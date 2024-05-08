@@ -162,7 +162,7 @@ We'll include the bootstrapping here
 
 ```{r, 00}
 
-  iterations <- 50
+  iterations <- 5
   
   boot_00 <- list()
   
