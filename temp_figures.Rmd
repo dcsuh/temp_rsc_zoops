@@ -488,6 +488,38 @@ ggsave(here("workshop", "figures","prev_plots.png"),
 ```
 
 
+```{r}
+spores_hz <- s1 | s2 | s3 | s4
+
+ggsave(here("workshop", "figures","spores_hz_plots.png"),
+       spores_hz,
+       width = 8,
+       height = 3,
+       units = "in")
+```
+
+```{r}
+susc_hz <- u1 | u2 | u3 | u4
+
+ggsave(here("workshop", "figures","susc_hz_plots.png"),
+       susc_hz,
+       width = 8,
+       height = 3,
+       units = "in")
+```
+
+```{r}
+prev_hz <- p1 | p2 | p3 | p4
+
+ggsave(here("workshop", "figures","prev_hz_plots.png"),
+       prev_hz,
+       width = 8,
+       height = 3,
+       units = "in")
+```
+
+
+
 
 
 
