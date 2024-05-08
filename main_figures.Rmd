@@ -227,22 +227,22 @@ algae_plot(f_seq, "m1_consumed")
 Show temp only models
 
 ```{r}
-p1 <- seq_plot(f_seq, "m2_rate") + 
+t1 <- seq_plot(f_seq, "m2_rate") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
 #algae_plot(f_seq, "m2_consumed")
-p2 <- spores_plot(f_seq, "m2_Z_end") + 
+t2 <- spores_plot(f_seq, "m2_Z_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
-p3 <- u_plot(u_seq, "m2_u") + 
+t3 <- u_plot(u_seq, "m2_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
-p4 <- prev_plot(u_seq, "m2_I_end") + theme(plot.title = element_blank(), legend.position = "none")
+t4 <- prev_plot(u_seq, "m2_I_end") + theme(plot.title = element_blank(), legend.position = "none")
 
-temp_plots <- p1 / p2 / p3 / p4
+temp_plots <- t1 / t2 / t3 / t4
 
-ggsave(here("workshop", "figures","temp_plots.png"),
-       temp_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","temp_plots.png"),
+#        temp_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 
 ```
 
@@ -251,65 +251,65 @@ ggsave(here("workshop", "figures","temp_plots.png"),
 Show resource only models
 
 ```{r}
-p1 <- seq_plot_temp(f_seq, "m3_rate") + 
+r1 <- seq_plot_temp(f_seq, "m3_rate") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
 #algae_plot_temp(f_seq, "m3_consumed")
-p2 <- spores_plot_temp(f_seq, "m3_Z_end") + 
+r2 <- spores_plot_temp(f_seq, "m3_Z_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
-p3 <- u_plot_temp(u_seq, "m3_u") + 
+r3 <- u_plot_temp(u_seq, "m3_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
-p4 <- prev_plot_temp(u_seq, "m3_I_end") + theme(plot.title = element_blank(), legend.position = "none")
+r4 <- prev_plot_temp(u_seq, "m3_I_end") + theme(plot.title = element_blank(), legend.position = "none")
 
-resource_plots <- p1 / p2 / p3 / p4
+resource_plots <- r1 / r2 / r3 / r4
 
-ggsave(here("workshop", "figures","resource_plots.png"),
-       resource_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","resource_plots.png"),
+#        resource_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
 # additive plots
 
 ```{r}
-p1 <- seq_plot(f_seq, "m4_rate") + 
+add1 <- seq_plot(f_seq, "m4_rate") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
 #algae_plot(f_seq, "m4_consumed")
-p2 <- spores_plot(f_seq, "m4_Z_end") + 
+add2 <- spores_plot(f_seq, "m4_Z_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
-p3 <- u_plot(u_seq, "m4_u") + 
+add3 <- u_plot(u_seq, "m4_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
-p4 <- prev_plot(u_seq, "m4_I_end") + theme(plot.title = element_blank(), legend.position = "none")
+add4 <- prev_plot(u_seq, "m4_I_end") + theme(plot.title = element_blank(), legend.position = "none")
 
-additive_plots <- p1 / p2 / p3 / p4
+additive_plots <- add1 / add2 / add3 / add4
 
-ggsave(here("workshop", "figures","additive_plots.png"),
-       additive_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","additive_plots.png"),
+#        additive_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 # interactive plots
 
 ```{r}
-p1 <- seq_plot(f_seq, "m6c_rate") + 
+i1 <- seq_plot(f_seq, "m6c_rate") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
 #algae_plot(f_seq, "m6c_consumed")
-p2 <- spores_plot(f_seq, "m6c_Z_end") + 
+i2 <- spores_plot(f_seq, "m6c_Z_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
-p3 <- u_plot(u_seq, "m5_u") + 
+i3 <- u_plot(u_seq, "m5_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
-p4 <- prev_plot(u_seq, "m5_I_end") + theme(plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+i4 <- prev_plot(u_seq, "m5_I_end") + theme(plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
-interactive_plots <- p1 / p2 / p3 / p4
+interactive_plots <- i1 / i2 / i3 / i4
 
-ggsave(here("workshop", "figures","interactive_plots.png"),
-       interactive_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","interactive_plots.png"),
+#        interactive_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -516,6 +516,196 @@ prev_hz <- p1 | p2 | p3 | p4
 #        height = 3,
 #        units = "in")
 ```
+
+
+Foraging - temp only plots
+
+
+```{r}
+t_a <- seq_plot(f_seq, "m2_rate") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+t_b <- algae_plot(f_seq, "m2_consumed") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+t_c <- spores_plot(f_seq, "m2_Z_end") +
+  theme(plot.title = element_blank(), legend.position = "none")
+
+temp_fora_plot <- t_a / t_b / t_c
+
+
+ggsave(here("workshop", "figures","temp_fora_plots.png"),
+       temp_fora_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+```{r}
+t_d <- spores_plot(u_seq, "spores_consumed_m2") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+t_e <- u_plot(u_seq, "m2_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+
+t_f <- prev_plot(u_seq, "m2_I_end") + 
+  theme(plot.title = element_blank(), legend.position = "none")
+
+
+temp_inf_plot <- t_d / t_e / t_f
+
+ggsave(here("workshop", "figures","temp_inf_plots.png"),
+       temp_inf_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+
+
+```
+
+
+
+
+
+
+resource only
+```{r}
+r_a <- seq_plot_temp(f_seq, "m3_rate") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+r_b <- algae_plot_temp(f_seq, "m3_consumed") +
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+r_c <- spores_plot_temp(f_seq, "m3_Z_end") + 
+  theme(plot.title = element_blank(), legend.position = "none")
+
+
+res_fora_plot <- r_a / r_b / r_c
+
+
+ggsave(here("workshop", "figures","res_fora_plots.png"),
+       res_fora_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+
+```{r}
+r_d <- spores_plot_temp(u_seq, "spores_consumed_m3") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+r_e <- u_plot_temp(u_seq, "m3_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+r_f <- prev_plot_temp(u_seq, "m3_I_end") + 
+  theme(plot.title = element_blank(), legend.position = "none")
+
+res_inf_plot <- r_d / r_e / r_f
+
+ggsave(here("workshop", "figures","res_inf_plots.png"),
+       res_inf_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+
+```
+
+
+additive only
+
+
+```{r}
+a_a <- seq_plot(f_seq, "m4_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+
+a_b <- algae_plot(f_seq, "m4_consumed") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+
+a_c <- spores_plot(f_seq, "m4_Z_end") + 
+  theme(plot.title = element_blank(), legend.position = "none")
+
+
+add_fora_plot <- a_a / a_b / a_c
+
+
+ggsave(here("workshop", "figures","add_fora_plots.png"),
+       add_fora_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+
+```
+
+
+```{r}
+a_d <- spores_plot(u_seq, "spores_consumed_m4") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+a_e <- u_plot(u_seq, "m4_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+a_f <- prev_plot(u_seq, "m4_I_end") + 
+  theme(plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+add_inf_plot <- a_d / a_e / a_f
+
+ggsave(here("workshop", "figures","add_inf_plots.png"),
+       add_inf_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+
+```
+
+
+interactive only
+
+
+```{r}
+i_a <- seq_plot(f_seq, "m6c_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+i_b <- algae_plot(f_seq, "m6c_consumed") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+i_c <- spores_plot(f_seq, "m6c_Z_end") + 
+  theme(plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+int_fora_plot <- i_a / i_b / i_c
+
+ggsave(here("workshop", "figures","int_fora_plots.png"),
+       int_fora_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+
+
+```{r}
+i_d <- spores_plot(u_seq, "spores_consumed_m5") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+i_e <- u_plot(u_seq, "m5_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
+
+i_f <- prev_plot(u_seq, "m5_I_end") + 
+  theme(plot.title = element_blank(), legend.position = "none")
+
+int_inf_plot <- i_d / i_e / i_f
+
+ggsave(here("workshop", "figures","int_inf_plots.png"),
+       int_inf_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+
 
 
 
