@@ -328,11 +328,11 @@ f4 <- seq_plot(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.p
 
 clearance_plots <- f1 / f2 / f3 / f4
 
-ggsave(here("workshop", "figures","clearance_plots.png"),
-       clearance_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","clearance_plots.png"),
+#        clearance_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -347,11 +347,11 @@ a4 <- algae_plot(f_seq, "m6c_consumed") + theme(plot.title = element_blank(), le
 
 algae_plots <- a1 / a2 / a3 / a4
 
-ggsave(here("workshop", "figures","algae_plots.png"),
-       algae_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","algae_plots.png"),
+#        algae_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 ```{r}
@@ -365,11 +365,11 @@ fs4 <- spores_plot(f_seq, "m6c_Z_end") + theme(axis.title.y=element_blank(), plo
 
 fora_spores_plots <- fs1 / fs2 / fs3 / fs4
 
-ggsave(here("workshop", "figures","fora_spore_plots.png"),
-       fora_spores_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","fora_spore_plots.png"),
+#        fora_spores_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -377,33 +377,32 @@ ggsave(here("workshop", "figures","fora_spore_plots.png"),
 ```{r}
 clearance_hz <- f1 | f2 | f3 | f4
 
-ggsave(here("workshop", "figures","clearance_hz_plots.png"),
-       clearance_hz,
-       width = 8,
-       height = 3,
-       units = "in")
+# ggsave(here("workshop", "figures","clearance_hz_plots.png"),
+#        clearance_hz,
+#        width = 8,
+#        height = 3,
+#        units = "in")
 ```
 
 ```{r}
 algae_hz <- a1 | a2 | a3 | a4
 
-ggsave(here("workshop", "figures","algae_hz_plots.png"),
-       algae_hz,
-       width = 8,
-       height = 3,
-       units = "in")
+# ggsave(here("workshop", "figures","algae_hz_plots.png"),
+#        algae_hz,
+#        width = 8,
+#        height = 3,
+#        units = "in")
 ```
 
 
 ```{r}
 fora_spores_hz <- fs1 | fs2 | fs3 | fs4
 
-ggsave(here("workshop", "figures","fora_spores_hz_plots.png"),
-       fora_spores_hz,
-       width = 8,
-       height = 3,
-       units = "in")
-
+# ggsave(here("workshop", "figures","fora_spores_hz_plots.png"),
+#        fora_spores_hz,
+#        width = 8,
+#        height = 3,
+#        units = "in")
 ```
 
 
@@ -435,11 +434,11 @@ s4 <- spores_plot(u_seq, "spores_consumed_m5") + theme(axis.title.y=element_blan
 
 spores_plots <- s1 / s2 / s3 / s4
 
-ggsave(here("workshop", "figures","spores_plots.png"),
-       spores_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","spores_plots.png"),
+#        spores_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -457,11 +456,11 @@ u4 <- u_plot(u_seq, "m5_u") + theme(axis.title.y=element_blank(), plot.title = e
 
 susc_plots <- u1 / u2 / u3 / u4
 
-ggsave(here("workshop", "figures","susc_plots.png"),
-       susc_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","susc_plots.png"),
+#        susc_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -480,42 +479,42 @@ p4 <- prev_plot(u_seq, "m5_I_end") + theme(axis.title.y=element_blank(), plot.ti
 
 prev_plots <- p1 / p2 / p3 / p4
 
-ggsave(here("workshop", "figures","prev_plots.png"),
-       prev_plots,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","prev_plots.png"),
+#        prev_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
 ```{r}
 spores_hz <- s1 | s2 | s3 | s4
 
-ggsave(here("workshop", "figures","spores_hz_plots.png"),
-       spores_hz,
-       width = 8,
-       height = 3,
-       units = "in")
+# ggsave(here("workshop", "figures","spores_hz_plots.png"),
+#        spores_hz,
+#        width = 8,
+#        height = 3,
+#        units = "in")
 ```
 
 ```{r}
 susc_hz <- u1 | u2 | u3 | u4
 
-ggsave(here("workshop", "figures","susc_hz_plots.png"),
-       susc_hz,
-       width = 8,
-       height = 3,
-       units = "in")
+# ggsave(here("workshop", "figures","susc_hz_plots.png"),
+#        susc_hz,
+#        width = 8,
+#        height = 3,
+#        units = "in")
 ```
 
 ```{r}
 prev_hz <- p1 | p2 | p3 | p4
 
-ggsave(here("workshop", "figures","prev_hz_plots.png"),
-       prev_hz,
-       width = 8,
-       height = 3,
-       units = "in")
+# ggsave(here("workshop", "figures","prev_hz_plots.png"),
+#        prev_hz,
+#        width = 8,
+#        height = 3,
+#        units = "in")
 ```
 
 
@@ -525,18 +524,18 @@ ggsave(here("workshop", "figures","prev_hz_plots.png"),
 
 # 3D plots
 
-```{r}
+```{r, eval=F}
 plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m2_I_end, color = ~m2_I_end)
 plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m3_I_end, color = ~m3_I_end)
 plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m4_I_end, color = ~m4_I_end)
 plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m5_I_end, color = ~m5_I_end)
 ```
-```{r}
+
+```{r, eval=F}
 plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m5_u, color = ~m5_I_end)
 ```
 
-
-```{r}
+```{r, eval=F}
 plot_ly(u_seq, x = ~spores_consumed_m4, y = ~m4_u, z = ~m4_I_end, color = ~m4_I_end)
 plot_ly(u_seq, x = ~spores_consumed_m5, y = ~m5_u, z = ~m5_I_end, color = ~m5_I_end)
 ```
