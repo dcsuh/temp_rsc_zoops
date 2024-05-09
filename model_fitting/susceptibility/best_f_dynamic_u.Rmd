@@ -1046,7 +1046,99 @@ coef(m5b_u_fit)
 saveRDS(m5b_u_fit, file = here("mle","susc","m5b_u_rho_fit.rds"))
 ```
 
+```{r}
+m5a_per_ll <- function(u, arr_u, rho_15, rho_20, rho_25){
 
+  
+  nll_sum <- 0  
+  u_nll <- 0
+  rho_vec <- c(rho_15, rho_20, rho_25)
+  for(j in 1:length(resource_IDs)){  
+    
+      exp_data <- dataset %>% filter(exposed==TRUE)
+      exp_data %<>% filter(temp == temp_IDs[j])
+      
+      
+      I_end <- as.data.frame(mapply(m4_sim, 
+                                    R=exp_data$resource*life_vol/1000, 
+                                    time=exp_data$time, 
+                                    f=f_est/life_vol, 
+                                    u=u*exp(resource*rho_vec[j]), 
+                                    length = exp_data$life_mm, 
+                                    gamma=gamma, 
+                                    Z=spore_conc*life_vol,
+                                    ref_t = ref_t,
+                                    arr_t_f = arr_f_est,
+                                    arr_t_u = arr_u,
+                                    h = (h_est + exp_data$temp*w_est),
+                                    temp=exp_data$temp))
+    
+      colnames(I_end) <- "I_end"
+      
+      exp_data %<>% cbind(I_end)
+      
+        inf_out <- function(inf_status, I_end){
+        dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+        }
+        
+      exp_data %<>% 
+        mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+      u_nll <- u_nll + -sum(exp_data$ll)
+  }
+  
+
+  nll_sum <- nll_sum + u_nll
+  return(nll_sum)
+}
+```
+
+
+```{r, eval=F}
+start_time <- Sys.time()
+
+
+tmp <- data
+m5a_per_fit <- mle2(m5a_per_ll, start=list(u = 0.0001, 
+                                     arr_u = 10,
+                                     rho_15 = 0.1,
+                                     rho_20 = 0.1,
+                                     rho_25 = 0.1), 
+                     control=list(parscale = c(u = 0.0001, 
+                                     arr_u = 10,
+                                     rho_15 = 0.1,
+                                     rho_20 = 0.1,
+                                     rho_25 = 0.1)),
+                     skip.hessian=F, method="BFGS")
+
+# m5a_per_fit <- mle2(m5a_per_ll, start=list(u = 0.0001, 
+#                                      arr_u = 10,
+#                                      rho_15 = 0.1,
+#                                      rho_20 = 0.1,
+#                                      rho_25 = 0.1), 
+#                      control=list(parscale = c(u = 0.0001, 
+#                                      arr_u = 10,
+#                                      rho_15 = 0.1,
+#                                      rho_20 = 0.1,
+#                                      rho_25 = 0.1)),
+#                      skip.hessian=F, method="L-BFGS-B", 
+#                    lower=c(u = 0, 
+#                                      arr_u = 0,
+#                                      rho_15 = -Inf,
+#                                      rho_20 = -Inf,
+#                                      rho_25 = -Inf), 
+#                    upper=c(u = Inf, 
+#                                      arr_u = Inf,
+#                                      rho_15 = Inf,
+#                                      rho_20 = Inf,
+#                                      rho_25 = Inf))
+end_time <- Sys.time()
+m5_per_runtime <- end_time - start_time
+m5_per_runtime
+
+coef(m5a_per_fit)
+
+saveRDS(m5a_per_fit, file = here("mle","susc","m5a_per_fit.rds"))
+```
 
 
 ```{r}

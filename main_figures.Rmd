@@ -149,13 +149,15 @@ prev_plot(u_seq, "m1_I_end")
 rate_plot <- function(seq_data, var){
   seq_data %>% filter(temp %in% const_temp) %>% 
     ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
-      geom_line() +
+      geom_line(size=1) +
+      scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
       new_scale_color() + 
       geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=3, shape = 1) + 
       geom_linerange(aes(x=resource, 
                      ymin=rate_mean_ml_day-rate_se_ml_day,
                      ymax=rate_mean_ml_day+rate_se_ml_day,
                      color=as.factor(temp))) +
+      scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
       labs(x = "Resource (mgC/L)", y = "Foraging rate (mL/day)", title="")
 }
 
