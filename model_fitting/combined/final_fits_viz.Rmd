@@ -562,6 +562,19 @@ seq_data %<>% mutate(spores_consumed_m5 = mapply(m1_sim_Z,
                                          arr_t_f = m5_arr,
                                          h = m5_h*exp(m5_w*temp),
                                          temp = temp))
+
+seq_data %<>% mutate(spores_consumed_m5a = mapply(m1_sim_Z, 
+                                         R=resource*life_vol/1000, 
+                                         time=1, 
+                                         f=m5a_f/life_vol, 
+                                         u = 0, 
+                                         length=length, 
+                                         gamma=gamma, 
+                                         Z=200*life_vol,
+                                         ref_t = ref_t,
+                                         arr_t_f = m5_arr,
+                                         h = m5a_h*exp(m5a_w*temp),
+                                         temp = temp))
 ```
 
 

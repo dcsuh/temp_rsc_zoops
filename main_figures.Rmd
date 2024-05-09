@@ -38,8 +38,8 @@ seq_plot <- function(seq_data, rate){
   ggplot(.) +
   geom_line(aes(x=resource, 
                 y=!!sym(rate),
-                group=temp_factor,
-                color=as.factor(temp_factor)),
+                group=as.factor(temp),
+                color=as.factor(temp)),
             size = 1) +
   geom_point(aes(x=resource, 
                   y=rate_len_mean, 
@@ -152,6 +152,10 @@ rate_plot <- function(seq_data, var){
       geom_line() +
       new_scale_color() + 
       geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=3, shape = 1) + 
+      geom_linerange(aes(x=resource, 
+                     ymin=rate_mean_ml_day-rate_se_ml_day,
+                     ymax=rate_mean_ml_day+rate_se_ml_day,
+                     color=as.factor(temp))) +
       labs(x = "Resource (mgC/L)", y = "Foraging rate (mL/day)", title="")
 }
 
@@ -516,6 +520,78 @@ prev_hz <- p1 | p2 | p3 | p4
 #        height = 3,
 #        units = "in")
 ```
+
+
+
+```{r}
+rate_plot(u_seq, "m5a_rate")
+spores_plot(u_seq, "spores_consumed_m5a")
+u_plot(u_seq, "m5a_u")
+prev_plot(u_seq, "m5a_I_end")
+```
+
+
+
+```{r}
+rate_4 <- rate_plot(u_seq, "m4_rate")
+rate_5 <- rate_plot(u_seq, "m5_rate")
+rate_5a <- rate_plot(u_seq, "m5a_rate")
+
+u_rate_plot <- rate_4 / rate_5 / rate_5a
+
+ggsave(here("workshop", "figures","u_full_rate_plots.png"),
+       u_rate_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+```{r}
+spo_4 <- spores_plot(u_seq, "spores_consumed_m4")
+spo_5 <- spores_plot(u_seq, "spores_consumed_m5")
+spo_5a <- spores_plot(u_seq, "spores_consumed_m5a")
+
+u_spores_plot <- spo_4 / spo_5 / spo_5a
+
+ggsave(here("workshop", "figures","u_full_spores_plots.png"),
+       u_spores_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+```{r}
+susc_4 <- u_plot(u_seq, "m4_u")
+susc_5 <- u_plot(u_seq, "m5_u")
+susc_5a <- u_plot(u_seq, "m5a_u")
+
+u_susc_plot <- susc_4 / susc_5 / susc_5a
+
+ggsave(here("workshop", "figures","u_full_susc_plots.png"),
+       u_susc_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+
+```{r}
+prev_4 <- prev_plot(u_seq, "m4_I_end")
+prev_5 <- prev_plot(u_seq, "m5_I_end")
+prev_5a <- prev_plot(u_seq, "m5a_I_end")
+
+u_prev_plot <- prev_4 / prev_5 / prev_5a
+
+ggsave(here("workshop", "figures","u_full_prev_plots.png"),
+       u_prev_plot,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+
+
+
 
 
 Foraging - temp only plots

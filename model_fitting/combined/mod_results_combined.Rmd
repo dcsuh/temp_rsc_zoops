@@ -23,6 +23,7 @@ m2 <- readRDS(here("mle","final","m2_fit.rds"))
 m3 <- readRDS(here("mle","final","m3_fit.rds"))
 m4 <- readRDS(here("mle","final","m4_fit.rds"))
 m5 <- readRDS(here("mle","final","m5_fit.rds"))
+m5a <- readRDS(here("mle","final","m5a_fit.rds"))
 ```
 
 
@@ -38,6 +39,7 @@ getAIC(m2)
 getAIC(m3)
 getAIC(m4)
 getAIC(m5)
+getAIC(m5a)
 ```
 
 
@@ -53,4 +55,31 @@ aic_table_final <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, w
 aic_table_final
 
 saveRDS(aic_table_final, file=here("mle/aic_table_combined_final.rds"))
+```
+
+```{r}
+model_list <- list(m1, m2, m3, m4, m5, m5a)
+mod_names <- c("m1", "m2", "m3", "m4", "m5", "m5a")
+mod_names_descriptive <- c("size", "temp", "rsc", "add", "inter", "inter-arr")
+mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
+#tibble(mod_names, mod_names_descriptive) #check to make sure names line up
+
+aic_table_final <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
+
+aic_table_final
+```
+
+
+```{r}
+model_list <- list(m1, m2, m3, m4, m5a)
+mod_names <- c("m1", "m2", "m3", "m4", "m5")
+mod_names_descriptive <- c("size", "temp", "rsc", "add", "inter")
+mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
+#tibble(mod_names, mod_names_descriptive) #check to make sure names line up
+
+aic_table_final <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
+
+aic_table_final
+
+saveRDS(aic_table_final, file=here("mle/aic_table_combined_final_alt.rds"))
 ```
