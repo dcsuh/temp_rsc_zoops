@@ -1108,7 +1108,7 @@ m5a_per_fit <- mle2(m5a_per_ll, start=list(u = 0.0001,
                                      rho_15 = 0.1,
                                      rho_20 = 0.1,
                                      rho_25 = 0.1)),
-                     skip.hessian=F, method="BFGS")
+                     skip.hessian=F, method="Nelder-Mead")
 
 # m5a_per_fit <- mle2(m5a_per_ll, start=list(u = 0.0001, 
 #                                      arr_u = 10,
@@ -1391,6 +1391,7 @@ m3_u_exp_fit <- readRDS(file = here("mle", "susc", "m3_u_exp_fit.rds"))
 m4_u_fit <- readRDS(file = here("mle", "susc", "m4_u_rho_fit.rds"))
 # m5a_u_fit <- readRDS(file = here("mle", "susc", "m5a_u_rho_fit.rds"))
 # m5b_u_fit <- readRDS(file = here("mle", "susc", "m5b_u_rho_fit.rds"))
+m5a_per_fit <- readRDS(file = here("mle", "susc", "m5a_per_fit.rds"))
 m5u_per_fit <- readRDS(file = here("mle", "susc", "m5u_per_fit.rds"))
 ```
 
@@ -1407,10 +1408,11 @@ getAIC(m2_u_fit)
 sum(getAIC(m3_u_fits[[1]]) + getAIC(m3_u_fits[[2]]) + getAIC(m3_u_fits[[3]]))
 getAIC(m3_u_per_fit)
 getAIC(m3_u_exp_fit)
-getAIC(m3_u_exp_per_temp_fits[[1]]) + getAIC(m3_u_exp_per_temp_fits[[2]]) + getAIC(m3_u_exp_per_temp_fits[[3]])
+#getAIC(m3_u_exp_per_temp_fits[[1]]) + getAIC(m3_u_exp_per_temp_fits[[2]]) + getAIC(m3_u_exp_per_temp_fits[[3]])
 getAIC(m4_u_fit)
 # getAIC(m5a_u_fit)
 # getAIC(m5b_u_fit)
+getAIC(m5a_per_fit)
 getAIC(m5u_per_fit)
 ```
 
