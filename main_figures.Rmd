@@ -482,8 +482,8 @@ s1 <- spores_plot(u_seq, "spores_consumed_m2") +
 s2 <- spores_plot(u_seq, "spores_consumed_m3") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 s3 <- spores_plot(u_seq, "spores_consumed_m4") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
-s4 <- spores_plot(u_seq, "spores_consumed_m5") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none")
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+s4 <- spores_plot(u_seq, "spores_consumed_m5b") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
 spores_plots <- s1 / s2 / s3 / s4
 
@@ -504,8 +504,8 @@ u1 <- u_plot(u_seq, "m2_u") +
 u2 <- u_plot(u_seq, "m3_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 u3 <- u_plot(u_seq, "m4_u") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
-u4 <- u_plot(u_seq, "m5_u") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none")
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+u4 <- u_plot(u_seq, "m5b_u") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
 susc_plots <- u1 / u2 / u3 / u4
 
@@ -527,8 +527,8 @@ p1 <- prev_plot(u_seq, "m2_I_end") +
 p2 <- prev_plot(u_seq, "m3_I_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 p3 <- prev_plot(u_seq, "m4_I_end") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
-p4 <- prev_plot(u_seq, "m5_I_end") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none")
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+p4 <- prev_plot(u_seq, "m5b_I_end") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
 prev_plots <- p1 / p2 / p3 / p4
 
@@ -588,11 +588,11 @@ rate_5a <- rate_plot(u_seq, "m5b_rate")
 
 u_rate_plot <- rate_4 / rate_5 / rate_5a
 
-ggsave(here("workshop", "figures","u_full_rate_plots.png"),
-       u_rate_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","u_full_rate_plots.png"),
+#        u_rate_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 ```{r}
@@ -602,11 +602,11 @@ spo_5a <- spores_plot(u_seq, "spores_consumed_m5b")
 
 u_spores_plot <- spo_4 / spo_5 / spo_5a
 
-ggsave(here("workshop", "figures","u_full_spores_plots.png"),
-       u_spores_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","u_full_spores_plots.png"),
+#        u_spores_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 ```{r}
@@ -616,11 +616,11 @@ susc_5a <- u_plot(u_seq, "m5b_u")
 
 u_susc_plot <- susc_4 / susc_5 / susc_5a
 
-ggsave(here("workshop", "figures","u_full_susc_plots.png"),
-       u_susc_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","u_full_susc_plots.png"),
+#        u_susc_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -631,11 +631,11 @@ prev_5a <- prev_plot(u_seq, "m5b_I_end")
 
 u_prev_plot <- prev_4 / prev_5 / prev_5a
 
-ggsave(here("workshop", "figures","u_full_prev_plots.png"),
-       u_prev_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","u_full_prev_plots.png"),
+#        u_prev_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -659,11 +659,11 @@ t_c <- spores_plot(f_seq, "m2_Z_end") +
 temp_fora_plot <- t_a / t_b / t_c
 
 
-ggsave(here("workshop", "figures","temp_fora_plots.png"),
-       temp_fora_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","temp_fora_plots.png"),
+#        temp_fora_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 ```{r}
@@ -680,11 +680,11 @@ t_f <- prev_plot(u_seq, "m2_I_end") +
 
 temp_inf_plot <- t_d / t_e / t_f
 
-ggsave(here("workshop", "figures","temp_inf_plots.png"),
-       temp_inf_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","temp_inf_plots.png"),
+#        temp_inf_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 
 
 ```
@@ -709,11 +709,11 @@ r_c <- spores_plot_temp(f_seq, "m3_Z_end") +
 res_fora_plot <- r_a / r_b / r_c
 
 
-ggsave(here("workshop", "figures","res_fora_plots.png"),
-       res_fora_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","res_fora_plots.png"),
+#        res_fora_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -729,11 +729,11 @@ r_f <- prev_plot_temp(u_seq, "m3_I_end") +
 
 res_inf_plot <- r_d / r_e / r_f
 
-ggsave(here("workshop", "figures","res_inf_plots.png"),
-       res_inf_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","res_inf_plots.png"),
+#        res_inf_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 
 ```
 
@@ -757,11 +757,11 @@ a_c <- spores_plot(f_seq, "m4_Z_end") +
 add_fora_plot <- a_a / a_b / a_c
 
 
-ggsave(here("workshop", "figures","add_fora_plots.png"),
-       add_fora_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","add_fora_plots.png"),
+#        add_fora_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 
 ```
 
@@ -778,11 +778,11 @@ a_f <- prev_plot(u_seq, "m4_I_end") +
 
 add_inf_plot <- a_d / a_e / a_f
 
-ggsave(here("workshop", "figures","add_inf_plots.png"),
-       add_inf_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","add_inf_plots.png"),
+#        add_inf_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 
 ```
 
@@ -802,11 +802,11 @@ i_c <- spores_plot(f_seq, "m6c_Z_end") +
 
 int_fora_plot <- i_a / i_b / i_c
 
-ggsave(here("workshop", "figures","int_fora_plots.png"),
-       int_fora_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","int_fora_plots.png"),
+#        int_fora_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
@@ -823,11 +823,11 @@ i_f <- prev_plot(u_seq, "m5b_I_end") +
 
 int_inf_plot <- i_d / i_e / i_f
 
-ggsave(here("workshop", "figures","int_inf_plots.png"),
-       int_inf_plot,
-       width = 3,
-       height = 8,
-       units = "in")
+# ggsave(here("workshop", "figures","int_inf_plots.png"),
+#        int_inf_plot,
+#        width = 3,
+#        height = 8,
+#        units = "in")
 ```
 
 
