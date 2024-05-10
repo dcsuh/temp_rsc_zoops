@@ -537,7 +537,7 @@ prev_plot(u_seq, "m5a_I_end")
 ```{r}
 rate_4 <- rate_plot(u_seq, "m4_rate")
 rate_5 <- rate_plot(u_seq, "m5_rate")
-rate_5a <- rate_plot(u_seq, "m5a_rate")
+rate_5a <- rate_plot(u_seq, "m5b_rate")
 
 u_rate_plot <- rate_4 / rate_5 / rate_5a
 
@@ -551,7 +551,7 @@ ggsave(here("workshop", "figures","u_full_rate_plots.png"),
 ```{r}
 spo_4 <- spores_plot(u_seq, "spores_consumed_m4")
 spo_5 <- spores_plot(u_seq, "spores_consumed_m5")
-spo_5a <- spores_plot(u_seq, "spores_consumed_m5a")
+spo_5a <- spores_plot(u_seq, "spores_consumed_m5b")
 
 u_spores_plot <- spo_4 / spo_5 / spo_5a
 
@@ -565,7 +565,7 @@ ggsave(here("workshop", "figures","u_full_spores_plots.png"),
 ```{r}
 susc_4 <- u_plot(u_seq, "m4_u")
 susc_5 <- u_plot(u_seq, "m5_u")
-susc_5a <- u_plot(u_seq, "m5a_u")
+susc_5a <- u_plot(u_seq, "m5b_u")
 
 u_susc_plot <- susc_4 / susc_5 / susc_5a
 
@@ -580,7 +580,7 @@ ggsave(here("workshop", "figures","u_full_susc_plots.png"),
 ```{r}
 prev_4 <- prev_plot(u_seq, "m4_I_end")
 prev_5 <- prev_plot(u_seq, "m5_I_end")
-prev_5a <- prev_plot(u_seq, "m5a_I_end")
+prev_5a <- prev_plot(u_seq, "m5b_I_end")
 
 u_prev_plot <- prev_4 / prev_5 / prev_5a
 
@@ -765,13 +765,13 @@ ggsave(here("workshop", "figures","int_fora_plots.png"),
 
 
 ```{r}
-i_d <- spores_plot(u_seq, "spores_consumed_m5") + 
+i_d <- spores_plot(u_seq, "spores_consumed_m5b") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
 
-i_e <- u_plot(u_seq, "m5_u") + 
+i_e <- u_plot(u_seq, "m5b_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title.x = element_blank(), plot.title = element_blank(), legend.position = "none")
 
-i_f <- prev_plot(u_seq, "m5_I_end") + 
+i_f <- prev_plot(u_seq, "m5b_I_end") + 
   theme(plot.title = element_blank(), legend.position = "none")
 
 int_inf_plot <- i_d / i_e / i_f

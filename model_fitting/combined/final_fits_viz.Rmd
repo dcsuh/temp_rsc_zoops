@@ -26,8 +26,8 @@ m2_u_f_fit <- readRDS(file = here("mle", "final", "m2_fit.rds"))
 m3_u_f_fit <- readRDS(file = here("mle", "final", "m3_fit.rds"))
 m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
 m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
-m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
-m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
+#m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
+m5b_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
 ```
 
 
@@ -371,7 +371,7 @@ seq_data %<>% mutate(m5_rate = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(length^gamm
 
 
 
-```{r}
+```{r, eval=F}
 m5a_coef <- coef(m5a_u_f_fit)
 m5a_f <- as.numeric(m5a_coef[1])
 m5a_u <- as.numeric(m5a_coef[2])
@@ -627,17 +627,17 @@ seq_data %<>% mutate(spores_consumed_m5 = mapply(m1_sim_Z,
                                          h = m5_h*exp(m5_w*temp),
                                          temp = temp))
 
-seq_data %<>% mutate(spores_consumed_m5a = mapply(m1_sim_Z, 
+seq_data %<>% mutate(spores_consumed_m5b = mapply(m1_sim_Z, 
                                          R=resource*life_vol/1000, 
                                          time=1, 
-                                         f=m5a_f/life_vol, 
+                                         f=m5b_f/life_vol, 
                                          u = 0, 
                                          length=length, 
                                          gamma=gamma, 
                                          Z=200*life_vol,
                                          ref_t = ref_t,
-                                         arr_t_f = m5_arr,
-                                         h = m5a_h*exp(m5a_w*temp),
+                                         arr_t_f = m5b_arr,
+                                         h = m5b_h*exp(m5b_w*temp),
                                          temp = temp))
 ```
 
@@ -874,6 +874,7 @@ rate_plot("m3_rate") + labs(title = "Resource-dependent model")
 rate_plot("m4_rate") + labs(title = "Temp. + Res. dependent model")
 rate_plot("m5_rate") + labs(title = "Interaction model")
 rate_plot("m5a_rate") + labs(title = "Interaction model alt")
+rate_plot("m5b_rate") + labs(title = "Interaction model altb")
 
 
 ```
