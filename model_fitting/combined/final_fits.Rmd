@@ -894,9 +894,9 @@ tmp_dataset <- dataset
 m5_u_f_fit <- mle2(m5_ll, start=list(u_15 = 0.0001,
                                      u_20 = 0.0001,
                                      u_25 = 0.0001,
-                                        f=1, 
-                                        arr_t_f=10, 
-                                        h=1,
+                                        f=30, 
+                                        arr_t_f=30, 
+                                        h=16000,
                                         w=0.1,
                                         rho_15=0.1,
                                      rho_20=0.1,
@@ -906,7 +906,7 @@ m5_u_f_fit <- mle2(m5_ll, start=list(u_15 = 0.0001,
                                      u_25 = 0.0001,
                                         f=1, 
                                         arr_t_f=10, 
-                                        h=1,
+                                        h=100,
                                         w=0.1,
                                         rho_15=0.1,
                                      rho_20=0.1,
@@ -945,7 +945,8 @@ end_time - start_time
 
 coef(m5_u_f_fit)
 
-saveRDS(m5_u_f_fit, file = here("mle","final","m5_fit.rds"))
+#saveRDS(m5_u_f_fit, file = here("mle","final","m5_fit.rds"))
+saveRDS(m5_u_f_fit, file = here("mle","final","m5_fit_alt.rds"))
 ```
 
 
@@ -1029,10 +1030,10 @@ start_time <- Sys.time()
 tmp <- data
 tmp_dataset <- dataset
 m5a_u_f_fit <- mle2(m5a_ll, start=list(u = 0.0001,
-                                        f=10, 
+                                        f=30, 
                                         arr_t_f=10,
-                                        arr_t_u=100,
-                                        h=1,
+                                        arr_t_u=65,
+                                        h=16000,
                                         w=0.1,
                                         rho_15=0.1,
                                      rho_20=0.1,
@@ -1041,7 +1042,7 @@ m5a_u_f_fit <- mle2(m5a_ll, start=list(u = 0.0001,
                                         f=1, 
                                         arr_t_f=10,
                                         arr_t_u=10,
-                                        h=1,
+                                        h=100,
                                         w=0.1,
                                         rho_15=0.1,
                                      rho_20=0.1,
@@ -1056,7 +1057,7 @@ end_time - start_time
 
 coef(m5a_u_f_fit)
 
-saveRDS(m5a_u_f_fit, file = here("mle","final","m5a_fit.rds"))
+saveRDS(m5a_u_f_fit, file = here("mle","final","m5a_fit_alt1.rds"))
 ```
 
 
@@ -1068,7 +1069,9 @@ m2_u_f_fit <- readRDS(file = here("mle", "final", "m2_fit.rds"))
 m3_u_f_fit <- readRDS(file = here("mle", "final", "m3_fit.rds"))
 m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
 m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
+m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit_alt.rds"))
 m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
+m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
 ```
 
 
@@ -1383,62 +1386,13 @@ data_summ %>% ggplot(.,aes(x=resource, y=m5_u, color=as.factor(temp))) + geom_po
 ```
 
 
-How well are the full and independent model estimating f
+How well are the full and interactive model estimating f and u separately
 
-```{r}
-  data <- tmp
-  R_end <- as.data.frame(mapply(m4_sim, 
-                                R=data$amt_init*fora_vol/1000, 
-                                time=data$time/60/24, 
-                                f=f/fora_vol,
-                                u = 0, 
-                                length=data$mm, gamma=gamma, Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=h*exp(w*data$temp),
-                                temp = data$temp))
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
-                 log = T)
-    nll_sum <- -sum(nll, na.rm = T)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-#  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m4_sim, 
-                                R=exp_data$resource*life_vol/1000, 
-                                time=exp_data$time, 
-                                f=f/life_vol, 
-                                u=u*exp(exp_data$resource*rho), 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                arr_t_u=arr_t_u,
-                                h=h*exp(w*exp_data$temp),
-                                temp=exp_data$temp))
-
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum <- nll_sum + -sum(exp_data$ll)
-```
 
 
 model 4 - full model
 ```{r}
-data <- tmp
+
 R_end <- as.data.frame(mapply(m4_sim, 
                               R=data$amt_init*fora_vol/1000, 
                               time=data$time/60/24, 
@@ -1469,7 +1423,7 @@ I_end <- as.data.frame(mapply(m4_sim,
                               R=exp_data$resource*life_vol/1000, 
                               time=exp_data$time, 
                               f=m4_f/life_vol, 
-                              u=m4_u*exp(exp_data$resource*rho), 
+                              u=m4_u*exp(exp_data$resource*m4_rho), 
                               length=exp_data$life_mm, 
                               gamma=gamma, 
                               Z=spore_conc*life_vol,
@@ -1494,7 +1448,7 @@ model 5 - interaction model
 
 
 ```{r}
-data <- tmp
+
 R_end <- as.data.frame(mapply(m3_sim, 
                               R=data$amt_init*fora_vol/1000, 
                               time=data$time/60/24, 
@@ -1550,19 +1504,95 @@ data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
 
 ```
 
+
 ```{r}
+
+  R_end <- as.data.frame(mapply(m4_sim, 
+                                R=data$amt_init*fora_vol/1000, 
+                                time=data$time/60/24, 
+                                f=m5a_f/fora_vol,
+                                u = 0, 
+                                length=data$mm, gamma=gamma, Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=m5a_arr,
+                                arr_t_u=m5a_arr_u,
+                                h=m5a_h*exp(m5a_w*data$temp),
+                                temp = data$temp))
+  
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid, na.rm = T), 
+                 log = T)
+    nll_sum_f_m5a <- -sum(nll, na.rm = T)
+  
+  tmp_dataset <- dataset %>% filter(exposed==TRUE)
+
+  nll_sum_u_m5a <- 0
+  
+  rho_vec <- c(m5a_rho_15, m5a_rho_20, m5a_rho_25)
+  
+  for(i in 1:3){
+  exp_data <- tmp_dataset %>% filter(temp == temp_IDs[i])
+
+  I_end <- as.data.frame(mapply(m4_sim, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=m5a_f/life_vol, 
+                                u=m5a_u*exp(exp_data$resource*rho_vec[i]), 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=m5a_arr,
+                                arr_t_u=m5a_arr_u,
+                                h=m5a_h*exp(m5a_w*exp_data$temp),
+                                temp=exp_data$temp))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+ nll_sum_u_m5a <- nll_sum_u_m5a + -sum(exp_data$ll)
+  }
+
+```
+
+
+
+```{r}
+m4_coef
 nll_sum_f_m4
 nll_sum_u_m4
 (nll_sum_f_m4 + nll_sum_u_m4)
+```
 
+
+```{r}
+m5_coef
 nll_sum_f_m5
 nll_sum_u_m5
 (nll_sum_f_m5 + nll_sum_u_m5)
 ```
 
+
+```{r}
+m5a_coef
+nll_sum_f_m5a
+nll_sum_u_m5a
+(nll_sum_f_m5a + nll_sum_u_m5a)
+```
+
 ```{r}
 summary(m4_u_f_fit)
 summary(m5_u_f_fit)
+summary(m5a_u_f_fit)
 ```
 
 
@@ -1570,12 +1600,15 @@ summary(m5_u_f_fit)
 ```{r}
 getAIC(m4_u_f_fit)
 getAIC(m5_u_f_fit)
+getAIC(m5a_u_f_fit)
 
 2*length(coef(m4_u_f_fit))
 2*length(coef(m5_u_f_fit))
+2*length(coef(m5a_u_f_fit))
 
 2*summary(m4_u_f_fit)@m2logL/-2
 2*summary(m5_u_f_fit)@m2logL/-2
+2*summary(m5a_u_f_fit)@m2logL/-2
 ```
 
 

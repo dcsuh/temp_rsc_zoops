@@ -27,6 +27,7 @@ m3_u_f_fit <- readRDS(file = here("mle", "final", "m3_fit.rds"))
 m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
 m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
 m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
+m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
 ```
 
 
@@ -369,6 +370,7 @@ seq_data %<>% mutate(m5_rate = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(length^gamm
 ```
 
 
+
 ```{r}
 m5a_coef <- coef(m5a_u_f_fit)
 m5a_f <- as.numeric(m5a_coef[1])
@@ -422,11 +424,73 @@ seq_data %<>% mutate(m5a_I_end = mapply(m4_sim,
                                        h = m5a_h*exp(m5a_w*temp),
                                        temp = temp))
 
+
 seq_data %<>% mutate(m5a_rate = (m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(length^gamma))/
                         (1+m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(length^gamma)*m5a_h*exp(m5a_w*temp)*resource/1000),
                       m5a_u = case_when(temp == 15 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_15*resource),
                                        temp == 20 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_20*resource),
                                        temp == 25 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_25*resource)))
+```
+
+```{r}
+m5b_coef <- coef(m5b_u_f_fit)
+m5b_u <- as.numeric(m5b_coef[1])
+m5b_f <- as.numeric(m5b_coef[2])
+m5b_arr <- as.numeric(m5b_coef[3])
+m5b_arr_u <- as.numeric(m5b_coef[4])
+m5b_h <- as.numeric(m5b_coef[5])
+m5b_w <- as.numeric(m5b_coef[6])
+m5b_rho_15 <- as.numeric(m5b_coef[7])
+m5b_rho_20 <- as.numeric(m5b_coef[8])
+m5b_rho_25 <- as.numeric(m5b_coef[9])
+
+viz_summ %<>% mutate(m5b_I_end = mapply(m4_sim, 
+                                       R=resource*life_vol/1000, 
+                                       time=1, 
+                                       f=m5b_f/life_vol, 
+                                       u = case_when(temp == 15 ~ m5b_u*exp(m5b_rho_15*resource),
+                                                     temp == 20 ~ m5b_u*exp(m5b_rho_20*resource),
+                                                     temp == 25 ~ m5b_u*exp(m5b_rho_25*resource)), 
+                                       length=life_mm, 
+                                       gamma=gamma, 
+                                       Z=200*life_vol,
+                                       ref_t = ref_t,
+                                       arr_t_f = m5b_arr,
+                                       arr_t_u = m5b_arr_u,
+                                       h = m5b_h*exp(m5b_w*temp),
+                                       temp = temp))
+
+data_summ %<>% mutate(m5b_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
+                        (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
+                      m5b_u = case_when(temp == 15 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
+                                       temp == 20 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
+                                       temp == 25 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
+
+```
+
+```{r, eval=F}
+seq_data %<>% mutate(m5b_I_end = mapply(m4_sim, 
+                                       R=resource*life_vol/1000, 
+                                       time=1, 
+                                       f=m5b_f/life_vol, 
+                                       u = case_when(temp == 15 ~ m5b_u*exp(m5b_rho_15*resource),
+                                                     temp == 20 ~ m5b_u*exp(m5b_rho_20*resource),
+                                                     temp == 25 ~ m5b_u*exp(m5b_rho_25*resource)), 
+                                       length=length, 
+                                       gamma=gamma, 
+                                       Z=200*life_vol,
+                                       ref_t = ref_t,
+                                       arr_t_f = m5b_arr,
+                                       arr_t_u = m5b_arr_u,
+                                       h = m5b_h*exp(m5b_w*temp),
+                                       temp = temp))
+
+
+seq_data %<>% mutate(m5b_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma))/
+                        (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
+                      m5b_u = case_when(temp == 15 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
+                                       temp == 20 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
+                                       temp == 25 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
 ```
 
 
@@ -626,6 +690,7 @@ prev_plot("m3_I_end") + labs(title = "resource-dependent model")
 prev_plot("m4_I_end") + labs(title = "full model")
 prev_plot("m5_I_end") + labs(title = "interactive model")
 prev_plot("m5a_I_end") + labs(title = "interactive model alt")
+prev_plot("m5b_I_end") + labs(title = "interactive model altb")
 ```
 
 ```{r}
