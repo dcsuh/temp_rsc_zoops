@@ -32,6 +32,15 @@ f_seq <- readRDS(file=here("model_fitting", "foraging", "rate_fit.rds"))
 u_seq <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
 ```
 
+
+```{r}
+f_seq %<>% mutate(amt_cons_mean = (resource-amt_rem_mean)*15/1000,
+                  amt_cons_se = amt_rem_se*15/1000)
+```
+
+
+
+
 ```{r}
 seq_plot <- function(seq_data, rate){
   seq_data %>% filter(temp %in% c(15,20,25)) %>%
@@ -196,9 +205,53 @@ algae_plot <- function(seq_data, var){
 seq_data %>% filter(temp %in% const_temp) %>% 
   ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
   geom_line(size=1) + 
+  geom_point(aes(x=resource, 
+                  y=amt_cons_mean, 
+                  group = as.factor(temp), 
+                  color = as.factor(temp)),
+             size=3) + 
+    geom_linerange(aes(x=resource, 
+                       ymin=amt_cons_mean-amt_cons_se,
+                       ymax=amt_cons_mean+amt_cons_se,
+                       color=as.factor(temp))) +
   labs(x = "Resource (mgC/L)", 
        y = "Algae consumed (mgC)",
        color = "Temp") + 
+    ylim(0, NA) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+}
+
+algae_plot_temp <- function(seq_data, var){
+seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>% 
+  ggplot(., aes(x=temp, y=!!sym(var), color=as.factor(resource), group = as.factor(resource))) + 
+  geom_line(size=1) + 
+  labs(x = "Temperature (C)", 
+       y = "Algae consumed (mgC)",
+       color = "Temp") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
+}
+
+algae_plot(f_seq, "m1_consumed")
+```
+
+```{r}
+algae_conc_plot <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>% 
+  ggplot(., aes(x=resource, y=!!sym(var)/15*1000, color=as.factor(temp), group = as.factor(temp))) + 
+  geom_line(size=1) + 
+  geom_point(aes(x=resource, 
+                  y=amt_cons_mean/15*1000, 
+                  group = as.factor(temp), 
+                  color = as.factor(temp)),
+             size=3) + 
+    geom_linerange(aes(x=resource, 
+                       ymin=amt_cons_mean/15*1000-amt_cons_se/15*1000,
+                       ymax=amt_cons_mean/15*1000+amt_cons_se/15*1000,
+                       color=as.factor(temp))) +
+  labs(x = "Resource (mgC/L)", 
+       y = "Algae consumed (mgC)",
+       color = "Temp") + 
+  ylim(0, NA) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
 

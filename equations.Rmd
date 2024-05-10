@@ -24,24 +24,29 @@ $$
 
 $$
 \frac{dR}{dt} = -L^{\gamma} fRS\\
+$$
 
+$$
 f = f'L^{\gamma}\\
 $$
 
 $$
 \frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\
+$$
 
+$$
 f = f'L^{\gamma}e^{T_{A}(1/T_{R}-1/T)}\\
 $$
 
 $$
 \frac{dR}{dt} = - \frac{fL^{\gamma}RS}{1 + fL^{\gamma}hR} \\
-
-f = \frac{f'L^{\gamma}}{1 + f'L^{\gamma}hR}\\
-
 $$
 
-```{r}
+$$
+f = \frac{f'L^{\gamma}}{1 + f'L^{\gamma}hR}\\
+$$
+
+```{r, include=F}
 dat1 <- tibble(h = seq(0,30,by=1),
                R = 1)
 dat1 %<>% mutate(f = R/(1+h*R))
@@ -58,12 +63,17 @@ dat2 %>% ggplot(., aes(x=R, y=f)) + geom_line()
 
 $$
 \frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}RS}{1 + fe^{T_{A}(1/T_{R}-1/T)}L^{\gamma}hR} \\
+$$
 
+$$
 f = \frac{f'e^{T_{A}(1/T_{R}-1/T)} L^{\gamma}}{1 + f'e^{T_{A}(1/T_{R}-1/T)}L^{\gamma}hR} \\
 $$
+
+
 $$
 h = h' + {\omega}T
 $$
+
 
 $$
 h = h'e^{{\omega}T}
@@ -79,26 +89,38 @@ $$
 $$
 
 $$
+\frac{dR}{dt} = -fR(S+I)\\
+\frac{dS}{dt} = -ufZS\\
+\frac{dI}{dt} = ufZS\\
+\frac{dZ}{dt} = -fZ(S+I)\\
+$$
+
+
+$$
+u = u'
+$$
+
+
+$$
 u = u'e^{T_{A}(1/T_{R}-1/T)}\\
 $$
+
+
 
 $$
 u = u'e^{\rho[R]}\\
 $$
 
+
+
 $$
 u = u'e^{T_{A}(1/T_{R}-1/T)}e^{\rho[R]}\\
 $$
 
+
+
 $$
-\rho = 
-\begin{cases}
-  \rho_{15},\ T=15
-  \\
-  \rho_{20},\ T=20
-  \\
-  \rho_{25},\ T=25
-\end{cases}
+\rho = \begin{cases} \rho_{15},\ T=15 \\ \rho_{20},\ T=20 \\ \rho_{25},\ T=25 \end{cases}
 $$
 
 
