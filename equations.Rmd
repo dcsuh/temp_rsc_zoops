@@ -24,14 +24,21 @@ $$
 
 $$
 \frac{dR}{dt} = -L^{\gamma} fRS\\
+
+f = f'L^{\gamma}\\
 $$
 
 $$
 \frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\
+
+f = f'L^{\gamma}e^{T_{A}(1/T_{R}-1/T)}\\
 $$
 
 $$
 \frac{dR}{dt} = - \frac{fL^{\gamma}RS}{1 + fL^{\gamma}hR} \\
+
+f = \frac{f'L^{\gamma}}{1 + f'L^{\gamma}hR}\\
+
 $$
 
 ```{r}
@@ -51,6 +58,8 @@ dat2 %>% ggplot(., aes(x=R, y=f)) + geom_line()
 
 $$
 \frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}RS}{1 + fe^{T_{A}(1/T_{R}-1/T)}L^{\gamma}hR} \\
+
+f = \frac{f'e^{T_{A}(1/T_{R}-1/T)} L^{\gamma}}{1 + f'e^{T_{A}(1/T_{R}-1/T)}L^{\gamma}hR} \\
 $$
 $$
 h = h' + {\omega}T
@@ -70,8 +79,28 @@ $$
 $$
 
 $$
-u = ue^{T_{A}(1/T_{R}-1/T)}\\
+u = u'e^{T_{A}(1/T_{R}-1/T)}\\
 $$
+
+$$
+u = u'e^{\rho[R]}\\
+$$
+
+$$
+u = u'e^{T_{A}(1/T_{R}-1/T)}e^{\rho[R]}\\
+$$
+
+$$
+\rho = 
+\begin{cases}
+  \rho_{15},\ T=15
+  \\
+  \rho_{20},\ T=20
+  \\
+  \rho_{25},\ T=25
+\end{cases}
+$$
+
 
 $$
 \beta = contact\ rate\ \cdot probability\ of\ infection\ given\ contact\\

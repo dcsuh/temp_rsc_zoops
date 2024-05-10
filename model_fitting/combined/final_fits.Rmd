@@ -1036,8 +1036,8 @@ m5a_u_f_fit <- mle2(m5a_ll, start=list(u = 0.0001,
                                         h=16000,
                                         w=0.1,
                                         rho_15=0.1,
-                                     rho_20=0.1,
-                                     rho_25=0.1), 
+                                     rho_20=-0.1,
+                                     rho_25=-0.1), 
                      control=list(parscale = c(u = 0.00001,
                                         f=1, 
                                         arr_t_f=10,
@@ -1072,6 +1072,7 @@ m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
 m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit_alt.rds"))
 m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
 m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
+m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt1.rds"))
 ```
 
 
@@ -1506,6 +1507,20 @@ data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
 
 
 ```{r}
+
+m5a_u_f_fit <- readRDS(here("mle","final","m5a_fit_alt1.rds"))
+
+
+m5a_coef <- coef(m5a_u_f_fit)
+m5a_u <- as.numeric(m5a_coef[1])
+m5a_f <- as.numeric(m5a_coef[2])
+m5a_arr <- as.numeric(m5a_coef[3])
+m5a_arr_u <- as.numeric(m5a_coef[4])
+m5a_h <- as.numeric(m5a_coef[5])
+m5a_w <- as.numeric(m5a_coef[6])
+m5a_rho_15 <- as.numeric(m5a_coef[7])
+m5a_rho_20 <- as.numeric(m5a_coef[8])
+m5a_rho_25 <- as.numeric(m5a_coef[9])
 
   R_end <- as.data.frame(mapply(m4_sim, 
                                 R=data$amt_init*fora_vol/1000, 
