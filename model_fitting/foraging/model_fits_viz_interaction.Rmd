@@ -918,7 +918,9 @@ seq_data %<>% mutate(m6c_R_end = mapply(m4_sim,
 r_end_mean <- 
   data %>% group_by(temp, resource) %>% 
   summarize(amt_rem_mean = mean(amt_rem),
-            amt_rem_se = sd(amt_rem)/sqrt(n())) %>%
+            amt_rem_se = sd(amt_rem)/sqrt(n()),
+            amt_consumed_mean = mean(amt_consumed),
+            amt_consumed_se = sd(amt_consumed)/sqrt(n())) %>%
   ungroup()
 ```
 

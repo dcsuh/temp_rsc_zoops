@@ -48,7 +48,8 @@ data %<>% mutate(mm = as.numeric(length)*17.86/1000,
                 rate_len = rate/mm^2,
                 amt_rem = read/read_coef, #final resource concentration
                 amt_rem_tot = amt_rem*vol,
-                amt_init = control_read/read_coef) #final resource amount
+                amt_init = control_read/read_coef,
+                amt_consumed = amt_init - amt_rem) #final resource amount
 ```
 
 

@@ -15,7 +15,7 @@ source(here("base","src.R"))
 library(ggnewscale)
 library(patchwork)
 
-library(plotly)
+#library(plotly)
 ```
 
 Formatting
@@ -30,12 +30,6 @@ theme_set(theme_bw(base_size = 10))
 ```{r}
 f_seq <- readRDS(file=here("model_fitting", "foraging", "rate_fit.rds"))
 u_seq <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
-```
-
-
-```{r}
-f_seq %<>% mutate(amt_cons_mean = (resource-amt_rem_mean)*15/1000,
-                  amt_cons_se = amt_rem_se*15/1000)
 ```
 
 
@@ -206,16 +200,16 @@ seq_data %>% filter(temp %in% const_temp) %>%
   ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
   geom_line(size=1) + 
   geom_point(aes(x=resource, 
-                  y=amt_cons_mean, 
+                  y=amt_consumed_mean*15/1000, 
                   group = as.factor(temp), 
                   color = as.factor(temp)),
              size=3) + 
     geom_linerange(aes(x=resource, 
-                       ymin=amt_cons_mean-amt_cons_se,
-                       ymax=amt_cons_mean+amt_cons_se,
+                       ymin=amt_consumed_mean*15/1000-amt_consumed_se*15/1000,
+                       ymax=amt_consumed_mean*15/1000+amt_consumed_se*15/1000,
                        color=as.factor(temp))) +
   labs(x = "Resource (mgC/L)", 
-       y = "Algae consumed (mgC)",
+       y = "Algae consumed (mgC/L)",
        color = "Temp") + 
     ylim(0, NA) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
@@ -240,18 +234,18 @@ seq_data %>% filter(temp %in% const_temp) %>%
   ggplot(., aes(x=resource, y=!!sym(var)/15*1000, color=as.factor(temp), group = as.factor(temp))) + 
   geom_line(size=1) + 
   geom_point(aes(x=resource, 
-                  y=amt_cons_mean/15*1000, 
+                  y=amt_consumed_mean, 
                   group = as.factor(temp), 
                   color = as.factor(temp)),
              size=3) + 
     geom_linerange(aes(x=resource, 
-                       ymin=amt_cons_mean/15*1000-amt_cons_se/15*1000,
-                       ymax=amt_cons_mean/15*1000+amt_cons_se/15*1000,
+                       ymin=amt_consumed_mean-amt_consumed_se,
+                       ymax=amt_consumed_mean+amt_consumed_se,
                        color=as.factor(temp))) +
   labs(x = "Resource (mgC/L)", 
-       y = "Algae consumed (mgC)",
+       y = "Algae consumed (mgC/L)",
        color = "Temp") + 
-  ylim(0, NA) + 
+    ylim(0, NA) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
 
