@@ -19,7 +19,7 @@ Objective: Bootstrap confidence intervals for f and u and associated parameters 
 
 Which model is the best fitting model?
 ```{r}
-m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
+m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
 ```
 
 
@@ -37,6 +37,17 @@ fora_data <- data
 ```
 
 
+```{r}
+m5a_u_est <- coef(m5a_u_f_fit)[1]
+m5a_f_est <- coef(m5a_u_f_fit)[2]
+m5a_arr_est <- coef(m5a_u_f_fit)[3]
+m5a_arr_u_est <- coef(m5a_u_f_fit)[4]
+m5a_h_est <- coef(m5a_u_f_fit)[5]
+m5a_w_est <- coef(m5a_u_f_fit)[6]
+m5a_rho_15_est <- coef(m5a_u_f_fit)[7]
+m5a_rho_20_est <- coef(m5a_u_f_fit)[8]
+m5a_rho_25_est <- coef(m5a_u_f_fit)[9]
+```
 
 
 
@@ -61,12 +72,32 @@ asdf
 jkl
 ```
 
+
+```{r}
+dataset_boot <- dataset %>% 
+  group_by(treatment) %>%
+  slice_sample(., prop=1, replace=T) %>%
+  ungroup()
+
+asdf <- dataset %>% group_by(treatment) %>%
+  summarize(mean = mean(inf_status),
+            n = n())
+
+jkl <- dataset_boot %>% group_by(treatment) %>%
+  summarize(mean = mean(inf_status),
+            n = n())
+
+asdf
+jkl
+```
+
+
 slice_sample is set to keep the amount of data per treatment the same (30), but resamples from the data with replacement which causes the means to be different. It looks like it is working!
 
 
 
 ```{r, m4_ll}
-m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
+m5a_ll <- function(u, f, arr_t_f, arr_t_u, h, w, rho_15, rho_20, rho_25){
   data <- boot_data
   R_end <- as.data.frame(mapply(m4_sim, 
                                 R=data$amt_init*fora_vol/1000, 
@@ -79,6 +110,7 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
                                 arr_t_u=arr_t_u,
                                 h=h*exp(w*data$temp),
                                 temp = data$temp))
+  
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
   data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
@@ -89,15 +121,17 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
                  log = T)
     nll_sum <- -sum(nll, na.rm = T)
   
-  exp_data <- boot_dataset
-
-
   
+  rho_vec <- c(rho_15, rho_20, rho_25)
+  
+  for(i in 1:3){
+  exp_data <- boot_dataset %>% filter(temp == temp_IDs[i])
+
   I_end <- as.data.frame(mapply(m4_sim, 
                                 R=exp_data$resource*life_vol/1000, 
                                 time=exp_data$time, 
                                 f=f/life_vol, 
-                                u=u*exp(exp_data$resource*rho), 
+                                u=u*exp(exp_data$resource*rho_vec[i]), 
                                 length = exp_data$life_mm, 
                                 gamma=gamma, 
                                 Z=spore_conc*life_vol,
@@ -111,9 +145,11 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
   
   exp_data %<>% cbind(I_end)
   
+  
   exp_data %<>% 
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
   nll_sum <- nll_sum + -sum(exp_data$ll)
+  }
   return(nll_sum)
 }
 ```
@@ -144,20 +180,76 @@ We'll include the bootstrapping here
         
       tmp <- boot_data
 
-      boot_00[[i]] <- mle2(m4_ll, start=list(f = 10, 
-                                     u=0.0001, 
-                                     arr_t_f=50, 
-                                     arr_t_u=50, 
-                                     h=3000,
-                                     w=-0.1,
-                                     rho=0.1), 
-                     control=list(parscale = c(f = 1, 
-                                               u=0.0001, 
-                                               arr_t_f=10, 
-                                               arr_t_u=10, 
-                                               h=1000,
-                                               w=0.1,
-                                               rho=0.1)),
+      boot_00[[i]] <- mle2(m5a_ll, start=list(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est), 
+                     control=list(parscale = c(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est),
+                                  maxit = 1000),
+                     skip.hessian=F, method="Nelder-Mead")
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+ 
+
+
+```{r}
+
+  iterations <- 20
+  
+  boot_01 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- fora_data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+      
+      boot_dataset <- life_data %>% 
+        group_by(treatment) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      boot_01[[i]] <- mle2(m5a_ll, start=list(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est), 
+                     control=list(parscale = c(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est)),
                      skip.hessian=F, method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
@@ -171,7 +263,210 @@ We'll include the bootstrapping here
 
 
 ```{r}
-#saveRDS(boot_00, file = here("model_fitting", "combined", "beet", "REPLACEME.rds"))
+
+  iterations <- 20
+  
+  boot_02 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- fora_data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+      
+      boot_dataset <- life_data %>% 
+        group_by(treatment) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      boot_02[[i]] <- mle2(m5a_ll, start=list(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est), 
+                     control=list(parscale = c(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est)),
+                     skip.hessian=F, method="Nelder-Mead")
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+
+```{r}
+
+  iterations <- 20
+  
+  boot_03 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- fora_data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+      
+      boot_dataset <- life_data %>% 
+        group_by(treatment) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      boot_03[[i]] <- mle2(m5a_ll, start=list(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est), 
+                     control=list(parscale = c(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est)),
+                     skip.hessian=F, method="Nelder-Mead")
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+
+```{r}
+
+  iterations <- 20
+  
+  boot_04 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- fora_data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+      
+      boot_dataset <- life_data %>% 
+        group_by(treatment) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      boot_04[[i]] <- mle2(m5a_ll, start=list(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est), 
+                     control=list(parscale = c(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est)),
+                     skip.hessian=F, method="Nelder-Mead")
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+```{r}
+
+  iterations <- 20
+  
+  boot_05 <- list()
+  
+  start_time <- Sys.time()
+  for(i in 1:iterations){
+      boot_data <- fora_data %>% 
+        group_by(treatment_ID) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      boot_dataset <- life_data %>% 
+        group_by(treatment) %>%
+        slice_sample(., prop=1, replace=T) %>%
+        ungroup()
+        
+      tmp <- boot_data
+
+      boot_05[[i]] <- mle2(m5a_ll, start=list(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est), 
+                     control=list(parscale = c(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est)),
+                     skip.hessian=F, method="Nelder-Mead")
+      print(i)
+      end_time <- Sys.time()
+      print(end_time-start_time)
+  }
+  end_time <- Sys.time()
+  
+  print(end_time-start_time)
+
+```
+
+```{r}
+beet <- c(boot_00, boot_01, boot_02, boot_03)
+```
+
+
+```{r}
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "80_051224.rds"))
 #mod_f_boot <- readRDS(file = here("model_fitting", "combined", "beet", "25_050824.rds"))
 ```
 
@@ -185,7 +480,9 @@ mod_boot_coefs <- tibble(f = rep_len(0, tib_length),
                          arr_u = rep_len(0, tib_length),
                          h = rep_len(0, tib_length),
                          w = rep_len(0, tib_length),
-                         rho = rep_len(0, tib_length))
+                         rho_15 = rep_len(0, tib_length),
+                         rho_20 = rep_len(0, tib_length),
+                         rho_25 = rep_len(0, tib_length))
 
 
 for(i in 1:length(mod_f_boot)){
@@ -211,13 +508,15 @@ for(i in 1:length(mod_f_boot)){
   }
   else{
   boot_coef <- coef(mod_f_boot[[i]])
-  mod_boot_coefs$f[i] <- as.numeric(boot_coef[1])
-  mod_boot_coefs$u_15[i] <- as.numeric(boot_coef[2])
+  mod_boot_coefs$u[i] <- as.numeric(boot_coef[1])
+  mod_boot_coefs$f[i] <- as.numeric(boot_coef[2])
   mod_boot_coefs$arr[i] <- as.numeric(boot_coef[3])
   mod_boot_coefs$arr_u[i] <- as.numeric(boot_coef[4])
   mod_boot_coefs$h[i] <- as.numeric(boot_coef[5])
   mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
-  mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
+  mod_boot_coefs$rho_15[i] <- as.numeric(boot_coef[7])
+  mod_boot_coefs$rho_20[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$rho_25[i] <- as.numeric(boot_coef[9])
   }
 }
 ```
@@ -232,7 +531,9 @@ mod_boot_coefs %>% ggplot(., aes(x = arr)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = arr_u)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = h)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = w)) + geom_histogram()
-mod_boot_coefs %>% ggplot(., aes(x = rho)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = rho_15)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = rho_20)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = rho_25)) + geom_histogram()
 ```
 
 
@@ -247,45 +548,58 @@ mod_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
                         arr_u = NA,
                         h = NA,
                         w = NA,
-                        rho = NA)
+                        rho_15 = NA,
+                        rho_20 = NA,
+                        rho_25 = NA)
 
-mod_quantiles$f[1] <- coef(m4_u_f_fit)[1]
+mod_quantiles$f[1] <- coef(m5a_u_f_fit)[2]
 mod_quantiles$f[2] <- mean(mod_boot_coefs$f)
 mod_quantiles$f[3] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$f[4] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[2]
 
 
-mod_quantiles$u[1] <- coef(m4_u_f_fit)[2]
+mod_quantiles$u[1] <- coef(m5a_u_f_fit)[1]
 mod_quantiles$u[2] <- mean(mod_boot_coefs$u)
 mod_quantiles$u[3] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$u[4] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[2]
 
 
-mod_quantiles$arr[1] <- coef(m4_u_f_fit)[3]
+mod_quantiles$arr[1] <- coef(m5a_u_f_fit)[3]
 mod_quantiles$arr[2] <- mean(mod_boot_coefs$arr)
 mod_quantiles$arr[3] <- quantile(mod_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$arr[4] <- quantile(mod_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$arr_u[1] <- coef(m4_u_f_fit)[4]
+mod_quantiles$arr_u[1] <- coef(m5a_u_f_fit)[4]
 mod_quantiles$arr_u[2] <- mean(mod_boot_coefs$arr_u)
 mod_quantiles$arr_u[3] <- quantile(mod_boot_coefs$arr_u, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$arr_u[4] <- quantile(mod_boot_coefs$arr_u, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$h[1] <- coef(m4_u_f_fit)[5]
+mod_quantiles$h[1] <- coef(m5a_u_f_fit)[5]
 mod_quantiles$h[2] <- mean(mod_boot_coefs$h)
 mod_quantiles$h[3] <- quantile(mod_boot_coefs$h, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$h[4] <- quantile(mod_boot_coefs$h, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$w[1] <- coef(m4_u_f_fit)[6]
+mod_quantiles$w[1] <- coef(m5a_u_f_fit)[6]
 mod_quantiles$w[2] <- mean(mod_boot_coefs$w)
 mod_quantiles$w[3] <- quantile(mod_boot_coefs$w, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$w[4] <- quantile(mod_boot_coefs$w, probs=seq(0.025, 0.975, 0.95))[2]
 
 
-mod_quantiles$rho_15[1] <- coef(m4_u_f_fit)[7]
-mod_quantiles$rho[2] <- mean(mod_boot_coefs$rho)
-mod_quantiles$rho[3] <- quantile(mod_boot_coefs$rho, probs=seq(0.025, 0.975, 0.95))[1]
-mod_quantiles$rho[4] <- quantile(mod_boot_coefs$rho, probs=seq(0.025, 0.975, 0.95))[2]
+mod_quantiles$rho_15[1] <- coef(m5a_u_f_fit)[7]
+mod_quantiles$rho_15[2] <- mean(mod_boot_coefs$rho_15)
+mod_quantiles$rho_15[3] <- quantile(mod_boot_coefs$rho_15, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$rho_15[4] <- quantile(mod_boot_coefs$rho_15, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$rho_20[1] <- coef(m5a_u_f_fit)[8]
+mod_quantiles$rho_20[2] <- mean(mod_boot_coefs$rho_20)
+mod_quantiles$rho_20[3] <- quantile(mod_boot_coefs$rho_20, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$rho_20[4] <- quantile(mod_boot_coefs$rho_20, probs=seq(0.025, 0.975, 0.95))[2]
+
+
+mod_quantiles$rho_25[1] <- coef(m5a_u_f_fit)[9]
+mod_quantiles$rho_25[2] <- mean(mod_boot_coefs$rho_25)
+mod_quantiles$rho_25[3] <- quantile(mod_boot_coefs$rho_25, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$rho_25[4] <- quantile(mod_boot_coefs$rho_25, probs=seq(0.025, 0.975, 0.95))[2]
 
 ```
 
