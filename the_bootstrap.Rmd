@@ -155,6 +155,42 @@ m5a_ll <- function(u, f, arr_t_f, arr_t_u, h, w, rho_15, rho_20, rho_25){
 ```
 
 
+```{r, eval=F}
+start_time <- Sys.time()
+
+rtol_fits <- list()
+rtol_vec <- c(0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001)
+boot_data <- data
+boot_dataset <- dataset
+for(i in 1:length(rtol_vec)){
+rtol_fits[[i]] <- mle2(m5a_ll, start=list(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est), 
+                     control=list(parscale = c(u = m5a_u_est,
+                                        f= m5a_f_est, 
+                                        arr_t_f= m5a_arr_est,
+                                        arr_t_u= m5a_arr_u_est,
+                                        h= m5a_h_est,
+                                        w= m5a_w_est,
+                                        rho_15= m5a_rho_15_est,
+                                     rho_20= m5a_rho_20_est,
+                                     rho_25= m5a_rho_25_est),
+                                  #maxit = ,
+                                  reltol=rtol_vec[i]),
+                     skip.hessian=F, method="Nelder-Mead")
+}
+
+
+end_time <- Sys.time()
+end_time - start_time
+```
+
 
 
 Finally, we use our optimizer to get the maximum likelihood estimate for all parameters
@@ -198,7 +234,8 @@ We'll include the bootstrapping here
                                         rho_15= m5a_rho_15_est,
                                      rho_20= m5a_rho_20_est,
                                      rho_25= m5a_rho_25_est),
-                                  maxit = 1000),
+                                  #maxit = ,
+                                  reltol=0.0001),
                      skip.hessian=F, method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
@@ -464,10 +501,13 @@ We'll include the bootstrapping here
 beet <- c(boot_00, boot_01, boot_02, boot_03)
 ```
 
+051224 - 80 iterations but with original starting parameters (h=16000)
+051324 - 47 iterations but with original starting parameters as parameter estimates from model 5a
+051424 - 20 iterations with model 5a parameter estimates as starting
 
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "80_051224.rds"))
-#mod_f_boot <- readRDS(file = here("model_fitting", "combined", "beet", "25_050824.rds"))
+#saveRDS(beet, file = here("model_fitting", "combined", "beet", "47_051424.rds"))
+#mod_f_boot <- readRDS(file = here("model_fitting", "combined", "beet", "47_051324.rds"))
 ```
 
 
@@ -602,6 +642,13 @@ mod_quantiles$rho_25[3] <- quantile(mod_boot_coefs$rho_25, probs=seq(0.025, 0.97
 mod_quantiles$rho_25[4] <- quantile(mod_boot_coefs$rho_25, probs=seq(0.025, 0.975, 0.95))[2]
 
 ```
+
+
+```{r}
+mod_quantiles %<>% pivot_longer(cols = f:rho_25) %>% pivot_wider(., names_from="id")
+mod_quantiles %>% ggplot(., aes(x = name, y=est)) + geom_point() + geom_linerange(aes(ymin=lower.025, ymax=upper.975)) + facet_wrap(~name, scales = "free")
+```
+
 
 
 

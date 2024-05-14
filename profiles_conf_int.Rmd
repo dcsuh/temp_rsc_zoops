@@ -1,0 +1,60 @@
+---
+title: "profiles_conf_int"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+source(here("model_fitting", "combined", "final_prep.R")) #data, global variables and functions
+```
+
+```{r}
+tmp <- data
+tmp_dataset <- dataset
+```
+
+
+```{r}
+m5a_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
+```
+
+```{r}
+m5a_profile <- profile(m5a_fit)
+```
+This generates the variance-covariance matrix where the diagonals represent the variance of the variable and the off-diagonals represent the correlation between variables
+```{r}
+var_cov_m5a <- vcov(m5a_fit)
+```
+
+The square root of the diagonals is the standard deviation
+```{r}
+m5a_coef <- coef(m5a_fit)
+m5a_df <- tibble("param" = names(m5a_coef),
+                 "estimate" = m5a_coef,
+                 "ci" = NA)
+
+for(i in 1:nrow(var_cov_m5a)){
+  m5a_df$ci[i] <- sqrt(var_cov_m5a[i,i])*2
+}
+
+m5a_df %<>% mutate(lower = estimate - ci,
+                   upper = estimate + ci,
+                   perc_range = (upper-lower)/estimate)
+```
+
+```{r}
+m5a_df %>% ggplot(., aes(x = param, y = estimate)) + 
+  geom_point() + 
+  geom_linerange(aes(ymin = estimate-ci, ymax = estimate+ci)) + 
+  facet_wrap(~param, scales = "free", nrow=1)
+```
+
+
+
+
