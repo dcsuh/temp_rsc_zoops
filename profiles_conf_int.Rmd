@@ -21,14 +21,19 @@ tmp_dataset <- dataset
 
 
 ```{r}
-m5a_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
+m4_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
+m5a_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt1.rds"))
 ```
 
 ```{r}
+m4_profile <- profile(m4_fit)
+saveRDS(m4_profile, file = here("mle", "final", "m4_profile_fit.rds"))
 m5a_profile <- profile(m5a_fit)
+saveRDS(m5a_profile, file = here("mle", "final", "m5a_profile_fit.rds"))
 ```
 This generates the variance-covariance matrix where the diagonals represent the variance of the variable and the off-diagonals represent the correlation between variables
 ```{r}
+var_cov_m4 <- vcov(m4_fit)
 var_cov_m5a <- vcov(m5a_fit)
 ```
 

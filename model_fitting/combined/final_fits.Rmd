@@ -951,17 +951,18 @@ saveRDS(m5_u_f_fit, file = here("mle","final","m5_fit_alt.rds"))
 
 
 ```{r, eval=F}
-m5_coef
+m5a_profile <- readRDS(file = here("mle", "final", "m5a_profile_fit.rds"))
+coef(m5a_profile)
 
-f <- 10
-u <- 0.0001
-arr_t_f <- 10
-arr_t_u <- 100
-h <- 1
-w <- 0.1
-rho_15 <- 0.1
-rho_20 <- 0.1
-rho_25 <- 0.1
+u_m5a <- coef(m5a_profile)[1]
+f_m5a <- coef(m5a_profile)[2]
+arr_t_f_m5a <- coef(m5a_profile)[3]
+arr_t_u_m5a <- coef(m5a_profile)[4]
+h_m5a <- coef(m5a_profile)[5]
+w_m5a <- coef(m5a_profile)[6]
+rho_15_m5a <- coef(m5a_profile)[7]
+rho_20_m5a <- coef(m5a_profile)[8]
+rho_25_m5a <- coef(m5a_profile)[9]
 
 ```
 
@@ -1029,24 +1030,25 @@ m5a_ll <- function(u, f, arr_t_f, arr_t_u, h, w, rho_15, rho_20, rho_25){
 start_time <- Sys.time()
 tmp <- data
 tmp_dataset <- dataset
-m5a_u_f_fit <- mle2(m5a_ll, start=list(u = 0.0001,
-                                        f=30, 
-                                        arr_t_f=10,
-                                        arr_t_u=65,
-                                        h=16000,
-                                        w=0.1,
-                                        rho_15=0.1,
-                                     rho_20=-0.1,
-                                     rho_25=-0.1), 
-                     control=list(parscale = c(u = 0.00001,
-                                        f=1, 
-                                        arr_t_f=10,
-                                        arr_t_u=10,
-                                        h=100,
-                                        w=0.1,
-                                        rho_15=0.1,
-                                     rho_20=0.1,
-                                     rho_25=0.1)),
+m5a_u_f_fit <- mle2(m5a_ll, start=list(u = u_m5a,
+                                        f=f_m5a, 
+                                        arr_t_f=arr_t_f_m5a,
+                                        arr_t_u=arr_t_u_m5a,
+                                        h=h_m5a,
+                                        w=w_m5a,
+                                        rho_15=rho_15_m5a,
+                                     rho_20=rho_20_m5a,
+                                     rho_25=rho_25_m5a), 
+                     control=list(parscale = c(u = u_m5a,
+                                        f=f_m5a, 
+                                        arr_t_f=arr_t_f_m5a,
+                                        arr_t_u=arr_t_u_m5a,
+                                        h=h_m5a,
+                                        w=w_m5a,
+                                        rho_15=rho_15_m5a,
+                                     rho_20=rho_20_m5a,
+                                     rho_25=rho_25_m5a),
+                                  maxit = 5000),
                      skip.hessian=F, method="Nelder-Mead")
 
 
@@ -1057,7 +1059,7 @@ end_time - start_time
 
 coef(m5a_u_f_fit)
 
-saveRDS(m5a_u_f_fit, file = here("mle","final","m5a_fit_alt1.rds"))
+saveRDS(m5a_u_f_fit, file = here("mle","final","m5a_fit_alt2.rds"))
 ```
 
 
@@ -1072,7 +1074,8 @@ m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
 m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit_alt.rds"))
 m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
 m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
-m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt1.rds"))
+m5a_u_f_fita <- readRDS(file = here("mle", "final", "m5a_fit_alt1.rds"))
+m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt2.rds"))
 ```
 
 
@@ -1083,7 +1086,7 @@ getAIC(m2_u_f_fit) #temperature-dependent u
 getAIC(m3_u_f_fit) #rho
 getAIC(m4_u_f_fit) #temperature-dependent u and rho
 getAIC(m5_u_f_fit) #per-temperature u and rho
-getAIC(m5a_u_f_fit) #arrhenius u and per-temperature rho
+getAIC(m5a_u_f_fit) #arrhenius u and per-temperature rhos
 ```
 
 

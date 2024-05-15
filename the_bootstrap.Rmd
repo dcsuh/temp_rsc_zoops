@@ -19,7 +19,7 @@ Objective: Bootstrap confidence intervals for f and u and associated parameters 
 
 Which model is the best fitting model?
 ```{r}
-m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt.rds"))
+m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt2.rds"))
 ```
 
 
@@ -233,9 +233,9 @@ We'll include the bootstrapping here
                                         w= m5a_w_est,
                                         rho_15= m5a_rho_15_est,
                                      rho_20= m5a_rho_20_est,
-                                     rho_25= m5a_rho_25_est),
-                                  #maxit = ,
-                                  reltol=0.0001),
+                                     rho_25= m5a_rho_25_est)
+                                  #,maxit = ,reltol=0.0001
+                                  ),
                      skip.hessian=F, method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
@@ -501,12 +501,15 @@ We'll include the bootstrapping here
 beet <- c(boot_00, boot_01, boot_02, boot_03)
 ```
 
-051224 - 80 iterations but with original starting parameters (h=16000)
-051324 - 47 iterations but with original starting parameters as parameter estimates from model 5a
-051424 - 20 iterations with model 5a parameter estimates as starting
+80_051224 - 80 iterations but with original starting parameters (h=16000)
+47_051324 - 47 iterations but with original starting parameters as parameter estimates from model 5a
+20_051424 - 20 iterations with model 5a parameter estimates as starting
+6_051424a - 6 iterations with model 5a parameter estimates as starting
+3_051424b - 6 iterations with model 5a parameter estimates as starting
 
 ```{r}
-#saveRDS(beet, file = here("model_fitting", "combined", "beet", "47_051424.rds"))
+#saveRDS(beet, file = here("model_fitting", "combined", "beet", "3_051424b.rds"))
+#readRDS(file = here("model_fitting", "combined", "beet", "47_051324.rds"))
 #mod_f_boot <- readRDS(file = here("model_fitting", "combined", "beet", "47_051324.rds"))
 ```
 

@@ -27,7 +27,7 @@ m3_u_f_fit <- readRDS(file = here("mle", "final", "m3_fit.rds"))
 m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
 m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
 #m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
-m5b_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt1.rds"))
+m5b_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt2.rds"))
 ```
 
 
@@ -434,7 +434,7 @@ seq_data %<>% mutate(m5a_rate = (m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(length^g
 
 ```{r}
 m5b_coef <- coef(m5b_u_f_fit)
-m5b_u <- as.numeric(m5b_coef[1])
+m5b_u_prime <- as.numeric(m5b_coef[1])
 m5b_f <- as.numeric(m5b_coef[2])
 m5b_arr <- as.numeric(m5b_coef[3])
 m5b_arr_u <- as.numeric(m5b_coef[4])
@@ -448,9 +448,9 @@ viz_summ %<>% mutate(m5b_I_end = mapply(m4_sim,
                                        R=resource*life_vol/1000, 
                                        time=1, 
                                        f=m5b_f/life_vol, 
-                                       u = case_when(temp == 15 ~ m5b_u*exp(m5b_rho_15*resource),
-                                                     temp == 20 ~ m5b_u*exp(m5b_rho_20*resource),
-                                                     temp == 25 ~ m5b_u*exp(m5b_rho_25*resource)), 
+                                       u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_rho_15*resource),
+                                                     temp == 20 ~ m5b_u_prime*exp(m5b_rho_20*resource),
+                                                     temp == 25 ~ m5b_u_prime*exp(m5b_rho_25*resource)), 
                                        length=life_mm, 
                                        gamma=gamma, 
                                        Z=200*life_vol,
@@ -462,9 +462,9 @@ viz_summ %<>% mutate(m5b_I_end = mapply(m4_sim,
 
 data_summ %<>% mutate(m5b_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
                         (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
-                      m5b_u = case_when(temp == 15 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
-                                       temp == 20 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
-                                       temp == 25 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
+                      m5b_u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
+                                       temp == 20 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
+                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
 
 ```
 
@@ -473,9 +473,9 @@ seq_data %<>% mutate(m5b_I_end = mapply(m4_sim,
                                        R=resource*life_vol/1000, 
                                        time=1, 
                                        f=m5b_f/life_vol, 
-                                       u = case_when(temp == 15 ~ m5b_u*exp(m5b_rho_15*resource),
-                                                     temp == 20 ~ m5b_u*exp(m5b_rho_20*resource),
-                                                     temp == 25 ~ m5b_u*exp(m5b_rho_25*resource)), 
+                                       u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_rho_15*resource),
+                                                     temp == 20 ~ m5b_u_prime*exp(m5b_rho_20*resource),
+                                                     temp == 25 ~ m5b_u_prime*exp(m5b_rho_25*resource)), 
                                        length=length, 
                                        gamma=gamma, 
                                        Z=200*life_vol,
@@ -488,9 +488,9 @@ seq_data %<>% mutate(m5b_I_end = mapply(m4_sim,
 
 seq_data %<>% mutate(m5b_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma))/
                         (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
-                      m5b_u = case_when(temp == 15 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
-                                       temp == 20 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
-                                       temp == 25 ~ m5b_u*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
+                      m5b_u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
+                                       temp == 20 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
+                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
 ```
 
 

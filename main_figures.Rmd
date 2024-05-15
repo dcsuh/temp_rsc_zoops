@@ -61,6 +61,24 @@ seq_plot <- function(seq_data, rate){
 seq_plot(f_seq, "m1_rate")
 ```
 
+```{r}
+seq_plot_alt <- function(seq_data, rate){
+  seq_data %>% filter(temp %in% c(15,20,25)) %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(rate),
+                group=as.factor(temp),
+                color=as.factor(temp)),
+            size = 1) +
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    ylim(0, 42) + 
+    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  labs(x="Resource (mgC/L)", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+}
+
+seq_plot_alt(f_seq, "m1_rate")
+```
+
 
 ```{r}
 seq_plot_temp <- function(seq_data, rate){
@@ -176,6 +194,7 @@ u_plot <- function(seq_data, var){
     ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
     geom_line(size = 1) + 
     scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    ylim(NA, 0.00275) + 
     labs(x = "Resource (mgC/L)", y = "Per-Spore Susceptibility", color = "Temp", title = "")
 }
 
@@ -184,6 +203,7 @@ u_plot_temp <- function(seq_data, var){
     filter(resource %in% c(0.1, 0.5, 1)) %>% 
     ggplot(.,aes(x=temp, y=!!sym(var), color=as.factor(resource))) + 
     geom_line(size = 1) + 
+    ylim(NA, 0.00275) + 
     scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
     labs(x = "Temperature (C)", y = "Per-Spore Susceptibility", color = "Resource (mgC/L)", title = "")
 }
@@ -211,7 +231,7 @@ seq_data %>% filter(temp %in% const_temp) %>%
   labs(x = "Resource (mgC/L)", 
        y = "Algae consumed (mgC/L)",
        color = "Temp") + 
-    ylim(0, NA) +
+    ylim(NA, 0.004) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
 
@@ -390,6 +410,25 @@ clearance_plots <- f1 / f2 / f3 / f4
 
 
 ```{r}
+f1 <- seq_plot_alt(f_seq, "m2_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+f2 <- seq_plot_alt(f_seq, "m3_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+f3 <- seq_plot_alt(f_seq, "m4_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+f4 <- seq_plot_alt(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
+
+clearance_plots <- f1 / f2 / f3 / f4
+
+ggsave(here("workshop", "figures","clearance_plots_alt.png"),
+       clearance_plots,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+
+```{r}
 a1 <- algae_plot(f_seq, "m2_consumed") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 a2 <- algae_plot(f_seq, "m3_consumed") + 
@@ -400,11 +439,11 @@ a4 <- algae_plot(f_seq, "m6c_consumed") + theme(plot.title = element_blank(), le
 
 algae_plots <- a1 / a2 / a3 / a4
 
-# ggsave(here("workshop", "figures","algae_plots.png"),
-#        algae_plots,
-#        width = 3,
-#        height = 8,
-#        units = "in")
+ggsave(here("workshop", "figures","algae_plots.png"),
+       algae_plots,
+       width = 3,
+       height = 8,
+       units = "in")
 ```
 
 ```{r}
@@ -510,6 +549,40 @@ u4 <- u_plot(u_seq, "m5b_u") + theme(axis.title.y=element_blank(), plot.title = 
 susc_plots <- u1 / u2 / u3 / u4
 
 # ggsave(here("workshop", "figures","susc_plots.png"),
+#        susc_plots,
+#        width = 3,
+#        height = 8,
+#        units = "in")
+```
+
+```{r}
+u1 <- u_plot_temp(u_seq, "m2_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+u2 <- u_plot_temp(u_seq, "m3_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+u3 <- u_plot_temp(u_seq, "m4_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+u4 <- u_seq %>% 
+    filter(resource %in% c(0.1, 0.5, 1)) %>% 
+    ggplot(.,aes(x=temp, y=m5b_u, color=as.factor(resource))) + 
+    geom_point(size = 4, alpha=0.5, position = position_jitter(width = 0.4)) + 
+    scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+    ylim(NA, 0.00275) + 
+    labs(x = "Temperature (C)", y = "Per-Spore Susceptibility", color = "Resource (mgC/L)", title = "") + 
+  theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+u4 <- u_seq %>% 
+    filter(resource %in% c(0.1, 0.5, 1)) %>% 
+    ggplot(.,aes(x=temp, y=m5b_u, fill=as.factor(resource))) + 
+    geom_col(position=position_dodge(), width=1.5) + 
+    scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+    ylim(NA, 0.00275) + 
+    labs(x = "Temperature (C)", y = "Per-Spore Susceptibility", color = "Resource (mgC/L)", title = "") + 
+  theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+susc_plots <- u1 / u2 / u3 / u4
+
+# ggsave(here("workshop", "figures","susc_plots_temp.png"),
 #        susc_plots,
 #        width = 3,
 #        height = 8,
