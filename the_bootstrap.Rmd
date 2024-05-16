@@ -686,7 +686,7 @@ mod_quantiles$rho_25[4] <- quantile(mod_boot_coefs$rho_25, probs=seq(0.025, 0.97
 
 
 ```{r}
-# mod_quantiles %<>% pivot_longer(cols = f:rho_25) %>% pivot_wider(., names_from="id")
+mod_quantiles %<>% pivot_longer(cols = f:rho_25) %>% pivot_wider(., names_from="id")
 # mod_quantiles %>% ggplot(., aes(x = name, y=est)) + geom_point() + geom_linerange(aes(ymin=lower.025, ymax=upper.975)) + facet_wrap(~name, scales = "free")
 ```
 
