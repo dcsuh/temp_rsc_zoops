@@ -239,11 +239,11 @@ m2_sim <- function(R, time, f, length, gamma, ref_t, arr_t, temp){
 ```{r, m2_ll}
 m2_ll <- function(f, arr_t){
   data <- tmp
-  m2_end <- as.data.frame(mapply(m2_sim, R=data$resource, time=data$time/60/24, f=f/data$vol,
+  m2_end <- as.data.frame(mapply(m2_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp))
   colnames(m2_end) <- "m2_end"
   data$end <- m2_end$m2_end
-  data %<>% mutate(resid = log(end) - log(amt_rem))
+  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -263,11 +263,11 @@ tmp <- data
 m2_f_fit <- mle2(m2_ll,
                 skip.hessian = T,
                 start=list(f=5,
-                           arr_t=50),
+                           arr_t=10),
                 method = "L-BFGS-B",
                 lower = c(0, 0),
                 upper = c(Inf, Inf),
-                control=list(parscale=c(f=5, T_A=50), maxit=10000))
+                control=list(parscale=c(f=5, T_A=10), maxit=10000))
 
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time

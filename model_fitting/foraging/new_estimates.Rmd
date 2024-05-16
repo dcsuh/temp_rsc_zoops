@@ -280,7 +280,7 @@ m2_f_fit <- mle2(m2_ll,
                 method = "L-BFGS-B",
                 lower = c(0, 0),
                 upper = c(Inf, Inf),
-                control=list(parscale=c(f=5, T_A=50), maxit=10000))
+                control=list(parscale=c(f=5, arr_t=50), maxit=10000))
 
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
