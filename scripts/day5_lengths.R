@@ -4,9 +4,9 @@ library(here)
 library(tidyverse)
 library(magrittr)
 
-lengths <- read_csv(here("raw_data", "day5_length.csv"))
+lengths <- read_csv(here("raw_data", "day5_length.csv")) #life table
 
-fora_data <- readRDS(here("processed_data","foraging_raw.rds"))
+fora_data <- readRDS(here("processed_data","foraging_raw.rds")) #foraging assay
 
 fora_lengths <- fora_data %>% filter(temp %in% c(15, 20, 25)) %>% dplyr::select(temp, resource, mm) %>% mutate(expt = "fora")
 
@@ -28,8 +28,30 @@ plot <- length_summ %>% filter(temp_id %in% c(15, 20, 25)) %>%
   theme_bw()
 
 
-ggsave(here("day5_lengths.png"), plot = plot)
+#ggsave(here("day5_lengths.png"), plot = plot)
 
+
+fora_summ <- fora_lengths %>% 
+  filter(!is.na(mm)) %>%
+  group_by(temp, resource) %>% 
+  summarize(mean_mm = mean(mm),
+            var = var(mm),
+            sd = sd(mm),
+            se = sd(mm)/sqrt(n()))
+
+fora_lengths <- fora_summ %>% ggplot(.,aes(x=resource, y=mean_mm, color = as.factor(temp))) +
+  geom_point(size=4) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  geom_linerange(aes(ymin=mean_mm-se, ymax=mean_mm+se)) +
+  scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  labs(x="Resource (mgC/L)", y="Length(mm)", color="Temperature", title = "") + 
+  theme_bw(base_size = 10)
+
+ggsave(here("workshop", "figures","fora_lengths.png"),
+       fora_lengths,
+       width = 9,
+       height = 6,
+       units = "in")
 
 
 #Lengths across experiment and treatment
@@ -90,23 +112,23 @@ size_boxplot_25 <- data %>% filter(!is.na(mm)) %>%
 
 
 
-ggsave(here("workshop", "figures","size_plots_15.png"),
-       size_boxplot_15,
-       width = 9,
-       height = 6,
-       units = "in")
-
-ggsave(here("workshop", "figures","size_plots_20.png"),
-       size_boxplot_20,
-       width = 9,
-       height = 6,
-       units = "in")
-
-ggsave(here("workshop", "figures","size_plots_25.png"),
-       size_boxplot_25,
-       width = 9,
-       height = 6,
-       units = "in")
+#ggsave(here("workshop", "figures","size_plots_15.png"),
+#        size_boxplot_15,
+#        width = 9,
+#        height = 6,
+#        units = "in")
+# 
+#ggsave(here("workshop", "figures","size_plots_20.png"),
+#        size_boxplot_20,
+#        width = 9,
+#        height = 6,
+#        units = "in")
+# 
+# ggsave(here("workshop", "figures","size_plots_25.png"),
+#        size_boxplot_25,
+#        width = 9,
+#        height = 6,
+#        units = "in")
 
 
 summary(glm(mm ~ as.numeric(temp) + resource + expt, family = "gaussian", data = data))

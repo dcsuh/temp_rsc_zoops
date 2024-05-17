@@ -369,11 +369,11 @@ tmp <- data
 m3_f_fit <- mle2(m3_ll,
                 skip.hessian = T,
                 start=list(f=40,
-                           h=0.2),
+                           h=100),
                 method = "L-BFGS-B",
                 lower = c(0, 0),
                 upper = c(Inf, Inf),
-                control=list(parscale=c(f=40, h=0.2), maxit=10000))
+                control=list(parscale=c(f=40, h=100), maxit=10000))
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
 m3_runtime
@@ -384,7 +384,7 @@ saveRDS(m3_f_fit, file = here("mle","m3_f_fit.rds"))
 ```
 
 ```{r, m3_f_fit}
-summary(readRDS(here("mle", "m3_f_fit.rds")))
+#summary(readRDS(here("mle", "m3_f_fit.rds")))
 ```
 
 # Model 3b - Half-Saturation Method
@@ -470,7 +470,7 @@ saveRDS(m3a_f_fit, file = here("mle","m3a_f_fit.rds"))
 ```
 
 ```{r, m3a_f_fit}
-summary(readRDS(here("mle", "m3_f_fit.rds")))
+#summary(readRDS(here("mle", "m3_f_fit.rds")))
 ```
 
 
@@ -540,11 +540,11 @@ start_time <- Sys.time()
 tmp <- data
 m4_f_fit <- mle2(m4_ll,
                 skip.hessian = T,
-                start=list(f=5, arr_t=50, h=0.1),
+                start=list(f=5, arr_t=50, h=100),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0),
                 upper = c(Inf, Inf, Inf),
-                control=list(parscale=c(f=5, arr_t=50, h=0.1), maxit=10000))
+                control=list(parscale=c(f=5, arr_t=50, h=100), maxit=10000))
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 m4_runtime
@@ -555,7 +555,7 @@ saveRDS(m4_f_fit, file = here("mle","m4_f_fit.rds"))
 ```
 
 ```{r, m4_f_fit}
-summary(readRDS(here("mle","m4_f_fit.rds")))
+#summary(readRDS(here("mle","m4_f_fit.rds")))
 ```
 
 
@@ -638,7 +638,7 @@ saveRDS(m4a_f_fit, file = here("mle","m4a_f_fit.rds"))
 ```
 
 ```{r, m4_f_fit}
-summary(readRDS(here("mle","m4a_f_fit.rds")))
+#summary(readRDS(here("mle","m4a_f_fit.rds")))
 ```
 
 

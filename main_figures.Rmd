@@ -215,41 +215,177 @@ u_plot(u_seq, "m5_u")
 
 
 ```{r}
+# algae_plot <- function(seq_data, var){
+# seq_data %>% filter(temp %in% const_temp) %>% 
+#   ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
+#   geom_line(size=1) + 
+#   geom_point(aes(x=resource, 
+#                   y=amt_consumed_mean*15/1000, 
+#                   group = as.factor(temp), 
+#                   color = as.factor(temp)),
+#              size=3) + 
+#     geom_linerange(aes(x=resource, 
+#                        ymin=amt_consumed_mean*15/1000-amt_consumed_se*15/1000,
+#                        ymax=amt_consumed_mean*15/1000+amt_consumed_se*15/1000,
+#                        color=as.factor(temp))) +
+#   labs(x = "Resource (mgC/L)", 
+#        y = "Algae consumed (mgC/L)",
+#        color = "Temp") + 
+# #    ylim(NA, 0.004) +
+#   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+# }
+# 
+# algae_plot <- function(seq_data, var){
+# seq_data %>% filter(temp %in% const_temp) %>% 
+#   ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
+#   geom_line(size=1) + 
+#   geom_point(aes(x=resource, 
+#                   y=amt_consumed_mean_theor*15/1000, 
+#                   group = as.factor(temp), 
+#                   color = as.factor(temp)),
+#              size=3) + 
+#     geom_linerange(aes(x=resource, 
+#                        ymin=amt_consumed_mean_theor*15/1000-amt_consumed_se_theor*15/1000,
+#                        ymax=amt_consumed_mean_theor*15/1000+amt_consumed_se_theor*15/1000,
+#                        color=as.factor(temp))) +
+#   labs(x = "Resource (mgC/L)", 
+#        y = "Algae consumed (mgC/L)",
+#        color = "Temp") + 
+# #    ylim(NA, 0.004) +
+#   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+# }
+# 
+# algae_plot_temp <- function(seq_data, var){
+# seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>% 
+#   ggplot(., aes(x=temp, y=!!sym(var), color=as.factor(resource), group = as.factor(resource))) + 
+#   geom_line(size=1) + 
+#   labs(x = "Temperature (C)", 
+#        y = "Algae consumed (mgC)",
+#        color = "Temp") + 
+#   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
+# }
+# 
+# algae_plot(f_seq, "m1_consumed")
+# algae_plot(f_seq, "m2_consumed")
+# algae_plot(f_seq, "m3_consumed")
+# algae_plot(f_seq, "m4_consumed")
+# algae_plot(f_seq, "m6c_consumed")
+```
+
+```{r}
+f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
+                  m1_diff = resource - m1_R_end/15*1000,
+                  m2_diff = resource - m2_R_end/15*1000,
+                  m3_diff = resource - m3_R_end/15*1000,
+                  m4_diff = resource - m4_R_end/15*1000,
+                  m6c_diff = resource - m6c_R_end/15*1000)
+
 algae_plot <- function(seq_data, var){
 seq_data %>% filter(temp %in% const_temp) %>% 
   ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
   geom_line(size=1) + 
   geom_point(aes(x=resource, 
-                  y=amt_consumed_mean*15/1000, 
+                  y=amt_rem_mean*15/1000, 
                   group = as.factor(temp), 
                   color = as.factor(temp)),
-             size=3) + 
+             size=1) + 
     geom_linerange(aes(x=resource, 
-                       ymin=amt_consumed_mean*15/1000-amt_consumed_se*15/1000,
-                       ymax=amt_consumed_mean*15/1000+amt_consumed_se*15/1000,
+                       ymin=amt_rem_mean*15/1000-amt_rem_se*15/1000,
+                       ymax=amt_rem_mean*15/1000+amt_rem_se*15/1000,
                        color=as.factor(temp))) +
   labs(x = "Resource (mgC/L)", 
-       y = "Algae consumed (mgC/L)",
+       y = "Resource remaining (mgC)",
        color = "Temp") + 
-    ylim(NA, 0.004) +
+#    ylim(NA, 0.004) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
+
+algae_plot <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>%
+  ggplot(., aes(x=resource, y=!!sym(var)/15*1000, color=as.factor(temp), group = as.factor(temp))) +
+  geom_line(size=1) +
+  geom_point(aes(x=resource,
+                  y=amt_rem_mean,
+                  group = as.factor(temp),
+                  color = as.factor(temp)),
+             size=3) +
+    geom_linerange(aes(x=resource,
+                       ymin=amt_rem_mean-amt_rem_se,
+                       ymax=amt_rem_mean+amt_rem_se,
+                       color=as.factor(temp))) +
+  labs(x = "Resource (mgC/L)",
+       y = "Resource remaining (mgC/L)",
+       color = "Temp") +
+#    ylim(NA, 0.004) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+}
+
+algae_plot <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>%
+  ggplot(., aes(x=resource, y=!!sym(var)/15*1000, color=as.factor(temp), group = as.factor(temp))) +
+  geom_line(size=1) +
+  geom_point(aes(x=resource,
+                  y=amt_rem_mean,
+                  group = as.factor(temp),
+                  color = as.factor(temp)),
+             size=3) +
+    geom_linerange(aes(x=resource,
+                       ymin=amt_rem_mean-amt_rem_se,
+                       ymax=amt_rem_mean+amt_rem_se,
+                       color=as.factor(temp))) +
+  labs(x = "Resource (mgC/L)",
+       y = "Resource remaining (mgC/L)",
+       color = "Temp") +
+#    ylim(NA, 0.004) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+}
+
+algae_plot_diff <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>%
+  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) +
+  geom_line(size=1) +
+  geom_point(aes(x=resource,
+                  y=amt_diff,
+                  group = as.factor(temp),
+                  color = as.factor(temp)),
+             size=3) +
+    geom_linerange(aes(x=resource,
+                       ymin=amt_diff-amt_rem_se,
+                       ymax=amt_diff+amt_rem_se,
+                       color=as.factor(temp))) +
+  labs(x = "Resource (mgC/L)",
+       y = "Resource difference (mgC/L)",
+       color = "Temp") +
+#    ylim(NA, 0.004) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+}
+
+
+
 
 algae_plot_temp <- function(seq_data, var){
 seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>% 
   ggplot(., aes(x=temp, y=!!sym(var), color=as.factor(resource), group = as.factor(resource))) + 
   geom_line(size=1) + 
   labs(x = "Temperature (C)", 
-       y = "Algae consumed (mgC)",
+       y = "Resource remaining (mgC)",
        color = "Temp") + 
   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
 }
 
-algae_plot(f_seq, "m1_consumed")
-algae_plot(f_seq, "m2_consumed")
-algae_plot(f_seq, "m3_consumed")
-algae_plot(f_seq, "m4_consumed")
+algae_plot(f_seq, "m1_R_end")
+algae_plot(f_seq, "m2_R_end")
+algae_plot(f_seq, "m3_R_end")
+algae_plot(f_seq, "m4_R_end")
+algae_plot(f_seq, "m6c_R_end")
+
+algae_plot_diff(f_seq, "m1_diff")
+algae_plot_diff(f_seq, "m2_diff")
+algae_plot_diff(f_seq, "m3_diff")
+algae_plot_diff(f_seq, "m4_diff")
+algae_plot_diff(f_seq, "m6c_diff")
 ```
+
 
 ```{r}
 algae_conc_plot <- function(seq_data, var){
@@ -432,18 +568,36 @@ ggsave(here("workshop", "figures","clearance_plots_alt.png"),
 
 
 ```{r}
-a1 <- algae_plot(f_seq, "m2_consumed") + 
+a1 <- algae_plot(f_seq, "m2_R_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-a2 <- algae_plot(f_seq, "m3_consumed") + 
+a2 <- algae_plot(f_seq, "m3_R_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-a3 <- algae_plot(f_seq, "m4_consumed") + 
+a3 <- algae_plot(f_seq, "m4_R_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-a4 <- algae_plot(f_seq, "m6c_consumed") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
+a4 <- algae_plot(f_seq, "m6c_R_end") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
 
 algae_plots <- a1 / a2 / a3 / a4
 
 ggsave(here("workshop", "figures","algae_plots.png"),
        algae_plots,
+       width = 3,
+       height = 8,
+       units = "in")
+```
+
+```{r}
+a1 <- algae_plot_diff(f_seq, "m2_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+a2 <- algae_plot_diff(f_seq, "m3_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+a3 <- algae_plot_diff(f_seq, "m4_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+a4 <- algae_plot_diff(f_seq, "m6c_diff") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
+
+algae_plots_diff <- a1 / a2 / a3 / a4
+
+ggsave(here("workshop", "figures","algae_plots_diff.png"),
+       algae_plots_diff,
        width = 3,
        height = 8,
        units = "in")
@@ -907,6 +1061,34 @@ int_inf_plot <- i_d / i_e / i_f
 ```
 
 
+
+# data plots
+
+```{r}
+f_seq %>% 
+  dplyr::select(resource, temp, amt_diff, amt_rem_se) %>% 
+  drop_na() %>%
+  ggplot(., aes(x=resource, y=amt_diff, group = as.factor(temp), color = as.factor(temp))) + 
+  geom_point(size=3) +
+  geom_linerange(aes(ymin=amt_diff-amt_rem_se,
+                     ymax=amt_diff+amt_rem_se,
+                     color=as.factor(temp))) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  labs(x="Resource (mgC/L)", y="Resource difference (mgC/L)", color="Temperature", title = "")
+```
+
+```{r}
+u_seq %>% filter(!is.na(prev)) %>% 
+ggplot(.,aes(x=resource, 
+             y=prev, 
+             color=as.factor(temp))) + 
+  geom_point(size = 3) + 
+  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  labs(x="Resource (mgC/L)", y="Probability of Infection", color="Temperature", title = "")
+```
 
 
 
