@@ -246,6 +246,9 @@ seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
 }
 
 algae_plot(f_seq, "m1_consumed")
+algae_plot(f_seq, "m2_consumed")
+algae_plot(f_seq, "m3_consumed")
+algae_plot(f_seq, "m4_consumed")
 ```
 
 ```{r}
