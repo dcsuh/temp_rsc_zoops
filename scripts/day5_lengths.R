@@ -47,6 +47,15 @@ fora_lengths <- fora_summ %>% ggplot(.,aes(x=resource, y=mean_mm, color = as.fac
   labs(x="Resource (mgC/L)", y="Length(mm)", color="Temperature", title = "") + 
   theme_bw(base_size = 10) + 
   theme(legend.position = "none", title = element_blank())
+
+fora_lengths <- fora_summ %>% ggplot(.,aes(x=resource, y=mean_mm, color = as.factor(temp))) +
+  geom_point(size=3) +
+  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  geom_linerange(aes(ymin=mean_mm-1.96*se, ymax=mean_mm+1.96*se)) +
+  scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  labs(x="Resource (mgC/L)", y="Length(mm)", color="Temperature", title = "") + 
+  theme_bw(base_size = 10) + 
+  theme(legend.position = "none", title = element_blank())
   
 
 ggsave(here("workshop", "figures","fora_lengths.png"),

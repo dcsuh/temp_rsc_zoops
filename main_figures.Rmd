@@ -353,8 +353,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
                   color = as.factor(temp)),
              size=3) +
     geom_linerange(aes(x=resource,
-                       ymin=amt_diff-amt_rem_se,
-                       ymax=amt_diff+amt_rem_se,
+                       ymin=amt_diff-1.96*amt_rem_se,
+                       ymax=amt_diff+1.96*amt_rem_se,
                        color=as.factor(temp))) +
   labs(x = "Resource (mgC/L)",
        y = "Resource difference (mgC/L)",
@@ -1073,8 +1073,8 @@ f_data <- f_seq %>%
   drop_na() %>%
   ggplot(., aes(x=resource, y=amt_diff, group = as.factor(temp), color = as.factor(temp))) + 
   geom_point(size=3) +
-  geom_linerange(aes(ymin=amt_diff-amt_rem_se,
-                     ymax=amt_diff+amt_rem_se,
+  geom_linerange(aes(ymin=amt_diff-1.96*amt_rem_se,
+                     ymax=amt_diff+1.96*amt_rem_se,
                      color=as.factor(temp))) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
