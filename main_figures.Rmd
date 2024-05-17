@@ -8,6 +8,7 @@ date: "`r Sys.Date()`"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+#packages
 
 ```{r}
 library(here)
@@ -30,6 +31,13 @@ theme_set(theme_bw(base_size = 10))
 ```{r}
 f_seq <- readRDS(file=here("model_fitting", "foraging", "rate_fit.rds"))
 u_seq <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
+
+f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
+                  m1_diff = resource - m1_R_end/15*1000,
+                  m2_diff = resource - m2_R_end/15*1000,
+                  m3_diff = resource - m3_R_end/15*1000,
+                  m4_diff = resource - m4_R_end/15*1000,
+                  m6c_diff = resource - m6c_R_end/15*1000)
 ```
 
 
@@ -273,12 +281,7 @@ u_plot(u_seq, "m5_u")
 ```
 
 ```{r}
-f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
-                  m1_diff = resource - m1_R_end/15*1000,
-                  m2_diff = resource - m2_R_end/15*1000,
-                  m3_diff = resource - m3_R_end/15*1000,
-                  m4_diff = resource - m4_R_end/15*1000,
-                  m6c_diff = resource - m6c_R_end/15*1000)
+
 
 algae_plot <- function(seq_data, var){
 seq_data %>% filter(temp %in% const_temp) %>% 
@@ -1065,7 +1068,7 @@ int_inf_plot <- i_d / i_e / i_f
 # data plots
 
 ```{r}
-f_seq %>% 
+f_data <- f_seq %>% 
   dplyr::select(resource, temp, amt_diff, amt_rem_se) %>% 
   drop_na() %>%
   ggplot(., aes(x=resource, y=amt_diff, group = as.factor(temp), color = as.factor(temp))) + 
@@ -1075,11 +1078,18 @@ f_seq %>%
                      color=as.factor(temp))) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  theme(legend.position = "none", title = element_blank()) + 
   labs(x="Resource (mgC/L)", y="Resource difference (mgC/L)", color="Temperature", title = "")
+
+ggsave(here("workshop", "figures","f_data.png"),
+       f_data,
+       width = 4,
+       height = 4,
+       units = "in")
 ```
 
 ```{r}
-u_seq %>% filter(!is.na(prev)) %>% 
+prev_data <- u_seq %>% filter(!is.na(prev)) %>% 
 ggplot(.,aes(x=resource, 
              y=prev, 
              color=as.factor(temp))) + 
@@ -1087,7 +1097,14 @@ ggplot(.,aes(x=resource,
   geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  theme(legend.position = "none", title = element_blank()) + 
   labs(x="Resource (mgC/L)", y="Probability of Infection", color="Temperature", title = "")
+
+ggsave(here("workshop", "figures","prev_data.png"),
+       prev_data,
+       width = 4,
+       height = 4,
+       units = "in")
 ```
 
 
