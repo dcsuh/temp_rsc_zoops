@@ -4,6 +4,8 @@ library(here)
 library(tidyverse)
 library(magrittr)
 
+theme_set(theme_bw(base_size = 12))
+
 lengths <- read_csv(here("raw_data", "day5_length.csv")) #life table
 
 fora_data <- readRDS(here("processed_data","foraging_raw.rds")) #foraging assay
@@ -51,8 +53,10 @@ fora_lengths <- fora_summ %>% ggplot(.,aes(x=resource, y=mean_mm, color = as.fac
 fora_lengths <- fora_summ %>% ggplot(.,aes(x=resource, y=mean_mm, color = as.factor(temp))) +
   geom_point(size=3) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  geom_linerange(aes(ymin=mean_mm-1.96*se, ymax=mean_mm+1.96*se)) +
+  geom_linerange(size = 1,
+                 aes(ymin=mean_mm-1.96*se, ymax=mean_mm+1.96*se)) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  scale_y_continuous(breaks = c(0.8, 1.0, 1.2)) +
   labs(x="Resource (mgC/L)", y="Length(mm)", color="Temperature", title = "") + 
   theme_bw(base_size = 10) + 
   theme(legend.position = "none", title = element_blank())
@@ -60,8 +64,8 @@ fora_lengths <- fora_summ %>% ggplot(.,aes(x=resource, y=mean_mm, color = as.fac
 
 ggsave(here("workshop", "figures","fora_lengths.png"),
        fora_lengths,
-       width = 4,
-       height = 4,
+       width = 3,
+       height = 3,
        units = "in")
 
 

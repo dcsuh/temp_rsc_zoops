@@ -21,7 +21,7 @@ library(patchwork)
 
 Formatting
 ```{r}
-theme_set(theme_bw(base_size = 10))
+theme_set(theme_bw(base_size = 12))
 
 ```
 
@@ -38,6 +38,8 @@ f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
                   m3_diff = resource - m3_R_end/15*1000,
                   m4_diff = resource - m4_R_end/15*1000,
                   m6c_diff = resource - m6c_R_end/15*1000)
+
+f_seq %<>% arrange(desc(temp))
 ```
 
 
@@ -45,7 +47,7 @@ f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
 
 ```{r}
 seq_plot <- function(seq_data, rate){
-  seq_data %>% filter(temp %in% c(15,20,25)) %>%
+  seq_data %>% filter(temp %in% c(25,20,15)) %>%
   ggplot(.) +
   geom_line(aes(x=resource, 
                 y=!!sym(rate),
@@ -63,6 +65,7 @@ seq_plot <- function(seq_data, rate){
                        color=as.factor(temp))) +
 #    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
     scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    guides(color = guide_legend(reverse=T)) + 
   labs(x="Resource (mgC/L)", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
 }
 
@@ -79,8 +82,10 @@ seq_plot_alt <- function(seq_data, rate){
                 color=as.factor(temp)),
             size = 1) +
 #    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-    ylim(0, 42) + 
     scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    scale_y_continuous(breaks = c(0, 20, 40), limits = c(0, 42)) + 
+    guides(color = guide_legend(reverse=T)) + 
   labs(x="Resource (mgC/L)", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
 }
 
@@ -123,6 +128,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
   labs(x = "Resource (mgC/L)", 
        y = "Spores consumed",
        color = "Temp") + 
+  scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  guides(color = guide_legend(reverse=T)) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
 
@@ -153,6 +160,9 @@ prev_plot <- function(seq_data, var){
     geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=3) + 
     geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
     scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    scale_y_continuous(breaks = c(0, 0.5, 1.0)) + 
+    guides(color = guide_legend(reverse=T)) + 
     labs(x="Resource (mgC/L)", y="Probability of Infection", color="Temperature", title = "")
 }
 
@@ -203,6 +213,8 @@ u_plot <- function(seq_data, var){
     geom_line(size = 1) + 
     scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
     ylim(NA, 0.00275) + 
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    guides(color = guide_legend(reverse=T)) + 
     labs(x = "Resource (mgC/L)", y = "Per-Spore Susceptibility", color = "Temp", title = "")
 }
 
@@ -299,7 +311,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
   labs(x = "Resource (mgC/L)", 
        y = "Resource remaining (mgC)",
        color = "Temp") + 
-#    ylim(NA, 0.004) +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    guides(color = guide_legend(reverse=T)) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
 
@@ -319,29 +332,11 @@ seq_data %>% filter(temp %in% const_temp) %>%
   labs(x = "Resource (mgC/L)",
        y = "Resource remaining (mgC/L)",
        color = "Temp") +
-#    ylim(NA, 0.004) +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    guides(color = guide_legend(reverse=T)) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
 
-algae_plot <- function(seq_data, var){
-seq_data %>% filter(temp %in% const_temp) %>%
-  ggplot(., aes(x=resource, y=!!sym(var)/15*1000, color=as.factor(temp), group = as.factor(temp))) +
-  geom_line(size=1) +
-  geom_point(aes(x=resource,
-                  y=amt_rem_mean,
-                  group = as.factor(temp),
-                  color = as.factor(temp)),
-             size=3) +
-    geom_linerange(aes(x=resource,
-                       ymin=amt_rem_mean-amt_rem_se,
-                       ymax=amt_rem_mean+amt_rem_se,
-                       color=as.factor(temp))) +
-  labs(x = "Resource (mgC/L)",
-       y = "Resource remaining (mgC/L)",
-       color = "Temp") +
-#    ylim(NA, 0.004) +
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-}
 
 algae_plot_diff <- function(seq_data, var){
 seq_data %>% filter(temp %in% const_temp) %>%
@@ -359,7 +354,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
   labs(x = "Resource (mgC/L)",
        y = "Resource difference (mgC/L)",
        color = "Temp") +
-#    ylim(NA, 0.004) +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    guides(color = guide_legend(reverse=T)) + 
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
 }
 
@@ -708,11 +704,11 @@ u4 <- u_plot(u_seq, "m5b_u") + theme(axis.title.y=element_blank(), plot.title = 
 
 susc_plots <- u1 / u2 / u3 / u4
 
-# ggsave(here("workshop", "figures","susc_plots.png"),
-#        susc_plots,
-#        width = 3,
-#        height = 8,
-#        units = "in")
+ggsave(here("workshop", "figures","susc_plots.png"),
+       susc_plots,
+       width = 3,
+       height = 8,
+       units = "in")
 ```
 
 ```{r}
@@ -765,11 +761,11 @@ p4 <- prev_plot(u_seq, "m5b_I_end") + theme(axis.title.y=element_blank(), plot.t
 
 prev_plots <- p1 / p2 / p3 / p4
 
-# ggsave(here("workshop", "figures","prev_plots.png"),
-#        prev_plots,
-#        width = 3,
-#        height = 8,
-#        units = "in")
+ggsave(here("workshop", "figures","prev_plots.png"),
+       prev_plots,
+       width = 3,
+       height = 8,
+       units = "in")
 ```
 
 
@@ -1073,7 +1069,8 @@ f_data <- f_seq %>%
   drop_na() %>%
   ggplot(., aes(x=resource, y=amt_diff, group = as.factor(temp), color = as.factor(temp))) + 
   geom_point(size=3) +
-  geom_linerange(aes(ymin=amt_diff-1.96*amt_rem_se,
+  geom_linerange(size = 1, 
+                 aes(ymin=amt_diff-1.96*amt_rem_se,
                      ymax=amt_diff+1.96*amt_rem_se,
                      color=as.factor(temp))) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
@@ -1083,8 +1080,8 @@ f_data <- f_seq %>%
 
 ggsave(here("workshop", "figures","f_data.png"),
        f_data,
-       width = 4,
-       height = 4,
+       width = 3,
+       height = 3,
        units = "in")
 ```
 
@@ -1094,16 +1091,18 @@ ggplot(.,aes(x=resource,
              y=prev, 
              color=as.factor(temp))) + 
   geom_point(size = 3) + 
-  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
+  geom_linerange(size=1,
+                 aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
   scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  scale_y_continuous(breaks = c(0, 0.5, 1.0)) + 
   theme(legend.position = "none", title = element_blank()) + 
   labs(x="Resource (mgC/L)", y="Probability of Infection", color="Temperature", title = "")
 
 ggsave(here("workshop", "figures","prev_data.png"),
        prev_data,
-       width = 4,
-       height = 4,
+       width = 3,
+       height = 3,
        units = "in")
 ```
 

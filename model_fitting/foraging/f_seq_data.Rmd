@@ -326,33 +326,15 @@ m6c_plot
 m6_range <- tibble(temp = temp_range)
 
 m6_range %<>% mutate(h = m4_h,
-                     h_b = (m6b_h + m6b_w*temp),
                      h_c = (m6c_h*exp(m6c_w*temp)))
 
 h_plot <- m6_range %>% ggplot(., aes(x=temp, y=h_c)) + 
   geom_line(size=2) +
-  labs(x = "Temp (C)", y = "Handling time (days/mgC)", title = "")
+  scale_x_continuous(breaks = c(15, 20, 25)) +
+  scale_y_continuous(breaks = c(200, 400, 600, 800)) + 
+  labs(x = "Temperature (C)", y = "Handling time (days/mgC)", title = "")
 
-#ggsave("h_plot.png", h_plot, path=here("mle/fit_plots"))
-
-
-m6_range %<>% pivot_longer(cols=c(h, h_b, h_c))
-
-h_labels <- c(h = "constant",
-              h_b = "linear",
-              h_c = "exp")
-
-m6_h_plot <- m6_range %>% ggplot(., aes(x=temp, y=value, group=name, color=name)) + geom_line() + 
-  labs(x="Temperature",
-       y="Handling Time (h)",
-       color="Interaction") + 
-  scale_color_discrete(labels = h_labels)
-
-m6_h_plot
-
-
-#ggsave("m6_h_plot.png", m6_h_plot, path=here("mle/fit_plots"))
-
+ggsave("h_plot.png", h_plot, path=here("workshop","figures"))
 
 
 ```
