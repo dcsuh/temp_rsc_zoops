@@ -64,7 +64,8 @@ seq_plot <- function(seq_data, rate){
                        ymax=rate_len_mean+rate_len_mean_se,
                        color=as.factor(temp))) +
 #    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
     guides(color = guide_legend(reverse=T)) + 
   labs(x="Resource (mgC/L)", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
 }
@@ -82,7 +83,8 @@ seq_plot_alt <- function(seq_data, rate){
                 color=as.factor(temp)),
             size = 1) +
 #    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
     scale_y_continuous(breaks = c(0, 20, 40), limits = c(0, 42)) + 
     guides(color = guide_legend(reverse=T)) + 
@@ -130,7 +132,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
        color = "Temp") + 
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
   guides(color = guide_legend(reverse=T)) + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
 }
 
 spores_plot_temp <- function(seq_data, var){
@@ -155,11 +158,13 @@ prev_plot <- function(seq_data, var){
                  y=!!sym(var), 
                  color=as.factor(temp))) + 
     geom_line(size=1) +
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
     new_scale_color() + 
     geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=3) + 
     geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
     scale_y_continuous(breaks = c(0, 0.5, 1.0)) + 
     guides(color = guide_legend(reverse=T)) + 
@@ -211,7 +216,8 @@ u_plot <- function(seq_data, var){
     filter(temp %in% const_temp) %>% 
     ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
     geom_line(size = 1) + 
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
     ylim(NA, 0.00275) + 
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
     guides(color = guide_legend(reverse=T)) + 
@@ -313,7 +319,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
        color = "Temp") + 
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
     guides(color = guide_legend(reverse=T)) + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
 }
 
 algae_plot <- function(seq_data, var){
@@ -334,7 +341,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
        color = "Temp") +
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
     guides(color = guide_legend(reverse=T)) + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
 }
 
 
@@ -356,7 +364,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
        color = "Temp") +
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
     guides(color = guide_legend(reverse=T)) + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
 }
 
 
@@ -539,11 +548,11 @@ f4 <- seq_plot(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.p
 
 clearance_plots <- f1 / f2 / f3 / f4
 
-# ggsave(here("workshop", "figures","clearance_plots.png"),
-#        clearance_plots,
-#        width = 3,
-#        height = 8,
-#        units = "in")
+ggsave(here("workshop", "figures","clearance_plots.png"),
+       clearance_plots,
+       width = 3,
+       height = 8,
+       units = "in")
 ```
 
 
@@ -682,11 +691,11 @@ s4 <- spores_plot(u_seq, "spores_consumed_m5b") + theme(axis.title.y=element_bla
 
 spores_plots <- s1 / s2 / s3 / s4
 
-# ggsave(here("workshop", "figures","spores_plots.png"),
-#        spores_plots,
-#        width = 3,
-#        height = 8,
-#        units = "in")
+ggsave(here("workshop", "figures","spores_plots.png"),
+       spores_plots,
+       width = 3,
+       height = 8,
+       units = "in")
 ```
 
 
@@ -1073,7 +1082,8 @@ f_data <- f_seq %>%
                  aes(ymin=amt_diff-1.96*amt_rem_se,
                      ymax=amt_diff+1.96*amt_rem_se,
                      color=as.factor(temp))) +
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
   theme(legend.position = "none", title = element_blank()) + 
   labs(x="Resource (mgC/L)", y="Resource difference (mgC/L)", color="Temperature", title = "")
@@ -1093,7 +1103,8 @@ ggplot(.,aes(x=resource,
   geom_point(size = 3) + 
   geom_linerange(size=1,
                  aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
   scale_y_continuous(breaks = c(0, 0.5, 1.0)) + 
   theme(legend.position = "none", title = element_blank()) + 
