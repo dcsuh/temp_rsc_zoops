@@ -60,6 +60,7 @@ fora_lengths <- fora_summ %>% ggplot(.,aes(x=resource, y=mean_mm, color = as.fac
                  aes(ymin=mean_mm-1.96*se, ymax=mean_mm+1.96*se)) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
   scale_y_continuous(breaks = c(0.8, 1.0, 1.2)) + 
+  guides(color = guide_legend(reverse=T)) + 
   labs(x="Resource (mgC/L)", y="Length(mm)", color="Temperature", title = "") + 
   theme_bw(base_size = 10) + 
   theme(legend.position = "none", title = element_blank())
