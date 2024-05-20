@@ -259,7 +259,7 @@ We'll include the bootstrapping here
 
 ```{r}
 
-  iterations <- 5
+  iterations <- 20
   
   boot_01 <- list()
   
@@ -365,7 +365,7 @@ We'll include the bootstrapping here
 
 ```{r}
 
-  iterations <- 5
+  iterations <- 10
   
   boot_03 <- list()
   
@@ -417,7 +417,7 @@ We'll include the bootstrapping here
 
 ```{r}
 
-  iterations <- 20
+  iterations <- 5
   
   boot_04 <- list()
   
@@ -481,10 +481,14 @@ beet <- c(boot_01, boot_02, boot_03, boot_04)
 20_051524 - 20 iterations with updated starting params and higher max iter. no convergence failures. rescaled
 20_051624 - 25 iterations with updated starting params and higher max iter. no convergence failures. rescaled
 35_051724 - 35 iters ""
+28_052024 - 28 iters ""
 
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "35_051724.rds"))
-#mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_051524.rds")), readRDS(file = here("model_fitting", "combined", "beet", "20_051624.rds")))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "28_052024.rds"))
+mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_051524.rds")), 
+                readRDS(file = here("model_fitting", "combined", "beet", "20_051624.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_051724.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "28_052024.rds")))
 #mod_f_boot <- readRDS(file = here("model_fitting", "combined", "beet", "47_051324.rds"))
 ```
 
@@ -517,6 +521,19 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$rho_20[i] <- NA
     mod_boot_coefs$rho_25[i] <- NA
     mod_boot_coefs$warning[i] <- "52"
+  }
+  else if(mod_f_boot[[i]]@details[4] == 10){
+    print(paste(i, "convergence_failure", sep="_"))
+    mod_boot_coefs$f[i] <- NA
+    mod_boot_coefs$u[i] <- NA
+    mod_boot_coefs$arr[i] <- NA
+    mod_boot_coefs$arr_u[i] <- NA
+    mod_boot_coefs$h[i] <- NA
+    mod_boot_coefs$w[i] <- NA
+    mod_boot_coefs$rho_15[i] <- NA
+    mod_boot_coefs$rho_20[i] <- NA
+    mod_boot_coefs$rho_25[i] <- NA
+    mod_boot_coefs$warning[i] <- "10"
   }
   else if(mod_f_boot[[i]]@min == 0){
     print(paste(i, "zero_ll", sep="_"))
