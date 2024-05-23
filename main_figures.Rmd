@@ -34,15 +34,18 @@ u_seq <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
 
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
 
-f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
+data_summ %<>% dplyr::select(temp, resource, amt_init_mean)
+f_seq %<>% left_join(., data_summ)
+
+#f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
+f_seq %<>% mutate(amt_diff = amt_init_mean-amt_rem_mean,
                   m1_diff = resource - m1_R_end/15*1000,
                   m2_diff = resource - m2_R_end/15*1000,
                   m3_diff = resource - m3_R_end/15*1000,
                   m4_diff = resource - m4_R_end/15*1000,
                   m6c_diff = resource - m6c_R_end/15*1000)
 
-data_summ %<>% dplyr::select(temp, resource, amt_init_mean)
-f_seq %<>% left_join(., data_summ)
+
 
 f_seq %<>% arrange(desc(temp))
 ```
@@ -1113,9 +1116,10 @@ int_inf_plot <- i_d / i_e / i_f
 
 ```{r}
 f_data <- f_seq %>% 
-  dplyr::select(resource, temp, amt_diff, amt_rem_se) %>% 
+  dplyr::select(resource, temp, amt_diff, amt_rem_se, amt_init_mean) %>% 
   drop_na() %>%
   ggplot(., aes(x=resource, y=amt_diff, group = as.factor(temp), color = as.factor(temp))) + 
+#  ggplot(., aes(x=amt_init_mean, y=amt_diff, group = as.factor(temp), color = as.factor(temp))) + 
   geom_point(size=3) +
   geom_linerange(size = 1, 
                  aes(ymin=amt_diff-1.96*amt_rem_se,
@@ -1127,6 +1131,7 @@ f_data <- f_seq %>%
   theme(legend.position = "none", title = element_blank()) + 
   labs(x="Resource (mgC/L)", y="Resource difference (mgC/L)", color="Temperature", title = "")
 
+#ggsave(here("workshop", "figures","f_data_new.png"),
 ggsave(here("workshop", "figures","f_data.png"),
        f_data,
        width = 3,
