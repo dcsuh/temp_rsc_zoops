@@ -24,6 +24,8 @@ mort <- readRDS(here("raw_data/main_mort_edit.rds"))
 
 ```{r}
 mort %<>% filter(exposed==1 & temp %in% const_temp)
+foraging %<>% mutate(temp = as.factor(temp),
+                     resource = as.factor(resource))
 ```
 
 
@@ -31,42 +33,37 @@ mort %<>% filter(exposed==1 & temp %in% const_temp)
 body size ANOVA
 ```{r}
 size_aov <- aov(mm ~ resource + temp, data = foraging)
-#size_fact_aov <- aov(mm ~ as.factor(resource) + as.factor(temp), data = foraging)
-size_aov_int <- aov(mm ~ resource * temp, data = foraging)
-#size_fact_aov_int <- aov(mm ~ as.factor(resource) * as.factor(temp), data = foraging)
+size_aov_int <- aov(mm ~ resource * temp, data = foraging) #interaction not significant
+
 ```
 
 ```{r}
 summary(size_aov)
-#summary(size_fact_aov)
 summary(size_aov_int)
-#summary(size_fact_aov_int)
 
-AIC(size_aov)
-#AIC(size_fact_aov)
-AIC(size_aov_int)
-#AIC(size_fact_aov_int)
 ```
+
+```{r}
+TukeyHSD(size_aov, which = "temp")
+TukeyHSD(size_aov, which = "resource")
+```
+
 
 
 amt_consumed ANOVA
 ```{r}
-amt_aov <- aov(amt_consumed ~ resource + temp, data = foraging)
-#amt_fact_aov <- aov(amt_consumed ~ as.factor(resource) + as.factor(temp), data = foraging)
+#amt_aov <- aov(amt_consumed ~ resource + temp, data = foraging)
 amt_aov_int <- aov(amt_consumed ~ resource * temp, data = foraging)
-#amt_fact_aov_int <- aov(amt_consumed ~ as.factor(resource) * as.factor(temp), data = foraging)
 ```
 
 ```{r}
-summary(amt_aov)
-#summary(amt_fact_aov)
+#summary(amt_aov)
 summary(amt_aov_int)
-#summary(amt_fact_aov_int)
+```
 
-AIC(amt_aov)
-#AIC(amt_fact_aov)
-AIC(amt_aov_int)
-#AIC(amt_fact_aov_int)
+```{r}
+TukeyHSD(amt_aov_int, which = "temp")
+TukeyHSD(amt_aov_int, which = "resource")
 ```
 
 
@@ -74,12 +71,14 @@ AIC(amt_aov_int)
 
 prob infection glm
 ```{r}
-inf_glm <- glm(inf ~ as.numeric(temp) + as.numeric(resource), family = binomial, data = mort)
+#inf_glm <- glm(inf ~ as.numeric(temp) + as.numeric(resource), family = binomial, data = mort)
+#inf_glm <- glm(inf ~ as.factor(temp) + as.factor(resource), family = binomial, data = mort)
 inf_glm_int <- glm(inf ~ as.numeric(temp) * as.numeric(resource), family = binomial, data = mort)
+#inf_glm_int <- glm(inf ~ as.factor(temp) * as.factor(resource), family = binomial, data = mort)
 ```
 
 ```{r}
-summary(inf_glm)
+#summary(inf_glm)
 summary(inf_glm_int)
 ```
 
