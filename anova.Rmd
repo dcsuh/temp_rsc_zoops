@@ -31,59 +31,46 @@ mort %<>% filter(exposed==1 & temp %in% const_temp)
 body size ANOVA
 ```{r}
 size_aov <- aov(mm ~ resource + temp, data = foraging)
-size_fact_aov <- aov(mm ~ as.factor(resource) + as.factor(temp), data = foraging)
+#size_fact_aov <- aov(mm ~ as.factor(resource) + as.factor(temp), data = foraging)
 size_aov_int <- aov(mm ~ resource * temp, data = foraging)
-size_fact_aov_int <- aov(mm ~ as.factor(resource) * as.factor(temp), data = foraging)
+#size_fact_aov_int <- aov(mm ~ as.factor(resource) * as.factor(temp), data = foraging)
 ```
 
 ```{r}
 summary(size_aov)
-summary(size_fact_aov)
+#summary(size_fact_aov)
 summary(size_aov_int)
-summary(size_fact_aov_int)
+#summary(size_fact_aov_int)
 
 AIC(size_aov)
-AIC(size_fact_aov)
+#AIC(size_fact_aov)
 AIC(size_aov_int)
-AIC(size_fact_aov_int)
+#AIC(size_fact_aov_int)
 ```
 
 
 amt_consumed ANOVA
 ```{r}
 amt_aov <- aov(amt_consumed ~ resource + temp, data = foraging)
-amt_fact_aov <- aov(amt_consumed ~ as.factor(resource) + as.factor(temp), data = foraging)
+#amt_fact_aov <- aov(amt_consumed ~ as.factor(resource) + as.factor(temp), data = foraging)
 amt_aov_int <- aov(amt_consumed ~ resource * temp, data = foraging)
-amt_fact_aov_int <- aov(amt_consumed ~ as.factor(resource) * as.factor(temp), data = foraging)
+#amt_fact_aov_int <- aov(amt_consumed ~ as.factor(resource) * as.factor(temp), data = foraging)
 ```
 
 ```{r}
 summary(amt_aov)
-summary(amt_fact_aov)
+#summary(amt_fact_aov)
 summary(amt_aov_int)
-summary(amt_fact_aov_int)
+#summary(amt_fact_aov_int)
 
 AIC(amt_aov)
-AIC(amt_fact_aov)
+#AIC(amt_fact_aov)
 AIC(amt_aov_int)
-AIC(amt_fact_aov_int)
+#AIC(amt_fact_aov_int)
 ```
 
 
 
-prob infection ANOVA - not sure if this works since response is a binomial
-```{r}
-inf_aov <- aov(inf ~ resource + temp, data = mort)
-inf_aov_int <- aov(inf ~ resource * temp, data = mort)
-```
-
-```{r}
-summary(inf_aov)
-summary(inf_aov_int)
-
-AIC(inf_aov)
-AIC(inf_aov_int)
-```
 
 prob infection glm
 ```{r}
@@ -96,9 +83,6 @@ summary(inf_glm)
 summary(inf_glm_int)
 ```
 
-```{r}
-wilcox.test
-```
 
 
 
