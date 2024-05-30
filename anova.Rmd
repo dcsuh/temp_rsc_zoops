@@ -48,6 +48,17 @@ TukeyHSD(size_aov, which = "temp")
 TukeyHSD(size_aov, which = "resource")
 ```
 
+body size lm
+```{r}
+size_lm <- lm(mm ~ as.numeric(resource) + as.numeric(temp), data = foraging)
+size_lm_int <- lm(mm ~ as.numeric(resource) * as.numeric(temp), data = foraging) #interaction not significant
+```
+
+```{r}
+summary(size_lm)
+summary(size_lm_int) #interaction not significant
+```
+
 
 
 amt_consumed ANOVA
@@ -65,6 +76,19 @@ summary(amt_aov_int)
 TukeyHSD(amt_aov_int, which = "temp")
 TukeyHSD(amt_aov_int, which = "resource")
 ```
+
+linear models for amount consumed
+```{r}
+amt_lm <- lm(amt_consumed ~ as.numeric(resource) + as.numeric(temp), data = foraging)
+amt_lm_int <- lm(amt_consumed ~ as.numeric(resource) * as.numeric(temp), data = foraging)
+```
+
+```{r}
+summary(amt_lm)
+summary(amt_lm_int)
+```
+
+
 
 
 

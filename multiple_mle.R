@@ -69,7 +69,11 @@ seq_data %<>% mutate(est_1_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length
                        (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
                      est_1_u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
                                        temp == 20 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
-                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
+                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)),
+                     est_1_arr = m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp)),
+                     est_1_rho = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_rho_15*resource),
+                                         temp == 20 ~ m5b_u_prime*exp(m5b_rho_20*resource),
+                                         temp == 25 ~ m5b_u_prime*exp(m5b_rho_25*resource)))
 
 seq_data %<>% mutate(m5_1_end = mapply(m4_sim, 
                                        R=resource*life_vol/1000, 
@@ -106,7 +110,11 @@ seq_data %<>% mutate(est_1.1_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(leng
                        (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
                      est_1.1_u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
                                        temp == 20 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
-                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
+                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)),
+                     est_1.1_arr = m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp)),
+                     est_1.1_rho = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_rho_15*resource),
+                                           temp == 20 ~ m5b_u_prime*exp(m5b_rho_20*resource),
+                                           temp == 25 ~ m5b_u_prime*exp(m5b_rho_25*resource)))
 
 seq_data %<>% mutate(m5_1.1_end = mapply(m4_sim, 
                                          R=resource*life_vol/1000, 
@@ -143,7 +151,11 @@ seq_data %<>% mutate(est_0.5_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(leng
                        (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
                      est_0.5_u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
                                        temp == 20 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
-                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
+                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)),
+                     est_0.5_arr = m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp)),
+                     est_0.5_rho = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_rho_15*resource),
+                                           temp == 20 ~ m5b_u_prime*exp(m5b_rho_20*resource),
+                                           temp == 25 ~ m5b_u_prime*exp(m5b_rho_25*resource)))
 
 seq_data %<>% mutate(m5_0.5_end = mapply(m4_sim, 
                                          R=resource*life_vol/1000, 
@@ -160,17 +172,32 @@ seq_data %<>% mutate(m5_0.5_end = mapply(m4_sim,
                                          arr_t_u = m5b_arr_u,
                                          h = m5b_h*exp(m5b_w*temp),
                                          temp = temp))
-
+#f
 seq_data %>% ggplot(., aes(x=est_1_rate, y=est_1.1_rate)) + geom_point() + geom_abline()
 seq_data %>% ggplot(., aes(x=est_1_rate, y=est_0.5_rate)) + geom_point() + geom_abline()
 seq_data %>% ggplot(., aes(x=est_1.1_rate, y=est_0.5_rate)) + geom_point() + geom_abline()
 
+#arr
+seq_data %>% ggplot(., aes(x=est_1_arr, y=est_1.1_arr)) + geom_point() + geom_abline()
+seq_data %>% ggplot(., aes(x=est_1_arr, y=est_0.5_arr)) + geom_point() + geom_abline()
+seq_data %>% ggplot(., aes(x=est_1.1_arr, y=est_0.5_arr)) + geom_point() + geom_abline()
 
+#rho
+seq_data %>% ggplot(., aes(x=est_1_rho, y=est_1.1_rho)) + geom_point() + geom_abline()
+seq_data %>% ggplot(., aes(x=est_1_rho, y=est_0.5_rho)) + geom_point() + geom_abline()
+seq_data %>% ggplot(., aes(x=est_1.1_rho, y=est_0.5_rho)) + geom_point() + geom_abline()
+
+#arr X rho
+seq_data %>% ggplot(., aes(x=est_1_arr*est_1_rho, y=est_1.1_arr*est_1.1_rho)) + geom_point() + geom_abline()
+seq_data %>% ggplot(., aes(x=est_1_arr*est_1_rho, y=est_0.5_arr*est_0.5_rho)) + geom_point() + geom_abline()
+seq_data %>% ggplot(., aes(x=est_1.1_arr*est_1.1_rho, y=est_0.5_arr*est_0.5_rho)) + geom_point() + geom_abline()
+
+#prev
 seq_data %>% ggplot(., aes(x=m5_1_end, y=m5_1.1_end)) + geom_point() + geom_abline()
 seq_data %>% ggplot(., aes(x=m5_1_end, y=m5_0.5_end)) + geom_point() + geom_abline()
 seq_data %>% ggplot(., aes(x=m5_1.1_end, y=m5_0.5_end)) + geom_point() + geom_abline()
 
-
+#u
 seq_data %>% ggplot(., aes(x=est_1_u, y=est_1.1_u, color = temp)) + geom_point() + geom_abline() + scale_color_viridis_c()
 seq_data %>% ggplot(., aes(x=est_1_u, y=est_0.5_u, color = temp)) + geom_point() + geom_abline() + scale_color_viridis_c()
 seq_data %>% ggplot(., aes(x=est_1.1_u, y=est_0.5_u, color = temp)) + geom_point() + geom_abline() + scale_color_viridis_c()
