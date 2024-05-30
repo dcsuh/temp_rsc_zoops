@@ -95,7 +95,8 @@ m0_ll <- function(f){
   m0_end <- as.data.frame(mapply(m0_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol))
   colnames(m0_end) <- "m0_end"
   data$end <- m0_end$m0_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -172,7 +173,8 @@ m1_ll <- function(f){
                                  length=data$mm, gamma=2))
   colnames(m1_end) <- "m1_end"
   data$end <- m1_end$m1_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -256,7 +258,8 @@ m2_ll <- function(f, arr_t){
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp))
   colnames(m2_end) <- "m2_end"
   data$end <- m2_end$m2_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -352,7 +355,8 @@ m3_ll <- function(f, h){
                                  length=data$mm, gamma=2, h=h))
   colnames(output) <- "end"
   data$end <- output$end
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -438,7 +442,8 @@ m3a_ll <- function(f, k){
                                  length=data$mm, gamma=2, k=k))
   colnames(output) <- "end"
   data$end <- output$end
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -523,7 +528,8 @@ m4_ll <- function(f, arr_t, h){
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h))
   colnames(m4_end) <- "m4_end"
   data$end <- m4_end$m4_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -607,7 +613,8 @@ m4a_ll <- function(f, arr_t, k){
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, k=k))
   colnames(output) <- "end"
   data$end <- output$end
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 

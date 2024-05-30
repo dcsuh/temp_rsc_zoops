@@ -106,7 +106,7 @@ m6_ll <- function(f, arr_t, h_15, h_20, h_25){
 ```
 
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 m6_f_fit <- mle2(m6_ll,
@@ -150,7 +150,7 @@ m6a_ll <- function(f, arr_t, h){
 ```
 
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 m6a_f_fit <- mle2(m6a_ll,
@@ -196,7 +196,7 @@ m6b_ll <- function(f, arr_t, h, w){
 ```
 
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 m6b_f_fit <- mle2(m6b_ll,
@@ -230,7 +230,8 @@ m6c_ll <- function(f, arr_t, h, w){
                                  h=h*exp(w*data$temp)))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
