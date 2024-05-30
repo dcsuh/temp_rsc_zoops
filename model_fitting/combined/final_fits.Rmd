@@ -954,15 +954,17 @@ saveRDS(m5_u_f_fit, file = here("mle","final","m5_fit_alt.rds"))
 m5a_profile <- readRDS(file = here("mle", "final", "m5a_profile_fit.rds"))
 coef(m5a_profile)
 
-u_m5a <- coef(m5a_profile)[1]
-f_m5a <- coef(m5a_profile)[2]
-arr_t_f_m5a <- coef(m5a_profile)[3]
-arr_t_u_m5a <- coef(m5a_profile)[4]
-h_m5a <- coef(m5a_profile)[5]
-w_m5a <- coef(m5a_profile)[6]
-rho_15_m5a <- coef(m5a_profile)[7]
-rho_20_m5a <- coef(m5a_profile)[8]
-rho_25_m5a <- coef(m5a_profile)[9]
+adjust_factor <- 1
+
+u_m5a <- coef(m5a_profile)[1]*adjust_factor
+f_m5a <- coef(m5a_profile)[2]*adjust_factor
+arr_t_f_m5a <- coef(m5a_profile)[3]*adjust_factor
+arr_t_u_m5a <- coef(m5a_profile)[4]*adjust_factor
+h_m5a <- coef(m5a_profile)[5]*adjust_factor
+w_m5a <- coef(m5a_profile)[6]*adjust_factor
+rho_15_m5a <- coef(m5a_profile)[7]*adjust_factor
+rho_20_m5a <- coef(m5a_profile)[8]*adjust_factor
+rho_25_m5a <- coef(m5a_profile)[9]*adjust_factor
 
 ```
 
@@ -1053,13 +1055,15 @@ m5a_u_f_fit <- mle2(m5a_ll, start=list(u = u_m5a,
 
 
 
+
+
 end_time <- Sys.time()
 end_time - start_time
 
 
 coef(m5a_u_f_fit)
 
-saveRDS(m5a_u_f_fit, file = here("mle","final","m5a_fit_alt2.rds"))
+#saveRDS(m5a_u_f_fit, file = here("mle","final","m5a_fit_alt2.rds"))
 ```
 
 
