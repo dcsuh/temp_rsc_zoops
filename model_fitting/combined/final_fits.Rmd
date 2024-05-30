@@ -987,12 +987,13 @@ m5a_ll <- function(u, f, arr_t_f, arr_t_u, h, w, rho_15, rho_20, rho_25){
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
   data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
                  sd = sd(data$resid, na.rm = T), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   tmp_dataset %<>% filter(exposed==TRUE)
 
