@@ -100,9 +100,9 @@ m0_ll <- function(f){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 }
 ```
 
@@ -178,9 +178,9 @@ m1_ll <- function(f){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 }
 ```
 
@@ -263,9 +263,9 @@ m2_ll <- function(f, arr_t){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 }
 ```
 
@@ -360,9 +360,9 @@ m3_ll <- function(f, h){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 }
 ```
 
@@ -447,9 +447,9 @@ m3a_ll <- function(f, k){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 }
 ```
 
@@ -533,9 +533,9 @@ m4_ll <- function(f, arr_t, h){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 }
 ```
 
@@ -618,9 +618,9 @@ m4a_ll <- function(f, arr_t, k){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 }
 ```
 

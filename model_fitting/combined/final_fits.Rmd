@@ -200,13 +200,14 @@ m1_ll <- function(u, f, arr_t_f, h, w){
   
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -259,13 +260,14 @@ w <- as.numeric(m6c_coef[4])
   
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum_f_m6c <- -sum(nll, na.rm = T)
+    nll_sum_f_m6c <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -318,13 +320,13 @@ w <- m1_coef[5]
   
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum_f_m1 <- -sum(nll, na.rm = T)
+    nll_sum_f_m1 <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -446,13 +448,14 @@ m2_ll <- function(f, u, arr_t_f, arr_t_u, h, w){
                                 temp=data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -578,13 +581,14 @@ m3_ll <- function(f, u, arr_t_f, h, w, rho){
                                 temp=data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -726,13 +730,14 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
                                 temp = data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 #  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
@@ -808,7 +813,7 @@ m4_runtime
 coef(m4_u_f_fit)
 
 #saveRDS(m4_u_f_fit, file = here("mle","final","m4_fit.rds"))
-#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit.rds"))
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit.rds"))
 saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
 saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit.rds"))
 ```
@@ -850,7 +855,8 @@ m5_ll <- function(f, u_15, u_20, u_25, arr_t_f, h, w, rho_15, rho_20, rho_25){
                                 temp = data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -991,8 +997,8 @@ m5a_ll <- function(u, f, arr_t_f, arr_t_u, h, w, rho_15, rho_20, rho_25){
   
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  #data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 

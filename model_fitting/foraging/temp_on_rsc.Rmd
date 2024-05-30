@@ -188,9 +188,9 @@ m6b_ll <- function(f, arr_t, h, w){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 
 }
 ```
