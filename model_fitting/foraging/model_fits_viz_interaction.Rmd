@@ -1354,7 +1354,7 @@ seq_data %<>% mutate(m6c_Z_end = mapply(m4_sim,
 
 
 ```{r, eval=F}
-#saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
+saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
 ```
 
 
