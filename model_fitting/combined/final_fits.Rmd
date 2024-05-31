@@ -695,27 +695,23 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
 ```
 
 
-```{r, eval=F}
-m4_coef
 
-adjust_factor <- 1
-
-f <- m4_coef[1]*adjust_factor
-u <- m4_coef[2]*adjust_factor
-arr_t_f <- m4_coef[3]*adjust_factor
-arr_t_u <- m4_coef[4]*adjust_factor
-h <- m4_coef[5]*adjust_factor
-w <- m4_coef[6]*adjust_factor
-rho <- m4_coef[7]*adjust_factor
-
-
-```
 
 
 
 
 ```{r, m4_ll}
 m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
+  
+  if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0) {
+  
+      return(NA)
+  
+  } 
+  
+  else {  
+  u <- u/100000
+  
   data <- tmp
   R_end <- as.data.frame(mapply(m4_sim, 
                                 R=data$amt_init*fora_vol/1000, 
@@ -765,29 +761,50 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
   nll_sum <- nll_sum + -sum(exp_data$ll)
   return(nll_sum)
+  
+  }
 }
 ```
 
 Now we use the optimizer
 
+```{r, eval=F}
+m4_fit <- readRDS(file = here("mle","final","m4_fit.rds"))
+m4_coef <- coef(m4_fit)
+
+adjust_factor <- 1
+
+m4_f <- m4_coef[1]*adjust_factor
+m4_u <- m4_coef[2]*adjust_factor
+m4_arr_t_f <- m4_coef[3]*adjust_factor
+m4_arr_t_u <- m4_coef[4]*adjust_factor
+m4_h <- m4_coef[5]*adjust_factor
+m4_w <- m4_coef[6]*adjust_factor
+m4_rho <- m4_coef[7]*adjust_factor
+
+
+```
+
 ```{r, m4_mle, eval=F}
+adjust_factor <- 1
+
 start_time <- Sys.time()
 tmp <- data
-m4_u_f_fit <- mle2(m4_ll, start=list(u = 0.0001, 
-                                     f=30, 
-                                     arr_t_f=30, 
-                                     arr_t_u=65, 
-                                     h=16000,
-                                     w=0.1,
-                                     rho=0.1), 
-                     control=list(parscale = c(u = 0.0001, 
-                                               f=1, 
-                                               arr_t_f=10, 
-                                               arr_t_u=10, 
-                                               h=10000,
-                                               w=0.1,
-                                               rho=0.1)),
-                     skip.hessian=F, method="BFGS")
+m4_u_f_fit <- mle2(m4_ll, start=list(u = 21*adjust_factor, 
+                                     f=5.5*adjust_factor,
+                                     arr_t_f=76*adjust_factor,
+                                     arr_t_u=31*adjust_factor,
+                                     h=790*adjust_factor,
+                                     w=-0.002*adjust_factor,
+                                     rho=1247*adjust_factor),
+                     control=list(parscale = c(u = 21*adjust_factor, 
+                                     f=5.5*adjust_factor,
+                                     arr_t_f=76*adjust_factor,
+                                     arr_t_u=31*adjust_factor,
+                                     h=790*adjust_factor,
+                                     w=-0.002*adjust_factor,
+                                     rho=1247*adjust_factor), maxit = 10000),
+                     skip.hessian=F, method="Nelder-Mead")
 
 # m4_u_f_fit <- mle2(m4_ll, start=list(u = 0.0001, 
 #                                      f=1, 
@@ -814,10 +831,144 @@ coef(m4_u_f_fit)
 
 #saveRDS(m4_u_f_fit, file = here("mle","final","m4_fit.rds"))
 saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit.rds"))
-saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
-saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit_log.rds"))
+# saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
+# saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit.rds"))
 ```
 
+```{r, eval=F}
+m4_coef
+
+adjust_factor <- 1.1
+
+m4_f <- m4_coef[1]*adjust_factor
+m4_u <- m4_coef[2]*adjust_factor
+m4_arr_t_f <- m4_coef[3]*adjust_factor
+m4_arr_t_u <- m4_coef[4]*adjust_factor
+m4_h <- m4_coef[5]*adjust_factor
+m4_w <- m4_coef[6]*adjust_factor
+m4_rho <- m4_coef[7]*adjust_factor
+
+
+```
+
+
+```{r, m4_mle, eval=F}
+adjust_factor <- 1.1
+
+start_time <- Sys.time()
+tmp <- data
+m4_u_f_fit <- mle2(m4_ll,  start=list(u = 21*adjust_factor, 
+                                     f=5.5*adjust_factor,
+                                     arr_t_f=76*adjust_factor,
+                                     arr_t_u=31*adjust_factor,
+                                     h=790*adjust_factor,
+                                     w=-0.002*adjust_factor,
+                                     rho=1247*adjust_factor),
+                     control=list(parscale = c(u = 21*adjust_factor, 
+                                     f=5.5*adjust_factor,
+                                     arr_t_f=76*adjust_factor,
+                                     arr_t_u=31*adjust_factor,
+                                     h=790*adjust_factor,
+                                     w=-0.002*adjust_factor,
+                                     rho=1247*adjust_factor), maxit = 10000),
+                     skip.hessian=F, method="Nelder-Mead")
+
+# m4_u_f_fit <- mle2(m4_ll, start=list(u = 0.0001, 
+#                                      f=1, 
+#                                      arr_t_f=10, 
+#                                      arr_t_u=10, 
+#                                      h=10000,
+#                                      w=0.1,
+#                                      rho=0.1), 
+#                      control=list(parscale = c(u = 0.0001, 
+#                                                f=1, 
+#                                                arr_t_f=10, 
+#                                                arr_t_u=10, 
+#                                                h=10000,
+#                                                w=0.1,
+#                                                rho=0.1)),
+#                      skip.hessian=F, method="L-BFGS-B", 
+#                    lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0), 
+#                    upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf))
+end_time <- Sys.time()
+m4_runtime <- end_time - start_time
+m4_runtime
+
+coef(m4_u_f_fit)
+
+
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit_log.rds"))
+
+```
+
+```{r, eval=F}
+m4_coef
+
+adjust_factor <- 0.5
+
+m4_f <- m4_coef[1]*adjust_factor
+m4_u <- m4_coef[2]*adjust_factor
+m4_arr_t_f <- m4_coef[3]*adjust_factor
+m4_arr_t_u <- m4_coef[4]*adjust_factor
+m4_h <- m4_coef[5]*adjust_factor
+m4_w <- m4_coef[6]*adjust_factor
+m4_rho <- m4_coef[7]*adjust_factor
+
+
+```
+
+
+```{r, m4_mle, eval=F}
+adjust_factor <- 0.5
+
+start_time <- Sys.time()
+tmp <- data
+m4_u_f_fit <- mle2(m4_ll, start=list(u = 21*adjust_factor, 
+                                     f=5.5*adjust_factor,
+                                     arr_t_f=76*adjust_factor,
+                                     arr_t_u=31*adjust_factor,
+                                     h=790*adjust_factor,
+                                     w=-0.002*adjust_factor,
+                                     rho=1247*adjust_factor),
+                     control=list(parscale = c(u = 21*adjust_factor, 
+                                     f=5.5*adjust_factor,
+                                     arr_t_f=76*adjust_factor,
+                                     arr_t_u=31*adjust_factor,
+                                     h=790*adjust_factor,
+                                     w=-0.002*adjust_factor,
+                                     rho=1247*adjust_factor), maxit=10000),
+                     skip.hessian=F, method="Nelder-Mead")
+
+# m4_u_f_fit <- mle2(m4_ll, start=list(u = 0.0001, 
+#                                      f=1, 
+#                                      arr_t_f=10, 
+#                                      arr_t_u=10, 
+#                                      h=10000,
+#                                      w=0.1,
+#                                      rho=0.1), 
+#                      control=list(parscale = c(u = 0.0001, 
+#                                                f=1, 
+#                                                arr_t_f=10, 
+#                                                arr_t_u=10, 
+#                                                h=10000,
+#                                                w=0.1,
+#                                                rho=0.1)),
+#                      skip.hessian=F, method="L-BFGS-B", 
+#                    lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0), 
+#                    upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf))
+end_time <- Sys.time()
+m4_runtime <- end_time - start_time
+m4_runtime
+
+coef(m4_u_f_fit)
+
+
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit_log.rds"))
+
+```
 
 # Interaction Model
 

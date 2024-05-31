@@ -467,7 +467,7 @@ seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
 }
 
-algae_plot(f_seq, "m1_consumed")
+#algae_plot(f_seq, "m1_consumed")
 ```
 
 
@@ -645,8 +645,8 @@ a4 <- algae_plot_diff(f_seq, "m6c_diff") + theme(plot.title = element_blank(), l
 
 algae_plots_diff <- a1 / a2 / a3 / a4
 
-ggsave(here("workshop", "figures","algae_plots_diff.png"),
-#ggsave(here("workshop", "figures","algae_plots_diff_new.png"),
+#ggsave(here("workshop", "figures","algae_plots_diff.png"),
+ggsave(here("workshop", "figures","algae_plots_diff_new.png"),
        algae_plots_diff,
        width = 3,
        height = 8,

@@ -24,7 +24,8 @@ library(patchwork)
 m1_u_f_fit <- readRDS(file = here("mle", "final", "m1_fit.rds"))
 m2_u_f_fit <- readRDS(file = here("mle", "final", "m2_fit.rds"))
 m3_u_f_fit <- readRDS(file = here("mle", "final", "m3_fit.rds"))
-m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
+#m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
+m4_u_f_fit <- readRDS(file = here("model_fitting", "m4_1_fit.rds"))
 m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
 #m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
 m5b_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt2.rds"))
@@ -513,6 +514,8 @@ seq_data %<>% mutate(rate_mean_ml_day=rate_len_mean*60*24,
 ```{r}
 #generated from here("model_fitting", "foraging", "best_fit_f.Rmd")
 best_f <- readRDS(here("mle","update","best_f_fit.rds")) # full model with exponential effect of temp on handling time
+best_f <- readRDS(here("mle", "m6c_f_fit.rds")) # full model with exponential effect of temp on handling time
+
 
 best_f_coef <- coef(best_f)
 

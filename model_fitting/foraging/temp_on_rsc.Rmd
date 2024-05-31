@@ -262,3 +262,61 @@ coef(m6c_f_fit)
 saveRDS(m6c_f_fit, file = here("mle","m6c_f_fit.rds"))
 ```
 
+```{r}
+adjust_factor <- 1.1
+
+start_time <- Sys.time()
+tmp <- data
+m6c_f_fit <- mle2(m6c_ll,
+                skip.hessian = T,
+                start=list(f=10*adjust_factor, 
+                           arr_t=50*adjust_factor, 
+                           h=10*adjust_factor,
+                           w=0.1*adjust_factor),
+                method = "L-BFGS-B",
+                lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10*adjust_factor, 
+                           arr_t=50*adjust_factor, 
+                           h=10*adjust_factor,
+                           w=0.1*adjust_factor), maxit=10000))
+end_time <- Sys.time()
+m6c_runtime <- end_time-start_time
+m6c_runtime
+
+coef(m6c_f_fit)
+
+saveRDS(m6c_f_fit, file = here("mle","m6c_f_fit_1.1.rds"))
+```
+
+
+```{r}
+adjust_factor <- 0.5
+
+start_time <- Sys.time()
+tmp <- data
+m6c_f_fit <- mle2(m6c_ll,
+                skip.hessian = T,
+                start=list(f=10*adjust_factor, 
+                           arr_t=50*adjust_factor, 
+                           h=10*adjust_factor,
+                           w=0.1*adjust_factor),
+                method = "L-BFGS-B",
+                lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10*adjust_factor, 
+                           arr_t=50*adjust_factor, 
+                           h=10*adjust_factor,
+                           w=0.1*adjust_factor), maxit=10000))
+end_time <- Sys.time()
+m6c_runtime <- end_time-start_time
+m6c_runtime
+
+coef(m6c_f_fit)
+
+saveRDS(m6c_f_fit, file = here("mle","m6c_f_fit_0.5.rds"))
+```
+
+
+
+
