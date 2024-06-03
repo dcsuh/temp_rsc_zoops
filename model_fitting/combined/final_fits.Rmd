@@ -732,6 +732,36 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
 ```
 
 
+```{r}
+m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=f,
+              u=u*exp(arr_t_u*(1/ref_t - 1/temp)),
+              length = length,
+              gamma = gamma,
+              Z = Z,
+              ref_t = ref_t,
+              arr_t_f = arr_t_f,
+              arr_t_u = arr_t_u,
+              h = h,
+              temp = temp)
+  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+  
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+
+  return(end_data)
+}
+```
+
 
 
 
@@ -763,11 +793,8 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
                                 ref_t=ref_t,
                                 arr_t_f=arr_t_f,
                                 arr_t_u=arr_t_u,
-                                h=h,
-                                temp = data$temp,
-                                resource = data$resource,
-                                w = w,
-                                rho = rho))
+                                h=h*exp(data$temp*w),
+                                temp = data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
@@ -787,18 +814,15 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
                                 R=exp_data$resource*life_vol/1000, 
                                 time=exp_data$time, 
                                 f=f/life_vol, 
-                                u=u/100000, 
+                                u=(u/100000)*exp(exp_data$resource*rho), 
                                 length = exp_data$life_mm, 
                                 gamma=gamma, 
                                 Z=spore_conc*life_vol,
                                 ref_t=ref_t,
                                 arr_t_f=arr_t_f,
                                 arr_t_u=arr_t_u,
-                                h=h,
-                                temp=exp_data$temp,
-                                resource=exp_data$resource,
-                                w = w,
-                                rho = rho))
+                                h=h*exp(exp_data$temp*w),
+                                temp=exp_data$temp))
 
   colnames(I_end) <- "I_end"
   
@@ -841,16 +865,16 @@ m4_u_f_fit <- mle2(m4_ll, start=list(u = 21*adjust_factor,
                                      f=5.5*adjust_factor,
                                      arr_t_f=76*adjust_factor,
                                      arr_t_u=31*adjust_factor,
-                                     h=790*adjust_factor,
+                                     h=16000*adjust_factor,
                                      w=-0.002*adjust_factor,
-                                     rho=1.247*adjust_factor),
+                                     rho=0.1*adjust_factor),
                      control=list(parscale = c(u = 21*adjust_factor, 
                                      f=5.5*adjust_factor,
                                      arr_t_f=76*adjust_factor,
                                      arr_t_u=31*adjust_factor,
-                                     h=790*adjust_factor,
+                                     h=1000*adjust_factor,
                                      w=-0.002*adjust_factor,
-                                     rho=1.247*adjust_factor), maxit = 10000),
+                                     rho=0.1*adjust_factor), maxit = 10000),
                      skip.hessian=F, method="Nelder-Mead")
 
 
