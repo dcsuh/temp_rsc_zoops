@@ -11,6 +11,7 @@ library(patchwork)
 
 mean_time <- mean(data$time/60/24)
 
+theme_set(theme_bw(base_size = 12))
 
 
 seq_plot <- function(seq_data, rate){
@@ -45,16 +46,18 @@ algae_plot_diff <- function(seq_data, var){
   seq_data %>% filter(temp %in% const_temp) %>%
     ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) +
     geom_line(size=1) +
+    geom_point(aes(x=amt_init_mean,
+                   y=amt_diff,
+                   group = as.factor(temp),
+                   color = as.factor(temp)),
+               size=3) +
     labs(x = "Resource (mgC/L)",
          y = "Resource difference (mgC/L)",
          color = "Temp") +
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
     guides(color = guide_legend(reverse=T)) + 
     #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-    scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
-}
-
-prev_plot <- function(seq_data, var){
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))prev_plot <- function(seq_data, var){
   seq_data %>% filter(temp %in% const_temp) %>% 
     ggplot(.,aes(x=resource, 
                  y=!!sym(var), 
@@ -954,46 +957,47 @@ seq_data %<>% mutate(phi_R_0.5 = mapply(m5_sim,
 
 seq_data %<>%
   mutate(amt_diff = amt_init_mean-amt_rem_mean,
-         phi_1_diff = resource - phi_R_1/50*1000,
-         phi_1.1_diff = resource - phi_R_1.1/50*1000,
-         phi_0.5_diff = resource - phi_R_0.5/50*1000)
+         phi_1_diff = resource - phi_R_1/15*1000,
+         phi_1.1_diff = resource - phi_R_1.1/15*1000,
+         phi_0.5_diff = resource - phi_R_0.5/15*1000)
+
+prev_1 <- prev_plot(seq_data, "phi_1_end") + labs(title = "reference") + theme(legend.position = "none")
+rate_1 <- seq_plot(seq_data, "phi_1_rate") + labs(title = "reference") + theme(legend.position = "none")
+diff_1 <- algae_plot_diff(seq_data, "phi_1_diff") + labs(title = "reference")
+susc_1 <- u_plot(seq_data, "phi_1_u") + labs(title = "reference")
+
+reference <- (rate_1 + diff_1) / (prev_1 + susc_1)
+
+prev_1.1 <- prev_plot(seq_data, "phi_1.1_end") + labs(title = "110% reference") + theme(legend.position = "none")
+rate_1.1 <- seq_plot(seq_data, "phi_1.1_rate") + labs(title = "110% reference") + theme(legend.position = "none")
+diff_1.1 <- algae_plot_diff(seq_data, "phi_1.1_diff") + labs(title = "110% reference")
+susc_1.1 <- u_plot(seq_data, "phi_1.1_u") + labs(title = "110% reference")
+
+reference_1.1 <- (rate_1.1 + diff_1.1) / (prev_1.1 + susc_1.1)
+
+prev_0.5 <- prev_plot(seq_data, "phi_0.5_end") + labs(title = "50% reference") + theme(legend.position = "none")
+rate_0.5 <- seq_plot(seq_data, "phi_0.5_rate") + labs(title = "50% reference") + theme(legend.position = "none")
+diff_0.5 <- algae_plot_diff(seq_data, "phi_0.5_diff") + labs(title = "50% reference")
+susc_0.5 <- u_plot(seq_data, "phi_0.5_u") + labs(title = "50% reference")
+
+reference_0.5 <- (rate_0.5 + diff_0.5) / (prev_0.5 + susc_0.5)
+
+ggsave(here("workshop", "figures","phi_reference.png"),
+       reference,
+       width = 8,
+       height = 8,
+       units = "in")
+
+ggsave(here("workshop", "figures","phi_reference_1.1.png"),
+       reference_1.1,
+       width = 8,
+       height = 8,
+       units = "in")
+
+ggsave(here("workshop", "figures","phi_reference_0.5.png"),
+       reference_0.5,
+       width = 8,
+       height = 8,
+       units = "in")
 
 
-prev_plot(seq_data, "phi_1_end") + labs(title = "reference")
-seq_plot(seq_data, "phi_1_rate") + labs(title = "reference")
-algae_plot_diff(seq_data, "phi_1_diff") + labs(title = "reference")
-u_plot(seq_data, "phi_1_u") + labs(title = "reference")
-
-seq_data %>% 
-  filter(temp %in% const_temp) %>% 
-  ggplot(., aes(x = resource, y = phi_R_1, color = temp, group = as.factor(temp))) +
-  geom_line()
-
-
-
-seq_data %>% 
-  filter(temp %in% const_temp) %>% 
-  ggplot(., aes(x=resource, y=phi_1_u, color = as.factor(temp), group = as.factor(temp))) +
-  geom_line() 
-
-prev_plot(seq_data, "phi_1.1_end") + labs(title = "110% reference")
-seq_plot(seq_data, "phi_1.1_rate") + labs(title = "110% reference")
-algae_plot_diff(seq_data, "phi_1.1_diff") + labs(title = "110% reference")
-u_plot(seq_data, "phi_1.1_u") + labs(title = "110% reference")
-
-
-seq_data %>% 
-  filter(temp %in% const_temp) %>% 
-  ggplot(., aes(x=resource, y=phi_1_u, color = as.factor(temp), group = as.factor(temp))) +
-  geom_line()
-
-prev_plot(seq_data, "phi_0.5_end") + labs(title = "50% reference")
-seq_plot(seq_data, "phi_0.5_rate") + labs(title = "50% reference")
-algae_plot_diff(seq_data, "phi_0.5_diff") + labs(title = "50% reference")
-u_plot(seq_data, "phi_0.5_u") + labs(title = "50% reference")
-
-
-seq_data %>% 
-  filter(temp %in% const_temp) %>% 
-  ggplot(., aes(x=resource, y=phi_0.5_u, color = as.factor(temp), group = as.factor(temp))) +
-  geom_line()
