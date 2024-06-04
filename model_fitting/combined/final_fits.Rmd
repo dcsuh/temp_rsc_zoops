@@ -856,7 +856,46 @@ m4_rho <- m4_coef[7]*adjust_factor
 
 ```
 
-```{r, m4_mle, eval=F}
+```{r}
+adjust_factor <- 1
+
+start_time <- Sys.time()
+tmp <- data
+m4_u_f_fit <- mle2(m4_ll, start=list(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor),
+                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor), maxit = 10000),
+                     skip.hessian=F, method="Nelder-Mead")
+
+
+end_time <- Sys.time()
+m4_runtime <- end_time - start_time
+m4_runtime
+
+coef(m4_u_f_fit)
+
+
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_coef_fit.rds"))
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_coef_log_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("mle","final","m4_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit_log.rds"))
+# saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
+# saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit.rds"))
+```
+
+
+```{r}
 adjust_factor <- 1
 
 start_time <- Sys.time()
@@ -894,25 +933,25 @@ saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit.rds"))
 
 
 
-```{r, m4_mle, eval=F}
+```{r}
 adjust_factor <- 1.1
 
 start_time <- Sys.time()
 tmp <- data
-m4_u_f_fit <- mle2(m4_ll,  start=list(u = 21*adjust_factor, 
-                                     f=5.5*adjust_factor,
-                                     arr_t_f=76*adjust_factor,
-                                     arr_t_u=31*adjust_factor,
-                                     h=790*adjust_factor,
-                                     w=-0.002*adjust_factor,
-                                     rho=1.247*adjust_factor),
-                     control=list(parscale = c(u = 21*adjust_factor, 
-                                     f=5.5*adjust_factor,
-                                     arr_t_f=76*adjust_factor,
-                                     arr_t_u=31*adjust_factor,
-                                     h=790*adjust_factor,
-                                     w=-0.002*adjust_factor,
-                                     rho=1.247*adjust_factor), maxit = 10000),
+m4_u_f_fit <- mle2(m4_ll,  start=list(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor),
+                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor), maxit = 10000),
                      skip.hessian=F, method="Nelder-Mead")
 
 
@@ -923,7 +962,7 @@ m4_runtime
 coef(m4_u_f_fit)
 
 
-saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_coef_fit.rds"))
 #saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit_log.rds"))
 
 ```
@@ -931,25 +970,25 @@ saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
 
 
 
-```{r, m4_mle, eval=F}
+```{r}
 adjust_factor <- 0.5
 
 start_time <- Sys.time()
 tmp <- data
-m4_u_f_fit <- mle2(m4_ll, start=list(u = 21*adjust_factor, 
-                                     f=5.5*adjust_factor,
-                                     arr_t_f=76*adjust_factor,
-                                     arr_t_u=31*adjust_factor,
-                                     h=790*adjust_factor,
-                                     w=-0.002*adjust_factor,
-                                     rho=1.247*adjust_factor),
-                     control=list(parscale = c(u = 21*adjust_factor, 
-                                     f=5.5*adjust_factor,
-                                     arr_t_f=76*adjust_factor,
-                                     arr_t_u=31*adjust_factor,
-                                     h=790*adjust_factor,
-                                     w=-0.002*adjust_factor,
-                                     rho=1.247*adjust_factor), maxit=10000),
+m4_u_f_fit <- mle2(m4_ll, start=list(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor),
+                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor), maxit=10000),
                      skip.hessian=F, method="Nelder-Mead")
 
 
@@ -960,7 +999,7 @@ m4_runtime
 coef(m4_u_f_fit)
 
 
-saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit.rds"))
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_coef_fit.rds"))
 #saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit_log.rds"))
 
 ```
