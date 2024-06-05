@@ -59,6 +59,20 @@ summary(size_lm)
 summary(size_lm_int) #interaction not significant
 ```
 
+```{r}
+size_lm_15 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 15))
+size_lm_20 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 20))
+size_lm_25 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 25))
+```
+
+```{r}
+summary(size_lm_15)
+summary(size_lm_20)
+summary(size_lm_25)
+```
+
+
+
 
 
 amt_consumed ANOVA
