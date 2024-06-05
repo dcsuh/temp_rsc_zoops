@@ -380,7 +380,7 @@ We'll include the bootstrapping here
                                       phi=0.1),
                                   maxit=5000),
                                   skip.hessian=F, 
-                                  method="BFGS")
+                                  method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -428,7 +428,7 @@ We'll include the bootstrapping here
                                       phi=0.1),
                                   maxit=5000),
                                   skip.hessian=F, 
-                                  method="BFGS")
+                                  method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -475,7 +475,7 @@ We'll include the bootstrapping here
                                       phi=0.1),
                                   maxit=5000),
                                   skip.hessian=F, 
-                                  method="BFGS")
+                                  method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
