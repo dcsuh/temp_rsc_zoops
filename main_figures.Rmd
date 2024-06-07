@@ -406,7 +406,7 @@ algae_plot_diff(f_seq, "m6c_diff")
 
 Shifted x-axis
 
-```{r, eval=F}
+```{r}
 algae_plot_diff <- function(seq_data, var){
 seq_data %>% filter(temp %in% const_temp) %>%
   ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) +
