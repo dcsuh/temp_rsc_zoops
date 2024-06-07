@@ -1170,6 +1170,51 @@ ggsave(here("workshop", "figures","prev_data.png"),
 
 # 3D plots
 
+
+
+
+
+```{r}
+# u_seq %>% ggplot(., aes(x = resource, y = temp, fill = spores_consumed_m5)) + 
+#   geom_tile() + 
+#   scale_fill_viridis_c(option = "magma") + 
+#   labs(title = "Spores Consumed")
+
+u_seq %>% ggplot(., aes(x = resource, y = temp, z = m5_u, fill = m5_u)) + 
+  geom_tile() + 
+  geom_contour() + 
+  metR::geom_text_contour(stroke = 0.15, label.placer = label_placer_n()) + 
+  scale_fill_viridis_c(option = "mako", direction = 1) + 
+  labs(x = "Resource", y = "Temperature", title = "Per-Spore Susceptibility") +
+  theme(legend.position = "none")
+
+u_seq %>% ggplot(., aes(x = resource, y = temp, z = m5_I_end, fill = m5_I_end)) + 
+  geom_tile() + 
+  geom_contour() + 
+  metR::geom_text_contour(stroke = 0.15, label.placer = label_placer_n()) + 
+  scale_fill_viridis_c(option = "magma", direction = 1) + 
+  labs(x = "Resource", y = "Temperature", title = "Probability of Infection") +
+  theme(legend.position = "none")
+
+
+
+```
+
+
+```{r}
+u_seq %>% ggplot(., aes(x = spores_consumed_m5, y = m5_u, size = m5_I_end, color = temp)) + 
+  geom_point()
+u_seq %>% filter(temp %in% seq(15, 25, by = 1) & resource %in% seq(0.1, 1, by = 0.2)) %>%
+  ggplot(., aes(x = spores_consumed_m5, y = m5_u, 
+                size = m5_I_end, color = temp, shape = as.factor(resource), group = as.factor(temp))) + 
+  geom_point() + 
+  geom_line(size = 1) + 
+  scale_color_viridis_c()
+
+```
+
+
+
 ```{r, eval=F}
 plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m2_I_end, color = ~m2_I_end)
 plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m3_I_end, color = ~m3_I_end)

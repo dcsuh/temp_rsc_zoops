@@ -265,26 +265,47 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_00[[i]] <- mle2(m5_ll, start=list(u = 20,
-                                      f=30, 
-                                      arr_t_f=30, 
-                                      arr_t_u=30,
-                                      h=10000,
-                                      w=-0.1,
-                                      rho=0.1,
-                                      phi=-0.1), 
-                     control=list(parscale = c(u = 20,
-                                      f=1, 
-                                      arr_t_f=10, 
-                                      arr_t_u=10,
-                                      h=100,
-                                      w=0.1,
-                                      rho=0.1,
-                                      phi=0.1),
+      boot_00[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi), 
+                     control=list(parscale = c(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="Nelder-Mead")
+                                  method="BFGS")
+      
+      # boot_00[[i]] <- mle2(m5_ll, start=list(u = 20,
+      #                                 f=30, 
+      #                                 arr_t_f=30, 
+      #                                 arr_t_u=30,
+      #                                 h=10000,
+      #                                 w=-0.1,
+      #                                 rho=0.1,
+      #                                 phi=-0.1), 
+      #                control=list(parscale = c(u = 20,
+      #                                 f=1, 
+      #                                 arr_t_f=10, 
+      #                                 arr_t_u=10,
+      #                                 h=100,
+      #                                 w=0.1,
+      #                                 rho=0.1,
+      #                                 phi=0.1),
+      #                             maxit=5000,
+      #                             reltol=0.00001),
+      #                             skip.hessian=F, 
+      #                             method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -315,26 +336,26 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_01[[i]] <- mle2(m5_ll, start=list(u = 20,
-                                      f=30, 
-                                      arr_t_f=30, 
-                                      arr_t_u=30,
-                                      h=10000,
-                                      w=-0.1,
-                                      rho=0.1,
-                                      phi=-0.1), 
-                     control=list(parscale = c(u = 20,
-                                      f=1, 
-                                      arr_t_f=10, 
-                                      arr_t_u=10,
-                                      h=100,
-                                      w=0.1,
-                                      rho=0.1,
-                                      phi=0.1),
+      boot_01[[i]] <-mle2(m5_ll, start=list(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi), 
+                     control=list(parscale = c(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="Nelder-Mead")
+                                  method="BFGS")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -364,26 +385,26 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_02[[i]] <- mle2(m5_ll, start=list(u = 20,
-                                      f=30, 
-                                      arr_t_f=30, 
-                                      arr_t_u=30,
-                                      h=10000,
-                                      w=-0.1,
-                                      rho=0.1,
-                                      phi=-0.1), 
-                     control=list(parscale = c(u = 20,
-                                      f=1, 
-                                      arr_t_f=10, 
-                                      arr_t_u=10,
-                                      h=100,
-                                      w=0.1,
-                                      rho=0.1,
-                                      phi=0.1),
+      boot_02[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi), 
+                     control=list(parscale = c(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="Nelder-Mead")
+                                  method="BFGS")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -397,7 +418,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 10
+  iterations <- 5
   
   boot_03 <- list()
   
@@ -413,26 +434,26 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_03[[i]] <- mle2(m5_ll, start=list(u = 20,
-                                      f=30, 
-                                      arr_t_f=30, 
-                                      arr_t_u=30,
-                                      h=10000,
-                                      w=-0.1,
-                                      rho=0.1,
-                                      phi=-0.1), 
-                     control=list(parscale = c(u = 20,
-                                      f=1, 
-                                      arr_t_f=10, 
-                                      arr_t_u=10,
-                                      h=100,
-                                      w=0.1,
-                                      rho=0.1,
-                                      phi=0.1),
+      boot_03[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi), 
+                     control=list(parscale = c(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="Nelder-Mead")
+                                  method="BFGS")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -445,7 +466,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 10
+  iterations <- 5
   
   boot_04 <- list()
   
@@ -461,26 +482,26 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_04[[i]] <- mle2(m5_ll, start=list(u = 20,
-                                      f=30, 
-                                      arr_t_f=30, 
-                                      arr_t_u=30,
-                                      h=10000,
-                                      w=-0.1,
-                                      rho=0.1,
-                                      phi=-0.1), 
-                     control=list(parscale = c(u = 20,
-                                      f=1, 
-                                      arr_t_f=10, 
-                                      arr_t_u=10,
-                                      h=100,
-                                      w=0.1,
-                                      rho=0.1,
-                                      phi=0.1),
+      boot_04[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi), 
+                     control=list(parscale = c(u = m5_u*100000,
+                                      f=m5_f, 
+                                      arr_t_f=m5_arr, 
+                                      arr_t_u=m5_arr_u,
+                                      h=m5_h,
+                                      w=m5_w,
+                                      rho=m5_rho,
+                                      phi=m5_phi),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="Nelder-Mead")
+                                  method="BFGS")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -497,11 +518,15 @@ We'll include the bootstrapping here
 beet <- c(boot_01, boot_02, boot_03, boot_04)
 ```
 
+30_060624 - 30 iterations on june 6
+10_060724 <- 10 iterations on june 7
+35_060724 <- 10 iterations on june 7
 
+10_060724a <- 10 iterations on june 7 with new starting conditions
 
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "30_060624.rds"))
-mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "30_060624.rds")))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "10_060724a.rds"))
+mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")))
 
 ```
 
@@ -611,59 +636,51 @@ mod_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
                         arr_u = NA,
                         h = NA,
                         w = NA,
-                        rho_15 = NA,
-                        rho_20 = NA,
-                        rho_25 = NA)
+                        rho = NA,
+                        phi = NA)
 
-mod_quantiles$f[1] <- coef(m5a_u_f_fit)[1]
+mod_quantiles$f[1] <- coef(m5_u_f_fit)[1]
 mod_quantiles$f[2] <- mean(mod_boot_coefs$f)
 mod_quantiles$f[3] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$f[4] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[2]
 
 
-mod_quantiles$u[1] <- coef(m5a_u_f_fit)[2]
+mod_quantiles$u[1] <- coef(m5_u_f_fit)[2]
 mod_quantiles$u[2] <- mean(mod_boot_coefs$u)
 mod_quantiles$u[3] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$u[4] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[2]
 
 
-mod_quantiles$arr[1] <- coef(m5a_u_f_fit)[3]
+mod_quantiles$arr[1] <- coef(m5_u_f_fit)[3]
 mod_quantiles$arr[2] <- mean(mod_boot_coefs$arr)
 mod_quantiles$arr[3] <- quantile(mod_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$arr[4] <- quantile(mod_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$arr_u[1] <- coef(m5a_u_f_fit)[4]
+mod_quantiles$arr_u[1] <- coef(m5_u_f_fit)[4]
 mod_quantiles$arr_u[2] <- mean(mod_boot_coefs$arr_u)
 mod_quantiles$arr_u[3] <- quantile(mod_boot_coefs$arr_u, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$arr_u[4] <- quantile(mod_boot_coefs$arr_u, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$h[1] <- coef(m5a_u_f_fit)[5]
+mod_quantiles$h[1] <- coef(m5_u_f_fit)[5]
 mod_quantiles$h[2] <- mean(mod_boot_coefs$h)
 mod_quantiles$h[3] <- quantile(mod_boot_coefs$h, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$h[4] <- quantile(mod_boot_coefs$h, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$w[1] <- coef(m5a_u_f_fit)[6]
+mod_quantiles$w[1] <- coef(m5_u_f_fit)[6]
 mod_quantiles$w[2] <- mean(mod_boot_coefs$w)
 mod_quantiles$w[3] <- quantile(mod_boot_coefs$w, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$w[4] <- quantile(mod_boot_coefs$w, probs=seq(0.025, 0.975, 0.95))[2]
 
 
-mod_quantiles$rho[1] <- coef(m5a_u_f_fit)[7]
+mod_quantiles$rho[1] <- coef(m5_u_f_fit)[7]
 mod_quantiles$rho[2] <- mean(mod_boot_coefs$rho)
 mod_quantiles$rho[3] <- quantile(mod_boot_coefs$rho, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$rho[4] <- quantile(mod_boot_coefs$rho, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$phi[1] <- coef(m5a_u_f_fit)[8]
+mod_quantiles$phi[1] <- coef(m5_u_f_fit)[8]
 mod_quantiles$phi[2] <- mean(mod_boot_coefs$phi)
 mod_quantiles$phi[3] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$phi[4] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[2]
-
-
-mod_quantiles$rho_25[1] <- coef(m5a_u_f_fit)[9]
-mod_quantiles$rho_25[2] <- mean(mod_boot_coefs$rho_25)
-mod_quantiles$rho_25[3] <- quantile(mod_boot_coefs$rho_25, probs=seq(0.025, 0.975, 0.95))[1]
-mod_quantiles$rho_25[4] <- quantile(mod_boot_coefs$rho_25, probs=seq(0.025, 0.975, 0.95))[2]
-
 ```
 
 
