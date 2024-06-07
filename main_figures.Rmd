@@ -581,6 +581,8 @@ interactive_plots <- i1 / i2 / i3 / i4
 
 
 ```{r}
+f0 <- seq_plot(f_seq, "m1_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f1 <- seq_plot(f_seq, "m2_rate") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f2 <- seq_plot(f_seq, "m3_rate") + 
@@ -589,17 +591,19 @@ f3 <- seq_plot(f_seq, "m4_rate") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f4 <- seq_plot(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
 
-clearance_plots <- f1 / f2 / f3 / f4
+clearance_plots <- f0 / f1 / f2 / f3 / f4
 
-ggsave(here("workshop", "figures","clearance_plots.png"),
+ggsave(here("workshop", "figures","clearance_plots_all.png"),
        clearance_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
 
 ```{r}
+f0 <- seq_plot_alt(f_seq, "m1_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f1 <- seq_plot_alt(f_seq, "m2_rate") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f2 <- seq_plot_alt(f_seq, "m3_rate") + 
@@ -608,12 +612,12 @@ f3 <- seq_plot_alt(f_seq, "m4_rate") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f4 <- seq_plot_alt(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
 
-clearance_plots <- f1 / f2 / f3 / f4
+clearance_plots <- f0 / f1 / f2 / f3 / f4
 
-ggsave(here("workshop", "figures","clearance_plots_alt.png"),
+ggsave(here("workshop", "figures","clearance_plots_alt_all.png"),
        clearance_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -637,6 +641,8 @@ ggsave(here("workshop", "figures","algae_plots.png"),
 ```
 
 ```{r}
+a0 <- algae_plot_diff(f_seq, "m1_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 a1 <- algae_plot_diff(f_seq, "m2_diff") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 a2 <- algae_plot_diff(f_seq, "m3_diff") + 
@@ -645,13 +651,13 @@ a3 <- algae_plot_diff(f_seq, "m4_diff") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 a4 <- algae_plot_diff(f_seq, "m6c_diff") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
 
-algae_plots_diff <- a1 / a2 / a3 / a4
+algae_plots_diff <- a0 / a1 / a2 / a3 / a4
 
 #ggsave(here("workshop", "figures","algae_plots_diff.png"),
-ggsave(here("workshop", "figures","algae_plots_diff_new.png"),
+ggsave(here("workshop", "figures","algae_plots_diff_all.png"),
        algae_plots_diff,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -725,6 +731,8 @@ spores_plot(f_seq, "m6c_Z_end")
 ```
 
 ```{r}
+s0 <- spores_plot(u_seq, "spores_consumed_m1") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 s1 <- spores_plot(u_seq, "spores_consumed_m2") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 s2 <- spores_plot(u_seq, "spores_consumed_m3") + 
@@ -733,12 +741,12 @@ s3 <- spores_plot(u_seq, "spores_consumed_m4") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 s4 <- spores_plot(u_seq, "spores_consumed_m5") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
-spores_plots <- s1 / s2 / s3 / s4
+spores_plots <- s0 / s1 / s2 / s3 / s4
 
-ggsave(here("workshop", "figures","spores_plots.png"),
+ggsave(here("workshop", "figures","spores_plots_all.png"),
        spores_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -747,6 +755,8 @@ susceptibility plots
 
 
 ```{r}
+u0 <- u_plot(u_seq, "m1_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 u1 <- u_plot(u_seq, "m2_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 u2 <- u_plot(u_seq, "m3_u") + 
@@ -755,12 +765,12 @@ u3 <- u_plot(u_seq, "m4_u") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 u4 <- u_plot(u_seq, "m5_u") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
-susc_plots <- u1 / u2 / u3 / u4
+susc_plots <- u0 / u1 / u2 / u3 / u4
 
-ggsave(here("workshop", "figures","susc_plots.png"),
+ggsave(here("workshop", "figures","susc_plots_all.png"),
        susc_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -804,6 +814,8 @@ prevalence plots
 
 
 ```{r}
+p0 <- prev_plot(u_seq, "m1_I_end") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 p1 <- prev_plot(u_seq, "m2_I_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 p2 <- prev_plot(u_seq, "m3_I_end") + 
@@ -812,12 +824,12 @@ p3 <- prev_plot(u_seq, "m4_I_end") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 p4 <- prev_plot(u_seq, "m5_I_end") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
-prev_plots <- p1 / p2 / p3 / p4
+prev_plots <- p0 / p1 / p2 / p3 / p4
 
-ggsave(here("workshop", "figures","prev_plots.png"),
+ggsave(here("workshop", "figures","prev_plots_all.png"),
        prev_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
