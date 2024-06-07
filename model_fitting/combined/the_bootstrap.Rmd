@@ -523,10 +523,12 @@ beet <- c(boot_01, boot_02, boot_03, boot_04)
 35_060724 <- 10 iterations on june 7
 
 10_060724a <- 10 iterations on june 7 with new starting conditions
+5_060724 <- 5 more iters on june 
 
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "10_060724a.rds"))
-mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")))
+#saveRDS(beet, file = here("model_fitting", "combined", "beet", "5_060724.rds"))
+mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")))
 
 ```
 
