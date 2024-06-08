@@ -404,7 +404,7 @@ We'll include the bootstrapping here
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="BFGS")
+                                  method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -418,7 +418,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 5
+  iterations <- 20
   
   boot_03 <- list()
   
@@ -453,7 +453,7 @@ We'll include the bootstrapping here
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="BFGS")
+                                  method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -501,7 +501,7 @@ We'll include the bootstrapping here
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="BFGS")
+                                  method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
@@ -524,11 +524,13 @@ beet <- c(boot_01, boot_02, boot_03, boot_04)
 
 10_060724a <- 10 iterations on june 7 with new starting conditions
 5_060724 <- 5 more iters on june 
+30_060824 <- 30 more iters
 
 ```{r}
-#saveRDS(beet, file = here("model_fitting", "combined", "beet", "5_060724.rds"))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "30_060824.rds"))
 mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")))
+                readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")))
 
 ```
 
