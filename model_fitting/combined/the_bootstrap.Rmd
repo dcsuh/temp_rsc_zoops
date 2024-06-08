@@ -355,7 +355,7 @@ We'll include the bootstrapping here
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
-                                  method="BFGS")
+                                  method="Nelder-Mead")
       print(i)
       end_time <- Sys.time()
       print(end_time-start_time)
