@@ -32,20 +32,20 @@ Interaction models
 #all versions use handling time method
 # m5 <- readRDS(here("mle","m5_f_fit.rds")) #treament-specific coefficients method
 # m5a <- readRDS(here("mle","m5a_f_fit.rds")) #no interaction coefficient method
-m5b <- readRDS(here("mle","m5b_f_fit.rds")) #resource-dependent arrhenius coefficient - LINEAR
-m5c <- readRDS(here("mle","m5c_f_fit.rds")) #resource-dependent arrhenius coefficient - EXP
+# m5b <- readRDS(here("mle","m5b_f_fit.rds")) #resource-dependent arrhenius coefficient - LINEAR
+# m5c <- readRDS(here("mle","m5c_f_fit.rds")) #resource-dependent arrhenius coefficient - EXP
 # m6 <- readRDS(here("mle","m6_f_fit.rds")) #treament-specific coefficients method
 # m6a <- readRDS(here("mle","m6a_f_fit.rds")) #no interaction coefficient method
-m6b <- readRDS(here("mle","m6b_f_fit.rds")) #temperature-dependent handling time - LINEAR
+#m6b <- readRDS(here("mle","m6b_f_fit.rds")) #temperature-dependent handling time - LINEAR
 m6c <- readRDS(here("mle","m6c_f_fit.rds")) #temperature-dependent handling time - EXP
 # m7 <- readRDS(here("mle","m7_f_fit.rds")) #treament-specific coefficients method
 # m7a <- readRDS(here("mle","m7a_f_fit.rds")) #no interaction coefficient method
 
 # resource-dependent arrhenius coefficient and temperature-dependent handling time, respectively
-m7b <- readRDS(here("mle","m7b_f_fit.rds")) # LINEAR-LINEAR
-m7c <- readRDS(here("mle","m7c_f_fit.rds")) # EXP-EXP
-m7d <- readRDS(here("mle","m7d_f_fit.rds")) # LINEAR-EXP
-m7e <- readRDS(here("mle","m7e_f_fit.rds")) # EXP-LINEAR
+# m7b <- readRDS(here("mle","m7b_f_fit.rds")) # LINEAR-LINEAR
+# m7c <- readRDS(here("mle","m7c_f_fit.rds")) # EXP-EXP
+# m7d <- readRDS(here("mle","m7d_f_fit.rds")) # LINEAR-EXP
+# m7e <- readRDS(here("mle","m7e_f_fit.rds")) # EXP-LINEAR
 ```
 
 # Coefficients
@@ -64,15 +64,15 @@ m4@coef
 ```{r}
 # m5@coef
 # m5a@coef
-m5b@coef
-m5c@coef
+# m5b@coef
+# m5c@coef
 ```
 
 
 ```{r}
 # m6@coef
 # m6a@coef
-m6b@coef
+#m6b@coef
 m6c@coef
 ```
 
@@ -80,10 +80,10 @@ m6c@coef
 ```{r}
 # m7@coef
 # m7a@coef
-m7b@coef
-m7c@coef
-m7d@coef
-m7e@coef
+# m7b@coef
+# m7c@coef
+# m7d@coef
+# m7e@coef
 ```
 
 
@@ -105,40 +105,14 @@ getAIC(m3)
 # getAIC(m3a)
 getAIC(m4)
 # getAIC(m4a)
-```
 
-
-```{r}
-getAIC(m4)
-
-# getAIC(m5)
-# getAIC(m5a)
-getAIC(m5b)
-getAIC(m5c)
-```
-
-```{r}
-getAIC(m4)
-
-# getAIC(m6)
-# getAIC(m6a)
-getAIC(m6b)
 getAIC(m6c)
 ```
 
-```{r}
-getAIC(m4)
 
-# getAIC(m7)
-# getAIC(m7a)
-getAIC(m7b)
-getAIC(m7c)
-getAIC(m7d)
-getAIC(m7e)
-```
 # AIC table
 
-```{r}
+```{r, eval=F}
 model_list <- list(m0, m1, m2, m3, m4, m5b, m5c, m6b, m6c, m7b, m7c, m7d, m7e)
 mod_names <- c("m0", "m1", "m2", "m3", "m4", "m5b", "m5c", "m6b", "m6c", "m7b", "m7c", "m7d", "m7e")
 mod_names_descriptive <- c("base", "size", "temp", "rsc", "full", "arr(R)~LIN", "arr(R)~EXP", "h(T)~LIN", "h(T)~EXP", "LIN-LIN", "EXP_EXP", "LIN_EXP", "EXP_LIN")

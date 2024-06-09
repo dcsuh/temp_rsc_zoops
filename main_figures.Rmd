@@ -139,6 +139,7 @@ seq_data %>% filter(temp %in% const_temp) %>%
        y = "Spores consumed",
        color = "Temp") + 
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  scale_y_continuous(breaks = c(0, 2000, 4000, 6000), limits = c(0, 6000)) + 
   guides(color = guide_legend(reverse=T)) + 
   #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
   scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
@@ -226,8 +227,9 @@ u_plot <- function(seq_data, var){
     geom_line(size = 1) + 
     #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
     scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
-    ylim(NA, 0.00275) + 
+    #ylim(NA, 0.0025) + 
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    scale_y_continuous(breaks = c(0, 0.001, 0.002), limits = c(0, 0.002)) + 
     guides(color = guide_legend(reverse=T)) + 
     labs(x = "Resource (mgC/L)", y = "Per-Spore Susceptibility", color = "Temp", title = "")
 }
@@ -404,7 +406,7 @@ algae_plot_diff(f_seq, "m6c_diff")
 
 Shifted x-axis
 
-```{r, eval=F}
+```{r}
 algae_plot_diff <- function(seq_data, var){
 seq_data %>% filter(temp %in% const_temp) %>%
   ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) +
@@ -467,7 +469,7 @@ seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
 }
 
-algae_plot(f_seq, "m1_consumed")
+#algae_plot(f_seq, "m1_consumed")
 ```
 
 
@@ -579,6 +581,8 @@ interactive_plots <- i1 / i2 / i3 / i4
 
 
 ```{r}
+f0 <- seq_plot(f_seq, "m1_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f1 <- seq_plot(f_seq, "m2_rate") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f2 <- seq_plot(f_seq, "m3_rate") + 
@@ -587,17 +591,19 @@ f3 <- seq_plot(f_seq, "m4_rate") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f4 <- seq_plot(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
 
-clearance_plots <- f1 / f2 / f3 / f4
+clearance_plots <- f0 / f1 / f2 / f3 / f4
 
-ggsave(here("workshop", "figures","clearance_plots.png"),
+ggsave(here("workshop", "figures","clearance_plots_all.png"),
        clearance_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
 
 ```{r}
+f0 <- seq_plot_alt(f_seq, "m1_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f1 <- seq_plot_alt(f_seq, "m2_rate") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f2 <- seq_plot_alt(f_seq, "m3_rate") + 
@@ -606,12 +612,12 @@ f3 <- seq_plot_alt(f_seq, "m4_rate") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 f4 <- seq_plot_alt(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
 
-clearance_plots <- f1 / f2 / f3 / f4
+clearance_plots <- f0 / f1 / f2 / f3 / f4
 
-ggsave(here("workshop", "figures","clearance_plots_alt.png"),
+ggsave(here("workshop", "figures","clearance_plots_alt_all.png"),
        clearance_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -635,6 +641,8 @@ ggsave(here("workshop", "figures","algae_plots.png"),
 ```
 
 ```{r}
+a0 <- algae_plot_diff(f_seq, "m1_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 a1 <- algae_plot_diff(f_seq, "m2_diff") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 a2 <- algae_plot_diff(f_seq, "m3_diff") + 
@@ -643,13 +651,13 @@ a3 <- algae_plot_diff(f_seq, "m4_diff") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 a4 <- algae_plot_diff(f_seq, "m6c_diff") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
 
-algae_plots_diff <- a1 / a2 / a3 / a4
+algae_plots_diff <- a0 / a1 / a2 / a3 / a4
 
-ggsave(here("workshop", "figures","algae_plots_diff.png"),
-#ggsave(here("workshop", "figures","algae_plots_diff_new.png"),
+#ggsave(here("workshop", "figures","algae_plots_diff.png"),
+ggsave(here("workshop", "figures","algae_plots_diff_all.png"),
        algae_plots_diff,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -723,20 +731,22 @@ spores_plot(f_seq, "m6c_Z_end")
 ```
 
 ```{r}
+s0 <- spores_plot(u_seq, "spores_consumed_m1") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 s1 <- spores_plot(u_seq, "spores_consumed_m2") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 s2 <- spores_plot(u_seq, "spores_consumed_m3") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 s3 <- spores_plot(u_seq, "spores_consumed_m4") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-s4 <- spores_plot(u_seq, "spores_consumed_m5b") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+s4 <- spores_plot(u_seq, "spores_consumed_m5") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
-spores_plots <- s1 / s2 / s3 / s4
+spores_plots <- s0 / s1 / s2 / s3 / s4
 
-ggsave(here("workshop", "figures","spores_plots.png"),
+ggsave(here("workshop", "figures","spores_plots_all.png"),
        spores_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -745,20 +755,22 @@ susceptibility plots
 
 
 ```{r}
+u0 <- u_plot(u_seq, "m1_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 u1 <- u_plot(u_seq, "m2_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 u2 <- u_plot(u_seq, "m3_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 u3 <- u_plot(u_seq, "m4_u") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-u4 <- u_plot(u_seq, "m5b_u") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+u4 <- u_plot(u_seq, "m5_u") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
-susc_plots <- u1 / u2 / u3 / u4
+susc_plots <- u0 / u1 / u2 / u3 / u4
 
-ggsave(here("workshop", "figures","susc_plots.png"),
+ggsave(here("workshop", "figures","susc_plots_all.png"),
        susc_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -802,20 +814,22 @@ prevalence plots
 
 
 ```{r}
+p0 <- prev_plot(u_seq, "m1_I_end") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 p1 <- prev_plot(u_seq, "m2_I_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 p2 <- prev_plot(u_seq, "m3_I_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
 p3 <- prev_plot(u_seq, "m4_I_end") + 
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-p4 <- prev_plot(u_seq, "m5b_I_end") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+p4 <- prev_plot(u_seq, "m5_I_end") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
 
-prev_plots <- p1 / p2 / p3 / p4
+prev_plots <- p0 / p1 / p2 / p3 / p4
 
-ggsave(here("workshop", "figures","prev_plots.png"),
+ggsave(here("workshop", "figures","prev_plots_all.png"),
        prev_plots,
        width = 3,
-       height = 8,
+       height = 9,
        units = "in")
 ```
 
@@ -1167,6 +1181,51 @@ ggsave(here("workshop", "figures","prev_data.png"),
 
 
 # 3D plots
+
+
+
+
+
+```{r}
+# u_seq %>% ggplot(., aes(x = resource, y = temp, fill = spores_consumed_m5)) + 
+#   geom_tile() + 
+#   scale_fill_viridis_c(option = "magma") + 
+#   labs(title = "Spores Consumed")
+
+u_seq %>% ggplot(., aes(x = resource, y = temp, z = m5_u, fill = m5_u)) + 
+  geom_tile() + 
+  geom_contour() + 
+  metR::geom_text_contour(stroke = 0.15, label.placer = label_placer_n()) + 
+  scale_fill_viridis_c(option = "mako", direction = 1) + 
+  labs(x = "Resource", y = "Temperature", title = "Per-Spore Susceptibility") +
+  theme(legend.position = "none")
+
+u_seq %>% ggplot(., aes(x = resource, y = temp, z = m5_I_end, fill = m5_I_end)) + 
+  geom_tile() + 
+  geom_contour() + 
+  metR::geom_text_contour(stroke = 0.15, label.placer = label_placer_n()) + 
+  scale_fill_viridis_c(option = "magma", direction = 1) + 
+  labs(x = "Resource", y = "Temperature", title = "Probability of Infection") +
+  theme(legend.position = "none")
+
+
+
+```
+
+
+```{r}
+u_seq %>% ggplot(., aes(x = spores_consumed_m5, y = m5_u, size = m5_I_end, color = temp)) + 
+  geom_point()
+u_seq %>% filter(temp %in% seq(15, 25, by = 1) & resource %in% seq(0.1, 1, by = 0.2)) %>%
+  ggplot(., aes(x = spores_consumed_m5, y = m5_u, 
+                size = m5_I_end, color = temp, shape = as.factor(resource), group = as.factor(temp))) + 
+  geom_point() + 
+  geom_line(size = 1) + 
+  scale_color_viridis_c()
+
+```
+
+
 
 ```{r, eval=F}
 plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m2_I_end, color = ~m2_I_end)

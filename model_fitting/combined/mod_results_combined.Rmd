@@ -21,9 +21,9 @@ Iterative models
 m1 <- readRDS(here("mle","final","m1_fit.rds"))
 m2 <- readRDS(here("mle","final","m2_fit.rds"))
 m3 <- readRDS(here("mle","final","m3_fit.rds"))
-m4 <- readRDS(here("mle","final","m4_fit.rds"))
-m5 <- readRDS(here("mle","final","m5_fit.rds"))
-m5a <- readRDS(here("mle","final","m5a_fit_alt2.rds"))
+m4 <- readRDS(here("model_fitting","m4_coef_fit.rds"))
+m5 <- readRDS(here("model_fitting","m5_phi_fit.rds"))
+#m5a <- readRDS(here("mle","final","m5a_fit_alt2.rds"))
 ```
 
 
@@ -39,7 +39,7 @@ getAIC(m2)
 getAIC(m3)
 getAIC(m4)
 getAIC(m5)
-getAIC(m5a)
+#getAIC(m5a)
 ```
 
 

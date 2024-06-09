@@ -200,13 +200,14 @@ m1_ll <- function(u, f, arr_t_f, h, w){
   
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -259,13 +260,14 @@ w <- as.numeric(m6c_coef[4])
   
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum_f_m6c <- -sum(nll, na.rm = T)
+    nll_sum_f_m6c <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -318,13 +320,13 @@ w <- m1_coef[5]
   
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum_f_m1 <- -sum(nll, na.rm = T)
+    nll_sum_f_m1 <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -446,13 +448,14 @@ m2_ll <- function(f, u, arr_t_f, arr_t_u, h, w){
                                 temp=data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -578,13 +581,14 @@ m3_ll <- function(f, u, arr_t_f, h, w, rho){
                                 temp=data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 
@@ -659,9 +663,76 @@ saveRDS(m3_u_f_fit, file = here("mle","final","m3_fit.rds"))
 # Full Model
 
 
+```{r}
+m4_num_sol <- function(t, x, params){
+  R <- x[1]
+  S <- x[2]
+  I <- x[3]
+  Z <- x[4]
+  
+  with(as.list(params),{
+    dR <- -R*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dS <- -Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dI <- Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+               (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dZ <- -Z*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    res <- c(dR, dS, dI, dZ)
+    list(res)}
+  )
+}
+
+    # dS = -S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dI = S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dZ = -(S+I)*Z*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dA = -(S+I)*A*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+```
+
+
+
+
 
 
 ```{r, m4_sim}
+m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp, resource, w, rho){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=f,
+              u=u,
+              length = length,
+              gamma = gamma,
+              Z = Z,
+              ref_t = ref_t,
+              arr_t_f = arr_t_f,
+              arr_t_u = arr_t_u,
+              h = h,
+              temp = temp,
+              resource = resource,
+              w = w,
+              rho = rho)
+  output <- as.data.frame(lsoda(y=xstart, times, m4_num_sol, params))
+  
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+
+  return(end_data)
+}
+```
+
+
+```{r}
 m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
   times <- seq(0, time, by=0.01)
   xstart <- c(R=R,
@@ -675,6 +746,7 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
               Z = Z,
               ref_t = ref_t,
               arr_t_f = arr_t_f,
+              arr_t_u = arr_t_u,
               h = h,
               temp = temp)
   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
@@ -691,46 +763,48 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
 ```
 
 
-```{r, eval=F}
-m4_coef
-
-f <- m4_coef[1]
-u <- m4_coef[2]
-arr_t_f <- m4_coef[3]
-arr_t_u <- m4_coef[4]
-h <- m4_coef[5]
-w <- m4_coef[6]
-rho <- m4_coef[7]
-
-
-```
 
 
 
 
 ```{r, m4_ll}
 m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
+  
+    if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
+      (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)) <0 |
+     (u/100000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)) <0) {
+  
+      return(NA)
+  
+  } 
+  
+  else {  
+  
+  
   data <- tmp
   R_end <- as.data.frame(mapply(m4_sim, 
                                 R=data$amt_init*fora_vol/1000, 
                                 time=data$time/60/24, 
                                 f=f/fora_vol,
                                 u = 0, 
-                                length=data$mm, gamma=gamma, Z=0,
+                                length=data$mm, 
+                                gamma=gamma, 
+                                Z=0,
                                 ref_t=ref_t,
                                 arr_t_f=arr_t_f,
                                 arr_t_u=arr_t_u,
-                                h=h*exp(w*data$temp),
+                                h=h*exp(data$temp*w),
                                 temp = data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    nll_sum <- -sum(nll, na.rm = T)
+    nll_sum <- -sum(nll)
   
   exp_data <- dataset %>% filter(exposed==TRUE)
 #  exp_data <- dataset_tmp %>% filter(exposed==TRUE)
@@ -740,14 +814,14 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
                                 R=exp_data$resource*life_vol/1000, 
                                 time=exp_data$time, 
                                 f=f/life_vol, 
-                                u=u*exp(exp_data$resource*rho), 
+                                u=(u/100000)*exp(exp_data$resource*rho), 
                                 length = exp_data$life_mm, 
                                 gamma=gamma, 
                                 Z=spore_conc*life_vol,
                                 ref_t=ref_t,
                                 arr_t_f=arr_t_f,
                                 arr_t_u=arr_t_u,
-                                h=h*exp(w*exp_data$temp),
+                                h=h*exp(exp_data$temp*w),
                                 temp=exp_data$temp))
 
   colnames(I_end) <- "I_end"
@@ -758,56 +832,177 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho){
     mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
   nll_sum <- nll_sum + -sum(exp_data$ll)
   return(nll_sum)
+  
+  }
 }
 ```
 
 Now we use the optimizer
 
-```{r, m4_mle, eval=F}
+```{r, eval=F}
+m4_fit <- readRDS(file = here("mle","final","m4_fit.rds"))
+m4_coef <- coef(m4_fit)
+
+adjust_factor <- 1
+
+m4_f <- m4_coef[1]*adjust_factor
+m4_u <- m4_coef[2]*adjust_factor
+m4_arr_t_f <- m4_coef[3]*adjust_factor
+m4_arr_t_u <- m4_coef[4]*adjust_factor
+m4_h <- m4_coef[5]*adjust_factor
+m4_w <- m4_coef[6]*adjust_factor
+m4_rho <- m4_coef[7]*adjust_factor
+
+
+```
+
+```{r}
+adjust_factor <- 1
+
 start_time <- Sys.time()
 tmp <- data
-m4_u_f_fit <- mle2(m4_ll, start=list(u = 0.0001, 
-                                     f=30, 
-                                     arr_t_f=30, 
-                                     arr_t_u=65, 
-                                     h=16000,
-                                     w=0.1,
-                                     rho=0.1), 
-                     control=list(parscale = c(u = 0.0001, 
-                                               f=1, 
-                                               arr_t_f=10, 
-                                               arr_t_u=10, 
-                                               h=10000,
-                                               w=0.1,
-                                               rho=0.1)),
-                     skip.hessian=F, method="BFGS")
+m4_u_f_fit <- mle2(m4_ll, start=list(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor),
+                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor), maxit = 10000),
+                     skip.hessian=F, method="Nelder-Mead")
 
-# m4_u_f_fit <- mle2(m4_ll, start=list(u = 0.0001, 
-#                                      f=1, 
-#                                      arr_t_f=10, 
-#                                      arr_t_u=10, 
-#                                      h=10000,
-#                                      w=0.1,
-#                                      rho=0.1), 
-#                      control=list(parscale = c(u = 0.0001, 
-#                                                f=1, 
-#                                                arr_t_f=10, 
-#                                                arr_t_u=10, 
-#                                                h=10000,
-#                                                w=0.1,
-#                                                rho=0.1)),
-#                      skip.hessian=F, method="L-BFGS-B", 
-#                    lower=c(u = 0, f = 0, arr_t_f = 0, arr_t_u = 0, h = 0), 
-#                    upper=c(u = 1, f = Inf, arr_t_f = Inf, arr_t_u = Inf, h = Inf))
+
 end_time <- Sys.time()
 m4_runtime <- end_time - start_time
 m4_runtime
 
 coef(m4_u_f_fit)
 
-saveRDS(m4_u_f_fit, file = here("mle","final","m4_fit.rds"))
+
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_coef_fit.rds"))
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_coef_log_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("mle","final","m4_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit_log.rds"))
+# saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
+# saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit.rds"))
 ```
 
+
+```{r}
+adjust_factor <- 1
+
+start_time <- Sys.time()
+tmp <- data
+m4_u_f_fit <- mle2(m4_ll, start=list(u = 21*adjust_factor, 
+                                     f=5.5*adjust_factor,
+                                     arr_t_f=76*adjust_factor,
+                                     arr_t_u=31*adjust_factor,
+                                     h=16000*adjust_factor,
+                                     w=-0.002*adjust_factor,
+                                     rho=0.1*adjust_factor),
+                     control=list(parscale = c(u = 21*adjust_factor, 
+                                     f=5.5*adjust_factor,
+                                     arr_t_f=76*adjust_factor,
+                                     arr_t_u=31*adjust_factor,
+                                     h=1000*adjust_factor,
+                                     w=-0.002*adjust_factor,
+                                     rho=0.1*adjust_factor), maxit = 10000),
+                     skip.hessian=F, method="Nelder-Mead")
+
+
+end_time <- Sys.time()
+m4_runtime <- end_time - start_time
+m4_runtime
+
+coef(m4_u_f_fit)
+
+#saveRDS(m4_u_f_fit, file = here("mle","final","m4_fit.rds"))
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1_fit_log.rds"))
+# saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit.rds"))
+# saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit.rds"))
+```
+
+
+
+
+```{r}
+adjust_factor <- 1.1
+
+start_time <- Sys.time()
+tmp <- data
+m4_u_f_fit <- mle2(m4_ll,  start=list(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor),
+                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor), maxit = 10000),
+                     skip.hessian=F, method="Nelder-Mead")
+
+
+end_time <- Sys.time()
+m4_runtime <- end_time - start_time
+m4_runtime
+
+coef(m4_u_f_fit)
+
+
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_coef_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit_log.rds"))
+
+```
+
+
+
+
+```{r}
+adjust_factor <- 0.5
+
+start_time <- Sys.time()
+tmp <- data
+m4_u_f_fit <- mle2(m4_ll, start=list(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor),
+                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
+                                     f=m4_f*adjust_factor,
+                                     arr_t_f=m4_arr_t_f*adjust_factor,
+                                     arr_t_u=m4_arr_t_u*adjust_factor,
+                                     h=m4_h*adjust_factor,
+                                     w=m4_w*adjust_factor,
+                                     rho=m4_rho*adjust_factor), maxit=10000),
+                     skip.hessian=F, method="Nelder-Mead")
+
+
+end_time <- Sys.time()
+m4_runtime <- end_time - start_time
+m4_runtime
+
+coef(m4_u_f_fit)
+
+
+saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_coef_fit.rds"))
+#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit_log.rds"))
+
+```
 
 # Interaction Model
 
@@ -829,6 +1024,259 @@ rho_25 <- m5_coef[10]
 ```
 
 
+```{r}
+
+m5_num_sol <- function(t, x, params){
+  R <- x[1]
+  S <- x[2]
+  I <- x[3]
+  Z <- x[4]
+  
+  with(as.list(params),{
+    dR <- -R*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dS <- -Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*exp(resource*temp*phi)*
+      (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dI <- Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*exp(resource*temp*phi)*
+      (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+               (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dZ <- -Z*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    res <- c(dR, dS, dI, dZ)
+    list(res)}
+  )
+}
+
+
+    # dS = -S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*exp(R_trt*T_trt*u3)*
+    #   f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dI = S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*exp(R_trt*T_trt*u3)*
+    #   f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dZ = -(S+I)*Z*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dA = -(S+I)*A*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+```
+
+
+```{r}
+m5_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp, resource, w, rho, phi){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=f,
+              u=u,
+              length = length,
+              gamma = gamma,
+              Z = Z,
+              ref_t = ref_t,
+              arr_t_f = arr_t_f,
+              arr_t_u = arr_t_u,
+              h = h,
+              temp = temp,
+              resource = resource,
+              w = w,
+              rho = rho,
+              phi = phi)
+  output <- as.data.frame(lsoda(y=xstart, times, m5_num_sol, params))
+  
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+
+  return(end_data)
+}
+```
+
+
+```{r}
+m5_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, phi){
+  
+  if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
+      (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)*exp(0.1/1000*15*phi)) <0 |
+     (u/100000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)*exp(1.0/1000*25*phi)) <0) {
+  
+      return(NA)
+  
+  } 
+  
+  else {  
+  
+  
+  data <- tmp
+  R_end <- as.data.frame(mapply(m5_sim, 
+                                R=data$amt_init*fora_vol/1000, 
+                                time=data$time/60/24, 
+                                f=f/fora_vol,
+                                u = 0, 
+                                length=data$mm, 
+                                gamma=gamma, 
+                                Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h,
+                                temp = data$temp,
+                                resource = data$resource,
+                                w = w,
+                                rho = rho,
+                                phi = phi))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid), 
+                 log = T)
+    nll_sum <- -sum(nll)
+  
+  exp_data <- tmp_dataset %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m5_sim, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f/life_vol, 
+                                u=u/100000, 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h,
+                                temp=exp_data$temp,
+                                resource=exp_data$resource,
+                                w = w,
+                                rho = rho,
+                                phi = phi))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  nll_sum <- nll_sum + -sum(exp_data$ll)
+  return(nll_sum)
+  
+  }
+}
+```
+
+```{r, eval=F}
+start_time <- Sys.time()
+tmp <- data
+tmp_dataset <- dataset
+m5_u_f_fit <- mle2(m5_ll, start=list(u = 20,
+                                      f=30, 
+                                      arr_t_f=30, 
+                                      arr_t_u=30,
+                                      h=100,
+                                      w=0.1,
+                                      rho=0.1,
+                                      phi=0.1), 
+                     control=list(parscale = c(u = 20,
+                                      f=1, 
+                                      arr_t_f=10, 
+                                      arr_t_u=10,
+                                      h=100,
+                                      w=0.1,
+                                      rho=0.1,
+                                      phi=0.1),
+                                  maxit=5000),
+                                  skip.hessian=F, 
+                                  method="BFGS")
+
+end_time <- Sys.time()
+end_time - start_time
+
+
+coef(m5_u_f_fit)
+
+saveRDS(m5_u_f_fit, file = here("model_fitting","m5_phi_fit.rds"))
+```
+
+```{r, eval=F}
+adjust_factor <- 1.1
+
+start_time <- Sys.time()
+tmp <- data
+tmp_dataset <- dataset
+m5_u_f_fit <- mle2(m5_ll, start=list(u = 20*adjust_factor,
+                                      f=30*adjust_factor, 
+                                      arr_t_f=30*adjust_factor, 
+                                      arr_t_u=30*adjust_factor,
+                                      h=100*adjust_factor,
+                                      w=0.1*adjust_factor,
+                                      rho=0.1*adjust_factor,
+                                      phi=0.1*adjust_factor), 
+                     control=list(parscale = c(u = 20*adjust_factor,
+                                      f=30*adjust_factor, 
+                                      arr_t_f=30*adjust_factor, 
+                                      arr_t_u=30*adjust_factor,
+                                      h=100*adjust_factor,
+                                      w=0.1*adjust_factor,
+                                      rho=0.1*adjust_factor,
+                                      phi=0.1*adjust_factor),
+                                  maxit=5000),
+                                  skip.hessian=F, 
+                                  method="BFGS")
+
+end_time <- Sys.time()
+end_time - start_time
+
+
+coef(m5_u_f_fit)
+
+saveRDS(m5_u_f_fit, file = here("model_fitting","m5_phi_fit_1.1.rds"))
+```
+
+```{r}
+adjust_factor <- 0.5
+
+start_time <- Sys.time()
+tmp <- data
+tmp_dataset <- dataset
+m5_u_f_fit <- mle2(m5_ll, start=list(u = 20*adjust_factor,
+                                      f=30*adjust_factor, 
+                                      arr_t_f=30*adjust_factor, 
+                                      arr_t_u=30*adjust_factor,
+                                      h=100*adjust_factor,
+                                      w=0.1*adjust_factor,
+                                      rho=0.1*adjust_factor,
+                                      phi=0.1*adjust_factor), 
+                     control=list(parscale = c(u = 20*adjust_factor,
+                                      f=30*adjust_factor, 
+                                      arr_t_f=30*adjust_factor, 
+                                      arr_t_u=30*adjust_factor,
+                                      h=100*adjust_factor,
+                                      w=0.1*adjust_factor,
+                                      rho=0.1*adjust_factor,
+                                      phi=0.1*adjust_factor),
+                                  maxit=5000),
+                                  skip.hessian=F, 
+                                  method="BFGS")
+
+end_time <- Sys.time()
+end_time - start_time
+
+
+coef(m5_u_f_fit)
+
+saveRDS(m5_u_f_fit, file = here("model_fitting","m5_phi_fit_0.5.rds"))
+```
+
+
 
 ```{r}
 m5_ll <- function(f, u_15, u_20, u_25, arr_t_f, h, w, rho_15, rho_20, rho_25){
@@ -845,7 +1293,8 @@ m5_ll <- function(f, u_15, u_20, u_25, arr_t_f, h, w, rho_15, rho_20, rho_25){
                                 temp = data$temp))
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -986,8 +1435,8 @@ m5a_ll <- function(u, f, arr_t_f, arr_t_u, h, w, rho_15, rho_20, rho_25){
   
   colnames(R_end) <- "R_end"
   data$end <- R_end$R_end
-  data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  #data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 

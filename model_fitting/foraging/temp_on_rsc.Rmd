@@ -106,7 +106,7 @@ m6_ll <- function(f, arr_t, h_15, h_20, h_25){
 ```
 
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 m6_f_fit <- mle2(m6_ll,
@@ -150,7 +150,7 @@ m6a_ll <- function(f, arr_t, h){
 ```
 
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 m6a_f_fit <- mle2(m6a_ll,
@@ -188,15 +188,15 @@ m6b_ll <- function(f, arr_t, h, w){
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
-                 sd = sd(data$resid, na.rm = T), 
+                 sd = sd(data$resid), 
                  log = T)
-    -sum(nll, na.rm = T)
+    -sum(nll)
 
 }
 ```
 
 
-```{r}
+```{r, eval=F}
 start_time <- Sys.time()
 tmp <- data
 m6b_f_fit <- mle2(m6b_ll,
@@ -230,7 +230,8 @@ m6c_ll <- function(f, arr_t, h, w){
                                  h=h*exp(w*data$temp)))
   colnames(output) <- "endpoint"
   data$end <- output$endpoint
-  data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
     nll <- dnorm(data$resid, 
                  mean = 0, 
@@ -260,4 +261,62 @@ coef(m6c_f_fit)
 
 saveRDS(m6c_f_fit, file = here("mle","m6c_f_fit.rds"))
 ```
+
+```{r}
+adjust_factor <- 1.1
+
+start_time <- Sys.time()
+tmp <- data
+m6c_f_fit <- mle2(m6c_ll,
+                skip.hessian = T,
+                start=list(f=10*adjust_factor, 
+                           arr_t=50*adjust_factor, 
+                           h=10*adjust_factor,
+                           w=0.1*adjust_factor),
+                method = "L-BFGS-B",
+                lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10*adjust_factor, 
+                           arr_t=50*adjust_factor, 
+                           h=10*adjust_factor,
+                           w=0.1*adjust_factor), maxit=10000))
+end_time <- Sys.time()
+m6c_runtime <- end_time-start_time
+m6c_runtime
+
+coef(m6c_f_fit)
+
+saveRDS(m6c_f_fit, file = here("mle","m6c_f_fit_1.1.rds"))
+```
+
+
+```{r}
+adjust_factor <- 0.5
+
+start_time <- Sys.time()
+tmp <- data
+m6c_f_fit <- mle2(m6c_ll,
+                skip.hessian = T,
+                start=list(f=10*adjust_factor, 
+                           arr_t=50*adjust_factor, 
+                           h=10*adjust_factor,
+                           w=0.1*adjust_factor),
+                method = "L-BFGS-B",
+                lower = c(f=0, arr_t=0, h=0, w=-Inf),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=10*adjust_factor, 
+                           arr_t=50*adjust_factor, 
+                           h=10*adjust_factor,
+                           w=0.1*adjust_factor), maxit=10000))
+end_time <- Sys.time()
+m6c_runtime <- end_time-start_time
+m6c_runtime
+
+coef(m6c_f_fit)
+
+saveRDS(m6c_f_fit, file = here("mle","m6c_f_fit_0.5.rds"))
+```
+
+
+
 
