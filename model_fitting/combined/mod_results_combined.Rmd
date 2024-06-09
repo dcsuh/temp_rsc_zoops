@@ -90,7 +90,7 @@ saveRDS(aic_table_final, file=here("mle/aic_table_combined_final_alt.rds"))
 ```{r}
 model_list <- list(m4, m5, m5_add_f_add_u, m5_add_f_int_u)
 mod_names <- c("m4", "m5", "m4_alt", "m5_alt")
-mod_names_descriptive <- c("int-add", "int-int", "add-add", "add-int")
+mod_names_descriptive <- c("int_f-add_u", "int_f-int_u", "add_f-add_u", "add_f-int_u")
 mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
 #tibble(mod_names, mod_names_descriptive) #check to make sure names line up
 
