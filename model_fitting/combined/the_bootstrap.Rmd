@@ -527,14 +527,16 @@ beet <- c(boot_01, boot_02, boot_03, boot_04)
 30_060824 <- 30 more iters
 45_060824 <- 45 more iters
 50_060924 <- 50 more iters
+50_061024 <- 50 more iters
 
 ```{r}
-#saveRDS(beet, file = here("model_fitting", "combined", "beet", "50_060924.rds"))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "50_061024.rds"))
 mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "45_060824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_060924.rds")))
+                readRDS(file = here("model_fitting", "combined", "beet", "50_060924.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_061024.rds")))
 
 ```
 
