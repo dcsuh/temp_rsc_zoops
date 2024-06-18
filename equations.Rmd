@@ -122,6 +122,11 @@ u = u'e^{T_{A}(1/T_{R}-1/T)}e^{\rho[R]}\\
 $$
 
 
+$$
+u = u'e^{T_{A}(1/T_{R}-1/T)}e^{\rho[R]}*e^{\phi[R]T}\\
+$$
+
+
 
 $$
 \rho = \begin{cases} \rho_{15},\ T=15 \\ \rho_{20},\ T=20 \\ \rho_{25},\ T=25 \end{cases}
