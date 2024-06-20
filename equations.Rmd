@@ -1,6 +1,8 @@
 ---
 title: "equations"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 date: "`r Sys.Date()`"
 ---
 
@@ -23,7 +25,7 @@ $$
 
 
 $$
-\frac{dR}{dt} = -L^{\gamma} fRS\\
+\frac{dR}{dt} = -L^{\gamma} f'RS\\
 $$
 
 $$
@@ -31,7 +33,7 @@ f = f'L^{\gamma}\\
 $$
 
 $$
-\frac{dR}{dt} = -L^{\gamma}fe^{T_{A}(1/T_{R}-1/T)} RS\\
+\frac{dR}{dt} = -L^{\gamma}f'e^{T_{A}(1/T_{R}-1/T)} RS\\
 $$
 
 $$
@@ -39,7 +41,7 @@ f = f'L^{\gamma}e^{T_{A}(1/T_{R}-1/T)}\\
 $$
 
 $$
-\frac{dR}{dt} = - \frac{fL^{\gamma}RS}{1 + fL^{\gamma}hR} \\
+\frac{dR}{dt} = - \frac{f'L^{\gamma}RS}{1 + fL^{\gamma}hR} \\
 $$
 
 $$
@@ -62,11 +64,11 @@ dat2 %>% ggplot(., aes(x=R, y=f)) + geom_line()
 
 
 $$
-\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}RS}{1 + fe^{T_{A}(1/T_{R}-1/T)}L^{\gamma}hR} \\
+\frac{dR}{dt} = -\frac{f'e^{T_{A}(1/T_{R}-1/T)} L^{\gamma}RS}{1 + f'e^{T_{A}(1/T_{R}-1/T)}L^{\gamma}hR} \\
 $$
 
 $$
-\frac{dR}{dt} = -\frac{fe^{T_{A}(1/T_{R}-1/T)} L^{\gamma}RS}{1 + fL^{\gamma}hR} \\
+\frac{dR}{dt} = -\frac{f'e^{T_{A}(1/T_{R}-1/T)} L^{\gamma}RS}{1 + f'L^{\gamma}hR} \\
 $$
 
 $$
@@ -87,15 +89,32 @@ $$
 
 $$
 \frac{dR}{dt} = -L^{\gamma} fR(S+I)\\
+$$
+$$
 \frac{dS}{dt} = -u L^{\gamma} fZS\\
+$$
+
+$$
 \frac{dI}{dt} = u L^{\gamma} fZS\\
+$$
+
+$$
 \frac{dZ}{dt} = -L^{\gamma} fZ(S+I)\\
 $$
 
 $$
 \frac{dR}{dt} = -fR(S+I)\\
+$$
+
+$$
 \frac{dS}{dt} = -ufZS\\
+$$
+
+$$
 \frac{dI}{dt} = ufZS\\
+$$
+
+$$
 \frac{dZ}{dt} = -fZ(S+I)\\
 $$
 
@@ -123,7 +142,7 @@ $$
 
 
 $$
-u = u'e^{T_{A}(1/T_{R}-1/T)}e^{\rho[R]}*e^{\phi[R]T}\\
+u = u'e^{T_{A}(1/T_{R}-1/T)}e^{\rho[R]}e^{\phi[R]T}\\
 $$
 
 
