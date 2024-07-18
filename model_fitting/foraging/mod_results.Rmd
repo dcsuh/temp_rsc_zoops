@@ -140,4 +140,38 @@ saveRDS(aic_table_final, file=here("mle/aic_table_f_final.rds"))
 ```
 
 
+# get corrected AIC
+
+```{r}
+data <- readRDS(here("processed_data","foraging_raw.rds"))
+```
+
+
+
+```{r}
+n <- nrow(data)
+
+getAIC_c <- function(model){
+  return((2*length(coef(model))-(summary(model)@m2logL)) + 
+           (2*length(coef(model))^2 + 2*length(coef(model)))/(n-length(coef(model))-1))
+}
+```
+
+```{r}
+getAIC_c(m0)
+getAIC_c(m1)
+getAIC_c(m2)
+getAIC_c(m3)
+getAIC_c(m4)
+getAIC_c(m6c)
+```
+
+```{r}
+aic_c_table_final <- AICctab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T, nobs=n)
+aic_c_table_final
+```
+
+
+
+
 
