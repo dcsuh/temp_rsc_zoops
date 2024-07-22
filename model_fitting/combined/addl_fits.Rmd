@@ -482,11 +482,19 @@ m4 <- readRDS(here("model_fitting","m4_coef_fit.rds"))
 m5 <- readRDS(here("model_fitting","m5_phi_fit.rds"))
 ```
 
+
+
 ```{r}
 getAIC(m4)
 getAIC(m5)
 getAIC(m5_add_f_add_u)
 getAIC(m5_add_f_int_u)
 ```
+
+
+
+
+
+
 
 

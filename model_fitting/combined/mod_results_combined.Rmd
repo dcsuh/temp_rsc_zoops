@@ -619,16 +619,371 @@ get_combined_AIC(m5, m5_output)
 
 
 ```{r}
-get_combined_corrected_AIC(m1, m1_output)
+m1_AICc <- get_combined_corrected_AIC(m1, m1_output)
 
-get_combined_corrected_AIC(m2, m2_output)
+m2_AICc <- get_combined_corrected_AIC(m2, m2_output)
 
-get_combined_corrected_AIC(m3, m3_output)
+m3_AICc <- get_combined_corrected_AIC(m3, m3_output)
 
-get_combined_corrected_AIC(m4, m4_output)
+m4_AICc <- get_combined_corrected_AIC(m4, m4_output)
 
-get_combined_corrected_AIC(m5, m5_output)
+m5_AICc <- get_combined_corrected_AIC(m5, m5_output)
+
+m1_AICc <- round(m1_AICc, digits = 1)
+m2_AICc <- round(m2_AICc, digits = 1)
+m3_AICc <- round(m3_AICc, digits = 1)
+m4_AICc <- round(m4_AICc, digits = 1)
+m5_AICc <- round(m5_AICc, digits = 1)
 ```
+log-likelihood
+```{r}
+sum(m1_output)
+sum(m2_output)
+sum(m3_output)
+sum(m4_output)
+sum(m5_output)
+```
+
+AIC weights are calculated by getting exp(-0.5 * deltaAIC) for each model and then taking the sum and then dividing each value by the sum
+```{r}
+sum_deltaAIC <- exp(-0.5*(m1_AICc-m5_AICc)) + exp(-0.5*(m2_AICc-m5_AICc)) + exp(-0.5*(m3_AICc-m5_AICc)) + exp(-0.5*(m4_AICc-m5_AICc)) + exp(-0.5*(m5_AICc-m5_AICc))
+
+exp(-0.5*(m1_AICc-m5_AICc))/sum_deltaAIC
+exp(-0.5*(m2_AICc-m5_AICc))/sum_deltaAIC
+exp(-0.5*(m3_AICc-m5_AICc))/sum_deltaAIC
+exp(-0.5*(m4_AICc-m5_AICc))/sum_deltaAIC
+exp(-0.5*(m5_AICc-m5_AICc))/sum_deltaAIC
+
+```
+
+```{r}
+
+m5_num_sol_add_f_add_u <- function(t, x, params){
+  R <- x[1]
+  S <- x[2]
+  I <- x[3]
+  Z <- x[4]
+  
+  with(as.list(params),{
+    dR <- -R*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+    
+    dS <- -Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*
+      (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+    
+    dI <- Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*
+      (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+               (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+    
+    dZ <- -Z*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+    
+    res <- c(dR, dS, dI, dZ)
+    list(res)}
+  )
+}
+
+
+    # dS = -S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*exp(R_trt*T_trt*u3)*
+    #   f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dI = S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*exp(R_trt*T_trt*u3)*
+    #   f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dZ = -(S+I)*Z*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dA = -(S+I)*A*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+```
+
+
+```{r}
+m5_sim_add_f_add_u <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp, resource, rho){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=f,
+              u=u,
+              length = length,
+              gamma = gamma,
+              Z = Z,
+              ref_t = ref_t,
+              arr_t_f = arr_t_f,
+              arr_t_u = arr_t_u,
+              h = h,
+              temp = temp,
+              resource = resource,
+              rho = rho)
+  output <- as.data.frame(lsoda(y=xstart, times, m5_num_sol_add_f_add_u , params))
+  
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+
+  return(end_data)
+}
+```
+
+```{r}
+m5_ll_add_f_add_u <- function(f, u, arr_t_f, arr_t_u, h, rho){
+  
+  if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
+      (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)) <0 |
+     (u/100000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)) <0) {
+  
+      return(NA)
+  
+  } 
+  
+  else {  
+  
+  
+  data <- tmp
+  R_end <- as.data.frame(mapply(m5_sim_add_f_add_u, 
+                                R=data$amt_init*fora_vol/1000, 
+                                time=data$time/60/24, 
+                                f=f/fora_vol,
+                                u = 0, 
+                                length=data$mm, 
+                                gamma=gamma, 
+                                Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h,
+                                temp = data$temp,
+                                resource = data$resource,
+                                rho = rho))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid), 
+                 log = T)
+    f_nll <- sum(nll)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m5_sim_add_f_add_u, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f/life_vol, 
+                                u=u/100000, 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h,
+                                temp=exp_data$temp,
+                                resource=exp_data$resource,
+                                rho = rho))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  u_nll <- sum(exp_data$ll)
+  return(c(f_nll, u_nll))
+  
+  }
+}
+```
+
+
+```{r}
+
+m5_num_sol_add_f_int_u <- function(t, x, params){
+  R <- x[1]
+  S <- x[2]
+  I <- x[3]
+  Z <- x[4]
+  
+  with(as.list(params),{
+    dR <- -R*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+    
+    dS <- -Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*exp(resource*temp*phi)*
+      (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+    
+    dI <- Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*exp(resource*temp*phi)*
+      (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+               (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+    
+    dZ <- -Z*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R)
+    
+    res <- c(dR, dS, dI, dZ)
+    list(res)}
+  )
+}
+
+
+    # dS = -S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*exp(R_trt*T_trt*u3)*
+    #   f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dI = S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*exp(R_trt*T_trt*u3)*
+    #   f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dZ = -(S+I)*Z*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+    # dA = -(S+I)*A*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+```
+
+
+```{r}
+m5_sim_add_f_int_u <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp, resource, rho, phi){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=f,
+              u=u,
+              length = length,
+              gamma = gamma,
+              Z = Z,
+              ref_t = ref_t,
+              arr_t_f = arr_t_f,
+              arr_t_u = arr_t_u,
+              h = h,
+              temp = temp,
+              resource = resource,
+              rho = rho,
+              phi = phi)
+  output <- as.data.frame(lsoda(y=xstart, times, m5_num_sol_add_f_int_u, params))
+  
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+
+  return(end_data)
+}
+```
+
+```{r}
+m5_ll_add_f_int_u <- function(f, u, arr_t_f, arr_t_u, h, rho, phi){
+  
+  if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
+      (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)*exp(0.1/1000*15*phi)) <0 |
+     (u/100000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)*exp(1.0/1000*25*phi)) <0) {
+  
+      return(NA)
+  
+  } 
+  
+  else {  
+  
+  
+  data <- tmp
+  R_end <- as.data.frame(mapply(m5_sim_add_f_int_u, 
+                                R=data$amt_init*fora_vol/1000, 
+                                time=data$time/60/24, 
+                                f=f/fora_vol,
+                                u = 0, 
+                                length=data$mm, 
+                                gamma=gamma, 
+                                Z=0,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h,
+                                temp = data$temp,
+                                resource = data$resource,
+                                rho = rho,
+                                phi = phi))
+  colnames(R_end) <- "R_end"
+  data$end <- R_end$R_end
+  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
+  
+    nll <- dnorm(data$resid, 
+                 mean = 0, 
+                 sd = sd(data$resid), 
+                 log = T)
+    f_nll <- sum(nll)
+  
+  exp_data <- dataset %>% filter(exposed==TRUE)
+
+  
+  I_end <- as.data.frame(mapply(m5_sim_add_f_int_u, 
+                                R=exp_data$resource*life_vol/1000, 
+                                time=exp_data$time, 
+                                f=f/life_vol, 
+                                u=u/100000, 
+                                length = exp_data$life_mm, 
+                                gamma=gamma, 
+                                Z=spore_conc*life_vol,
+                                ref_t=ref_t,
+                                arr_t_f=arr_t_f,
+                                arr_t_u=arr_t_u,
+                                h=h,
+                                temp=exp_data$temp,
+                                resource=exp_data$resource,
+                                rho = rho,
+                                phi = phi))
+
+  colnames(I_end) <- "I_end"
+  
+  exp_data %<>% cbind(I_end)
+  
+  exp_data %<>% 
+    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
+  u_nll <- sum(exp_data$ll)
+  return(c(f_nll, u_nll))
+  
+  }
+}
+```
+
+```{r}
+m5_add_f_add_u_output <- m5_ll_add_f_add_u(f = coef(m5_add_f_add_u)[1], 
+      u=coef(m5_add_f_add_u)[2], 
+      arr_t_f=coef(m5_add_f_add_u)[3], 
+      arr_t_u=coef(m5_add_f_add_u)[4], 
+      h=coef(m5_add_f_add_u)[5], 
+      rho=coef(m5_add_f_add_u)[6])
+
+m5_add_f_int_u_output <- m5_ll_add_f_int_u(f = coef(m5_add_f_int_u)[1], 
+      u=coef(m5_add_f_int_u)[2], 
+      arr_t_f=coef(m5_add_f_int_u)[3], 
+      arr_t_u=coef(m5_add_f_int_u)[4], 
+      h=coef(m5_add_f_int_u)[5], 
+      rho=coef(m5_add_f_int_u)[6],
+      phi=coef(m5_add_f_int_u)[7])
+```
+
+```{r}
+m5_add_add_AICc <- get_combined_corrected_AIC(m5_add_f_add_u, m5_add_f_add_u_output)
+m5_add_int_AICc <- get_combined_corrected_AIC(m5_add_f_add_u, m5_add_f_int_u_output)
+
+m5_add_add_AICc
+m5_add_int_AICc
+
+m5_add_add_AICc <- round(m5_add_add_AICc, digits = 1)
+m5_add_int_AICc <- round(m5_add_int_AICc, digits = 1)
+```
+
+```{r}
+m5_AICc
+m4_AICc
+m5_add_add_AICc
+m5_add_int_AICc
+```
+
+
+
+
+
+
 
 
 
