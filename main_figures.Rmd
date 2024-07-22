@@ -29,7 +29,7 @@ theme_set(theme_bw(base_size = 12))
 
 
 ```{r}
-f_seq <- readRDS(file=here("model_fitting", "foraging", "rate_fit.rds"))
+f_seq <- readRDS(file=here("model_fitting", "foraging", "rate_fit_alt.rds"))
 u_seq <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
 
 data_summ <- readRDS(here("processed_data", "foraging.rds"))

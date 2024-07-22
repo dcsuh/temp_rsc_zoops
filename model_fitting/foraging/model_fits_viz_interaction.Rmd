@@ -92,15 +92,18 @@ data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
 
 
 ```{r}
+resource_min <- round(min(data$amt_init), digits = 2)
+resource_max <- round(max(data$amt_init), digits = 2)
+
 temp_range <- seq(15,25,by=0.1)
-resource_range <- seq(0.1,1,by=0.01)
+resource_range <- seq(resource_min, resource_max,by=0.01)
 
 seq_data <- tibble(temp=c(),
                    resourece=c())
 
 for (i in 1:length(temp_range)){
   tmp <- tibble(temp = temp_range[i],
-                resource = seq(0.1,1,by=0.01))
+                resource = seq(resource_min, resource_max,by=0.01))
   seq_data %<>% bind_rows(., tmp)
 }
 
@@ -1357,6 +1360,7 @@ seq_data %<>% mutate(m6c_Z_end = mapply(m4_sim,
 
 ```{r, eval=F}
 saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
+saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit_alt.rds"))
 ```
 
 
