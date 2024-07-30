@@ -1,0 +1,222 @@
+---
+title: "bootstrap_figure"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = F}
+library(here)
+source(here("base","src.R"))
+```
+
+
+```{r}
+mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_060824.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_060924.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_061024.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "70_061124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "40_061124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_061224.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_061324.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "55_061424.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_061524.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_071824.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_072624.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_072924.rds")))
+
+```
+
+
+```{r}
+m5_u_f_fit <- readRDS(file = here("model_fitting", "m5_phi_fit.rds"))
+```
+
+```{r}
+tib_length <- length(mod_f_boot)
+
+mod_boot_coefs <- tibble(f = rep_len(0, tib_length),
+                         u = rep_len(0, tib_length),
+                         arr = rep_len(0, tib_length),
+                         arr_u = rep_len(0, tib_length),
+                         h = rep_len(0, tib_length),
+                         w = rep_len(0, tib_length),
+                         rho = rep_len(0, tib_length),
+                         phi = rep_len(0, tib_length),
+                         warning = NA)
+
+
+for(i in 1:length(mod_f_boot)){
+  if(mod_f_boot[[i]]@details[4] == 52){
+    print(paste(i, "convergence_failure", sep="_"))
+    mod_boot_coefs$f[i] <- NA
+    mod_boot_coefs$u[i] <- NA
+    mod_boot_coefs$arr[i] <- NA
+    mod_boot_coefs$arr_u[i] <- NA
+    mod_boot_coefs$h[i] <- NA
+    mod_boot_coefs$w[i] <- NA
+    mod_boot_coefs$rho[i] <- NA
+    mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$warning[i] <- "52"
+  }
+  else if(mod_f_boot[[i]]@details[4] == 10){
+    print(paste(i, "convergence_failure", sep="_"))
+    mod_boot_coefs$f[i] <- NA
+    mod_boot_coefs$u[i] <- NA
+    mod_boot_coefs$arr[i] <- NA
+    mod_boot_coefs$arr_u[i] <- NA
+    mod_boot_coefs$h[i] <- NA
+    mod_boot_coefs$w[i] <- NA
+    mod_boot_coefs$rho[i] <- NA
+    mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$warning[i] <- "10"
+  }
+  else if(mod_f_boot[[i]]@min == 0){
+    print(paste(i, "zero_ll", sep="_"))
+    mod_boot_coefs$f[i] <- NA
+    mod_boot_coefs$u[i] <- NA
+    mod_boot_coefs$arr[i] <- NA
+    mod_boot_coefs$arr_u[i] <- NA
+    mod_boot_coefs$h[i] <- NA
+    mod_boot_coefs$w[i] <- NA
+    mod_boot_coefs$rho[i] <- NA
+    mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$warning[i] <- "zero_ll"
+  }
+  else if(mod_f_boot[[i]]@details[4] == 1){
+  print(paste(i, "max_iter_reached", sep="_"))
+  boot_coef <- coef(mod_f_boot[[i]])
+  mod_boot_coefs$f[i] <- as.numeric(boot_coef[1])
+  mod_boot_coefs$u[i] <- as.numeric(boot_coef[2])
+  mod_boot_coefs$arr[i] <- as.numeric(boot_coef[3])
+  mod_boot_coefs$arr_u[i] <- as.numeric(boot_coef[4])
+  mod_boot_coefs$h[i] <- as.numeric(boot_coef[5])
+  mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
+  mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
+  mod_boot_coefs$phi[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$warning[i] <- "1"
+  }
+  else{
+  boot_coef <- coef(mod_f_boot[[i]])
+  mod_boot_coefs$f[i] <- as.numeric(boot_coef[1])
+  mod_boot_coefs$u[i] <- as.numeric(boot_coef[2])
+  mod_boot_coefs$arr[i] <- as.numeric(boot_coef[3])
+  mod_boot_coefs$arr_u[i] <- as.numeric(boot_coef[4])
+  mod_boot_coefs$h[i] <- as.numeric(boot_coef[5])
+  mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
+  mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
+  mod_boot_coefs$phi[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$warning[i] <- "0"
+  }
+}
+```
+
+
+```{r}
+mod_boot_coefs %<>% drop_na()
+
+mod_boot_coefs %>% ggplot(., aes(x = f)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = u)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = arr)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = arr_u)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = h)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = w)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = rho)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = phi)) + geom_histogram()
+```
+
+
+
+
+quantiles
+```{r}
+mod_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
+                        f = NA,
+                        u = NA,
+                        arr = NA,
+                        arr_u = NA,
+                        h = NA,
+                        w = NA,
+                        rho = NA,
+                        phi = NA)
+
+mod_quantiles$f[1] <- coef(m5_u_f_fit)[1]
+mod_quantiles$f[2] <- mean(mod_boot_coefs$f)
+mod_quantiles$f[3] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$f[4] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$u[1] <- coef(m5_u_f_fit)[2]
+mod_quantiles$u[2] <- mean(mod_boot_coefs$u)
+mod_quantiles$u[3] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$u[4] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[2]
+
+
+mod_quantiles$arr[1] <- coef(m5_u_f_fit)[3]
+mod_quantiles$arr[2] <- mean(mod_boot_coefs$arr)
+mod_quantiles$arr[3] <- quantile(mod_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$arr[4] <- quantile(mod_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[2]
+
+
+mod_quantiles$arr_u[1] <- coef(m5_u_f_fit)[4]
+mod_quantiles$arr_u[2] <- mean(mod_boot_coefs$arr_u)
+mod_quantiles$arr_u[3] <- quantile(mod_boot_coefs$arr_u, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$arr_u[4] <- quantile(mod_boot_coefs$arr_u, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$h[1] <- coef(m5_u_f_fit)[5]
+mod_quantiles$h[2] <- mean(mod_boot_coefs$h)
+mod_quantiles$h[3] <- quantile(mod_boot_coefs$h, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$h[4] <- quantile(mod_boot_coefs$h, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$w[1] <- coef(m5_u_f_fit)[6]
+mod_quantiles$w[2] <- mean(mod_boot_coefs$w)
+mod_quantiles$w[3] <- quantile(mod_boot_coefs$w, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$w[4] <- quantile(mod_boot_coefs$w, probs=seq(0.025, 0.975, 0.95))[2]
+
+
+mod_quantiles$rho[1] <- coef(m5_u_f_fit)[7]
+mod_quantiles$rho[2] <- mean(mod_boot_coefs$rho)
+mod_quantiles$rho[3] <- quantile(mod_boot_coefs$rho, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$rho[4] <- quantile(mod_boot_coefs$rho, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$phi[1] <- coef(m5_u_f_fit)[8]
+mod_quantiles$phi[2] <- mean(mod_boot_coefs$phi)
+mod_quantiles$phi[3] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$phi[4] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[2]
+```
+
+
+```{r}
+mod_quantiles %<>% pivot_longer(cols = f:phi) %>% pivot_wider(., names_from="id")
+```
+
+```{r}
+theme_set(theme_bw(base_size = 6))
+
+param_ci <- 
+  mod_quantiles %>% 
+  #filter(name == "f") %>%
+  ggplot(aes(x = name, 
+             y = est)) + 
+  geom_point() + 
+  geom_linerange(aes(ymin = lower.025, 
+                     ymax = upper.975)) + 
+  geom_hline(yintercept = 0) + 
+  labs(x = "",
+       y = "",
+       title = "Maximum Likelihood Estimates (95% CI)") + 
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) + 
+  facet_wrap(~name, scales = "free",
+             nrow = 2)
+
+param_ci
+
+ggsave(here("workshop", "figures", "update", "param_est.png"), width = 4, height = 4)
+```
+
