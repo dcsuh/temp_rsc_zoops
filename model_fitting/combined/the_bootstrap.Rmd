@@ -369,7 +369,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 15
+  iterations <- 20
   
   boot_02 <- list()
   
@@ -536,9 +536,10 @@ beet <- c(boot_01, boot_02, boot_03, boot_04)
 50_061524 <- 50 more iters 
 50_071824 <- 50 more iters
 50_072624 <- 50 more iters
+45_072914 <- 45 more iters
 
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "50_072624.rds"))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "45_072924.rds"))
 mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
@@ -552,7 +553,8 @@ mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060
                 readRDS(file = here("model_fitting", "combined", "beet", "55_061424.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "50_061524.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "50_071824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_072624.rds")))
+                readRDS(file = here("model_fitting", "combined", "beet", "50_072624.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_072924.rds")))
 
 ```
 

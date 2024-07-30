@@ -1,0 +1,413 @@
+---
+title: "make_figures"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#packages
+
+```{r}
+library(here)
+#source(here("base","src.R"))
+
+library(tidyverse)
+library(magrittr)
+library(ggnewscale)
+library(patchwork)
+
+#library(plotly)
+```
+
+Formatting
+```{r}
+theme_set(theme_bw(base_size = 12))
+const_temp <- c(15, 20, 25)
+```
+
+
+
+
+```{r}
+f_seq <- readRDS(file=here("model_fitting", "foraging", "rate_fit_alt.rds"))
+u_seq <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
+
+data_summ <- readRDS(here("processed_data", "foraging.rds"))
+
+data_summ %<>% dplyr::select(temp, resource, amt_init_mean)
+f_seq %<>% left_join(., data_summ)
+
+#f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
+f_seq %<>% mutate(amt_diff = amt_init_mean-amt_rem_mean,
+                  m1_diff = resource - m1_R_end/15*1000,
+                  m2_diff = resource - m2_R_end/15*1000,
+                  m3_diff = resource - m3_R_end/15*1000,
+                  m4_diff = resource - m4_R_end/15*1000,
+                  m6c_diff = resource - m6c_R_end/15*1000)
+
+
+
+f_seq %<>% arrange(desc(temp))
+```
+
+
+```{r}
+seq_plot_alt <- function(seq_data, rate){
+  seq_data %>% filter(temp %in% c(15,20,25)) %>%
+  ggplot(.) +
+  geom_line(aes(x=resource, 
+                y=!!sym(rate),
+                group=as.factor(temp),
+                color=as.factor(temp)),
+            size = 1) +
+#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    scale_y_continuous(breaks = c(0, 20, 40), limits = c(0, 42)) + 
+    guides(color = guide_legend(reverse=T)) + 
+  labs(x="Resource (mgC/L)", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+}
+```
+
+```{r}
+algae_plot_diff <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>%
+  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) +
+  geom_line(size=1) +
+  geom_point(aes(x=amt_init_mean,
+                  y=amt_diff,
+                  group = as.factor(temp),
+                  color = as.factor(temp)),
+             size=3) +
+    geom_linerange(aes(x=amt_init_mean,
+                       ymin=amt_diff-1.96*amt_rem_se,
+                       ymax=amt_diff+1.96*amt_rem_se,
+                       color=as.factor(temp))) +
+  labs(x = "Resource (mgC/L)",
+       y = "Resource difference (mgC/L)",
+       color = "Temp") +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    guides(color = guide_legend(reverse=T)) + 
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
+}
+```
+
+
+```{r}
+spores_plot <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>% 
+  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
+  geom_line(size = 1) + 
+  labs(x = "Resource (mgC/L)", 
+       y = "Spores consumed",
+       color = "Temp") + 
+  scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+  scale_y_continuous(breaks = c(0, 2000, 4000, 6000), limits = c(0, 6000)) + 
+  guides(color = guide_legend(reverse=T)) + 
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
+}
+```
+
+
+```{r}
+u_plot <- function(seq_data, var){
+  seq_data %>% 
+    filter(temp %in% const_temp) %>% 
+    ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
+    geom_line(size = 1) + 
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+    #ylim(NA, 0.0025) + 
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    scale_y_continuous(breaks = c(0, 0.001, 0.002), limits = c(0, 0.002)) + 
+    guides(color = guide_legend(reverse=T)) + 
+    labs(x = "Resource (mgC/L)", y = "Per-Spore Susceptibility", color = "Temp", title = "")
+}
+```
+
+
+```{r}
+prev_plot <- function(seq_data, var){
+  seq_data %>% filter(temp %in% const_temp) %>% 
+    ggplot(.,aes(x=resource, 
+                 y=!!sym(var), 
+                 color=as.factor(temp))) + 
+    geom_line(size=1) +
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+    new_scale_color() + 
+    geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=3) + 
+    geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
+    #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
+    scale_y_continuous(breaks = c(0, 0.5, 1.0)) + 
+    guides(color = guide_legend(reverse=T)) + 
+    labs(x="Resource (mgC/L)", y="Infection Prevalence", color="Temperature", title = "")
+}
+```
+
+
+
+
+
+
+
+
+
+```{r}
+f1 <- seq_plot_alt(f_seq, "m1_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+f2 <- seq_plot_alt(f_seq, "m2_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+f3 <- seq_plot_alt(f_seq, "m3_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+f4 <- seq_plot_alt(f_seq, "m4_rate") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+f5 <- seq_plot_alt(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.position = "none", axis.title = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
+
+
+```
+
+```{r}
+a1 <- algae_plot_diff(f_seq, "m1_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+a2 <- algae_plot_diff(f_seq, "m2_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+a3 <- algae_plot_diff(f_seq, "m3_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+a4 <- algae_plot_diff(f_seq, "m4_diff") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+a5 <- algae_plot_diff(f_seq, "m6c_diff") + theme(plot.title = element_blank(), legend.position = "none", axis.title = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
+
+
+```
+
+
+```{r}
+outwidth <- 4
+outheight <- 3
+
+ggsave(here("workshop", "figures", "update", "f1.png"),
+       f1,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "f2.png"),
+       f2,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "f3.png"),
+       f3,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "f4.png"),
+       f4,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "f5.png"),
+       f5,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "a1.png"),
+       a1,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "a2.png"),
+       a2,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "a3.png"),
+       a3,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "a4.png"),
+       a4,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "a5.png"),
+       a5,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+```
+
+
+
+
+
+
+
+
+```{r}
+s1 <- spores_plot(u_seq, "spores_consumed_m1") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+s2 <- spores_plot(u_seq, "spores_consumed_m2") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+s3 <- spores_plot(u_seq, "spores_consumed_m3") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+s4 <- spores_plot(u_seq, "spores_consumed_m4") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+s5 <- spores_plot(u_seq, "spores_consumed_m5") + theme(axis.title=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+
+```
+
+
+
+```{r}
+u1 <- u_plot(u_seq, "m1_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+u2 <- u_plot(u_seq, "m2_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+u3 <- u_plot(u_seq, "m3_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+u4 <- u_plot(u_seq, "m4_u") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+u5 <- u_plot(u_seq, "m5_u") + theme(axis.title=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+
+```
+
+
+```{r}
+p1 <- prev_plot(u_seq, "m1_I_end") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+p2 <- prev_plot(u_seq, "m2_I_end") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+p3 <- prev_plot(u_seq, "m3_I_end") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+p4 <- prev_plot(u_seq, "m4_I_end") + 
+  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+p5 <- prev_plot(u_seq, "m5_I_end") + theme(axis.title=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+
+
+```
+
+
+```{r}
+outwidth <- 4
+outheight <- 3
+
+ggsave(here("workshop", "figures", "update", "s1.png"),
+       s1,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "s2.png"),
+       s2,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "s3.png"),
+       s3,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "s4.png"),
+       s4,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "s5.png"),
+       s5,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "u1.png"),
+       u1,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "u2.png"),
+       u2,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "u3.png"),
+       u3,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "u4.png"),
+       u4,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "u5.png"),
+       u5,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "p1.png"),
+       p1,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "p2.png"),
+       p2,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "p3.png"),
+       p3,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "p4.png"),
+       p4,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+ggsave(here("workshop", "figures", "update", "p5.png"),
+       p5,
+       width = outwidth,
+       height = outheight,
+       units = "in")
+
+```
+
+
+
+
