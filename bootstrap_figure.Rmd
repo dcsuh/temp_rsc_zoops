@@ -220,3 +220,42 @@ param_ci
 ggsave(here("workshop", "figures", "update", "param_est.png"), width = 4, height = 4)
 ```
 
+
+```{r}
+h_seq <- tibble(temp = seq(15, 25, by = 0.1),
+                h = NA,
+                h_lower = NA,
+                h_upper = NA)
+
+h_est <- mod_quantiles$est[5]
+h_min <- mod_quantiles$lower.025[5]
+h_max <- mod_quantiles$upper.975[5]
+
+w_est <- mod_quantiles$est[6]
+w_min <- mod_quantiles$lower.025[6]
+w_max <- mod_quantiles$upper.975[6]
+
+h_seq %<>% mutate(h = h_est * exp(temp*w_est),
+                  h_lower = h_min * exp(temp*w_min),
+                  h_upper = h_max * exp(temp*w_max))
+
+head(h_seq)
+```
+
+```{r}
+h_plot <-
+  h_seq %>%
+  ggplot(aes(x = temp)) + 
+  geom_ribbon(aes(ymin = h_lower,
+                  ymax = h_upper),
+              fill = "grey70") + 
+  geom_line(aes(y = h)) + 
+  labs(y = "Handling time (days/mgC)",
+       x = "Temperature (C)") + 
+  theme_bw(base_size = 12)
+
+ggsave(here("workshop", "figures", "update", "handling.png"), width = 6, height = 4)
+```
+
+
+
