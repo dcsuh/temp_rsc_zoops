@@ -98,18 +98,18 @@ m0_ll <- function(f, sd_est){
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
   
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
-    #              sd = sd(data$resid), 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd(data$resid),
     #              log = T)
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
-    #              sd = sd_est, 
-    #              log = T)
-    nll <- dnorm(data$amt_rem*vol/1000,
-                 mean = mean(data$end), 
-                 sd = sd_est, 
+    nll <- dnorm(data$resid,
+                 mean = 0,
+                 sd = sd_est,
                  log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
     -sum(nll)
 }
 ```
@@ -130,7 +130,7 @@ m0_runtime
 
 coef(m0_f_fit)
 
-#saveRDS(m0_f_fit, file = here("mle","m0_f_fit.rds"))
+saveRDS(m0_f_fit, file = here("mle","m0_f_fit.rds"))
 
 ```
 
@@ -190,14 +190,14 @@ m1_ll <- function(f, sd_est){
     #              mean = 0, 
     #              sd = sd(data$resid), 
     #              log = T)
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
+    nll <- dnorm(data$resid,
+                 mean = 0,
+                 sd = sd_est,
+                 log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end), 
     #              sd = sd_est, 
     #              log = T)
-    nll <- dnorm(data$amt_rem*vol/1000,
-                 mean = mean(data$end), 
-                 sd = sd_est, 
-                 log = T)
     -sum(nll)
 }
 ```
@@ -217,7 +217,7 @@ m1_runtime
 
 coef(m1_f_fit)
 
-#saveRDS(m1_f_fit, file = here("mle","m1_f_fit.rds"))
+saveRDS(m1_f_fit, file = here("mle","m1_f_fit.rds"))
 ```
 
 ```{r, m1_f_fit}
@@ -284,14 +284,14 @@ m2_ll <- function(f, arr_t, sd_est){
     #              mean = 0, 
     #              sd = sd(data$resid), 
     #              log = T)
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
+    nll <- dnorm(data$resid,
+                 mean = 0,
+                 sd = sd_est,
+                 log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end), 
     #              sd = sd_est, 
     #              log = T)
-    nll <- dnorm(data$amt_rem*vol/1000,
-                 mean = mean(data$end), 
-                 sd = sd_est, 
-                 log = T)
     -sum(nll)
 }
 ```
@@ -319,7 +319,7 @@ m2_runtime
 
 coef(m2_f_fit)
 
-#saveRDS(m2_f_fit, file = here("mle","m2_f_fit.rds"))
+saveRDS(m2_f_fit, file = here("mle","m2_f_fit.rds"))
 ```
 
 ```{r, m2_f_fit}
@@ -390,14 +390,14 @@ m3_ll <- function(f, h, sd_est){
     #              mean = 0, 
     #              sd = sd(data$resid), 
     #              log = T)
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
+    nll <- dnorm(data$resid,
+                 mean = 0,
+                 sd = sd_est,
+                 log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end), 
     #              sd = sd_est, 
     #              log = T)
-    nll <- dnorm(data$amt_rem*vol/1000,
-                 mean = mean(data$end), 
-                 sd = sd_est, 
-                 log = T)
     -sum(nll)
 }
 ```
@@ -410,18 +410,18 @@ m3_f_fit <- mle2(m3_ll,
                 skip.hessian = T,
                 start=list(f=40,
                            h=100,
-                           sd_est=0.01),
+                           sd_est=0.001),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0),
                 upper = c(Inf, Inf, Inf),
-                control=list(parscale=c(f=40, h=100, sd_est=0.01), maxit=10000))
+                control=list(parscale=c(f=40, h=100, sd_est=0.001), maxit=10000))
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
 m3_runtime
 
 coef(m3_f_fit)
 
-#saveRDS(m3_f_fit, file = here("mle","m3_f_fit.rds"))
+saveRDS(m3_f_fit, file = here("mle","m3_f_fit.rds"))
 ```
 
 ```{r, m3_f_fit}
@@ -572,14 +572,14 @@ m4_ll <- function(f, arr_t, h, sd_est){
     #              mean = 0, 
     #              sd = sd(data$resid), 
     #              log = T)
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
+    nll <- dnorm(data$resid,
+                 mean = 0,
+                 sd = sd_est,
+                 log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end), 
     #              sd = sd_est, 
     #              log = T)
-    nll <- dnorm(data$amt_rem*vol/1000,
-                 mean = mean(data$end), 
-                 sd = sd_est, 
-                 log = T)
     -sum(nll)
 }
 ```
@@ -591,18 +591,18 @@ start_time <- Sys.time()
 tmp <- data
 m4_f_fit <- mle2(m4_ll,
                 skip.hessian = T,
-                start=list(f=5, arr_t=50, h=100, sd_est=0.01),
+                start=list(f=5, arr_t=50, h=100, sd_est=0.001),
                 method = "L-BFGS-B",
                 lower = c(0, 0, 0, 0),
                 upper = c(Inf, Inf, Inf, Inf),
-                control=list(parscale=c(f=5, arr_t=50, h=100, sd_est=0.01), maxit=10000))
+                control=list(parscale=c(f=5, arr_t=50, h=100, sd_est=0.001), maxit=10000))
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 m4_runtime
 
 coef(m4_f_fit)
 
-#saveRDS(m4_f_fit, file = here("mle","m4_f_fit.rds"))
+saveRDS(m4_f_fit, file = here("mle","m4_f_fit.rds"))
 ```
 
 ```{r, m4_f_fit}

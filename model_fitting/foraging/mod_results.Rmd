@@ -96,6 +96,16 @@ getAIC <- function(model){
 }
 ```
 
+```{r}
+summary(m0)@m2logL
+summary(m1)@m2logL
+summary(m2)@m2logL
+summary(m3)@m2logL
+summary(m4)@m2logL
+summary(m6c)@m2logL
+```
+
+
 
 ```{r}
 getAIC(m0)
