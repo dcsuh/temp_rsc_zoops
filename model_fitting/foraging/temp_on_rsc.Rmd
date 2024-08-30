@@ -232,20 +232,43 @@ m6c_ll <- function(f, arr_t, h, w, sd_est){
   data$end <- output$endpoint
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
-    #              sd = sd(data$resid), 
-    #              log = T)
     nll <- dnorm(data$resid,
                  mean = 0,
-                 sd = sd_est,
+                 sd = sd(data$resid),
                  log = T)
-    # nll <- dnorm(data$amt_rem*vol/1000,
-    #              mean = mean(data$end), 
-    #              sd = sd_est, 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
     #              log = T)
-    -sum(nll, na.rm = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll_sum <- 0
+    # for(i in 1:length(treatment_IDs)){
+    #   treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+    #   nll <- dnorm(treatment_data$sqrt_data_end,
+    #              mean = mean(treatment_data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    #   nll_sum <- -sum(nll) + nll_sum
+    # }
+    # 
+    # nll_sum
+    -sum(nll)
 
 }
 ```

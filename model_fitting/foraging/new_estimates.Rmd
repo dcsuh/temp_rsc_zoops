@@ -46,6 +46,8 @@ Some of the lengths are missing so we impute these missing values by using the a
 mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)
 data %<>% left_join(., mean_length_summ)
 data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
+
+
 ```
 
 
@@ -97,20 +99,43 @@ m0_ll <- function(f, sd_est){
   data$end <- m0_end$m0_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
     # nll <- dnorm(data$resid,
     #              mean = 0,
     #              sd = sd(data$resid),
     #              log = T)
-    nll <- dnorm(data$resid,
-                 mean = 0,
-                 sd = sd_est,
-                 log = T)
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
     # nll <- dnorm(data$amt_rem*vol/1000,
     #              mean = mean(data$end),
     #              sd = sd_est,
     #              log = T)
-    -sum(nll)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
+                 sd = sd_est,
+                 log = T)
+      nll_sum <- -sum(nll) + nll_sum
+    }
+
+    nll_sum
+    #-sum(nll)
 }
 ```
 
@@ -185,20 +210,43 @@ m1_ll <- function(f, sd_est){
   data$end <- m1_end$m1_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
-    #              sd = sd(data$resid), 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd(data$resid),
     #              log = T)
-    nll <- dnorm(data$resid,
-                 mean = 0,
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
                  sd = sd_est,
                  log = T)
-    # nll <- dnorm(data$amt_rem*vol/1000,
-    #              mean = mean(data$end), 
-    #              sd = sd_est, 
-    #              log = T)
-    -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
+
+    nll_sum
+    #-sum(nll)
 }
 ```
 
@@ -279,20 +327,43 @@ m2_ll <- function(f, arr_t, sd_est){
   data$end <- m2_end$m2_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
-    #              sd = sd(data$resid), 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd(data$resid),
     #              log = T)
-    nll <- dnorm(data$resid,
-                 mean = 0,
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
                  sd = sd_est,
                  log = T)
-    # nll <- dnorm(data$amt_rem*vol/1000,
-    #              mean = mean(data$end), 
-    #              sd = sd_est, 
-    #              log = T)
-    -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
+
+    nll_sum
+    #-sum(nll)
 }
 ```
 
@@ -385,20 +456,43 @@ m3_ll <- function(f, h, sd_est){
   data$end <- output$end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
-    #              sd = sd(data$resid), 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd(data$resid),
     #              log = T)
-    nll <- dnorm(data$resid,
-                 mean = 0,
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
                  sd = sd_est,
                  log = T)
-    # nll <- dnorm(data$amt_rem*vol/1000,
-    #              mean = mean(data$end), 
-    #              sd = sd_est, 
-    #              log = T)
-    -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
+
+    nll_sum
+    #-sum(nll)
 }
 ```
 
@@ -567,19 +661,42 @@ m4_ll <- function(f, arr_t, h, sd_est){
   data$end <- m4_end$m4_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    # nll <- dnorm(data$resid, 
-    #              mean = 0, 
-    #              sd = sd(data$resid), 
-    #              log = T)
     nll <- dnorm(data$resid,
                  mean = 0,
-                 sd = sd_est,
+                 sd = sd(data$resid),
                  log = T)
-    # nll <- dnorm(data$amt_rem*vol/1000,
-    #              mean = mean(data$end), 
-    #              sd = sd_est, 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
     #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll_sum <- 0
+    # for(i in 1:length(treatment_IDs)){
+    #   treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+    #   nll <- dnorm(treatment_data$sqrt_data_end,
+    #              mean = mean(treatment_data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    #   nll_sum <- -sum(nll) + nll_sum
+    # }
+    # 
+    # nll_sum
     -sum(nll)
 }
 ```
