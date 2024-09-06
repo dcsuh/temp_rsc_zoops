@@ -67,6 +67,25 @@ data %<>% mutate(mm = as.numeric(length)*17.86/1000,
 
 
 ```{r}
+data %>% mutate(treatment_ID = paste(resource, temp, sep = "_")) %>%
+  ggplot(., aes(x=read)) + 
+  geom_histogram() +
+  facet_wrap(~treatment_ID)
+
+data %>% mutate(treatment_ID = paste(resource, temp, sep = "_")) %>%
+  ggplot(., aes(x=log(read))) + 
+  geom_histogram() +
+  facet_wrap(~treatment_ID)
+
+data %>% mutate(treatment_ID = paste(resource, temp, sep = "_")) %>%
+  ggplot(., aes(x=sqrt(read))) + 
+  geom_histogram() +
+  facet_wrap(~treatment_ID)
+```
+
+
+
+```{r}
 data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(rate),
                                                              rate_var = var(rate),
                                                              rate_sd = sd(rate),

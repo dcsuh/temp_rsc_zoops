@@ -216,7 +216,7 @@ fora_data
 
 Now let's get the results from the model
 ```{r}
-m0_f <- as.numeric(m0_coef)
+m0_f <- as.numeric(m0_coef[1])
 data_summ %<>% mutate(m0_rate = m0_f)
 ```
 
@@ -961,7 +961,7 @@ seq_data %<>% mutate(m6c_Z_end = mapply(m4_sim,
 
 
 ```{r, eval=F}
-#saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
+saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
 ```
 
 

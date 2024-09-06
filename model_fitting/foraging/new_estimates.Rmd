@@ -46,6 +46,8 @@ Some of the lengths are missing so we impute these missing values by using the a
 mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)
 data %<>% left_join(., mean_length_summ)
 data %<>% mutate(mm = if_else(!is.na(mm), mm, mm_mean))
+
+
 ```
 
 
@@ -90,19 +92,50 @@ m0_sim <- function(R, time, f){
 
 
 ```{r, m0_ll}
-m0_ll <- function(f){
+m0_ll <- function(f, sd_est){
   data <- tmp
   m0_end <- as.data.frame(mapply(m0_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol))
   colnames(m0_end) <- "m0_end"
   data$end <- m0_end$m0_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid), 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd(data$resid),
+    #              log = T)
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
+                 sd = sd_est,
                  log = T)
-    -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
+
+    nll_sum
+    #-sum(nll)
 }
 ```
 
@@ -112,8 +145,10 @@ m0_ll <- function(f){
 start_time <- Sys.time()
 tmp <- data
 m0_f_fit <- mle2(minuslogl=m0_ll, skip.hessian=T,
-                start=list(f=10),
-                control=list(parscale=c(f=10), maxit=10000))
+                start=list(f=10,
+                           sd_est = 0.01),
+                control=list(parscale=c(f=10,
+                                        sd_est = 0.01), maxit=10000))
 end_time <- Sys.time()
 m0_runtime <- end_time - start_time
 m0_runtime
@@ -167,7 +202,7 @@ m1_sim <- function(R, time, f, length, gamma){
 ```
 
 ```{r, m1_ll}
-m1_ll <- function(f){
+m1_ll <- function(f, sd_est){
   data <- tmp
   m1_end <- as.data.frame(mapply(m1_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2))
@@ -175,12 +210,43 @@ m1_ll <- function(f){
   data$end <- m1_end$m1_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid), 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd(data$resid),
+    #              log = T)
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
+                 sd = sd_est,
                  log = T)
-    -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
+
+    nll_sum
+    #-sum(nll)
 }
 ```
 
@@ -190,8 +256,9 @@ Now we use the optimizer
 start_time <- Sys.time()
 tmp <- data
 m1_f_fit <- mle2(minuslogl=m1_ll, skip.hessian=T, #method="Nelder-Mead", 
-              start=list(f=10),
-              control=list(parscale=c(f=10), maxit=10000))
+              start=list(f=10,
+                         sd_est = 0.01),
+              control=list(parscale=c(f=10, sd_est = 0.001), maxit=10000))
 end_time <- Sys.time()
 m1_runtime <- end_time - start_time
 m1_runtime
@@ -252,7 +319,7 @@ m2_sim <- function(R, time, f, length, gamma, ref_t, arr_t, temp){
 
 
 ```{r, m2_ll}
-m2_ll <- function(f, arr_t){
+m2_ll <- function(f, arr_t, sd_est){
   data <- tmp
   m2_end <- as.data.frame(mapply(m2_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp))
@@ -260,12 +327,43 @@ m2_ll <- function(f, arr_t){
   data$end <- m2_end$m2_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid), 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd(data$resid),
+    #              log = T)
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
+                 sd = sd_est,
                  log = T)
-    -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
+
+    nll_sum
+    #-sum(nll)
 }
 ```
 
@@ -279,11 +377,12 @@ tmp <- data
 m2_f_fit <- mle2(m2_ll,
                 skip.hessian = T,
                 start=list(f=5,
-                           arr_t=50),
+                           arr_t=50,
+                           sd_est=0.001),
                 method = "L-BFGS-B",
-                lower = c(0, 0),
-                upper = c(Inf, Inf),
-                control=list(parscale=c(f=5, arr_t=50), maxit=10000))
+                lower = c(0, 0, 0),
+                upper = c(Inf, Inf, Inf),
+                control=list(parscale=c(f=5, arr_t=50, sd_est=0.001), maxit=10000))
 
 end_time <- Sys.time()
 m2_runtime <- end_time - start_time
@@ -349,7 +448,7 @@ m3_sim <- function(R, time, f, length, gamma, h){
 ```
 
 ```{r, m3_ll}
-m3_ll <- function(f, h){
+m3_ll <- function(f, h, sd_est){
   data <- tmp
   output <- as.data.frame(mapply(m3_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, h=h))
@@ -357,12 +456,43 @@ m3_ll <- function(f, h){
   data$end <- output$end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid), 
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd(data$resid),
+    #              log = T)
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
+                 sd = sd_est,
                  log = T)
-    -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
+
+    nll_sum
+    #-sum(nll)
 }
 ```
 
@@ -373,11 +503,12 @@ tmp <- data
 m3_f_fit <- mle2(m3_ll,
                 skip.hessian = T,
                 start=list(f=40,
-                           h=100),
+                           h=100,
+                           sd_est=0.001),
                 method = "L-BFGS-B",
-                lower = c(0, 0),
-                upper = c(Inf, Inf),
-                control=list(parscale=c(f=40, h=100), maxit=10000))
+                lower = c(0, 0, 0),
+                upper = c(Inf, Inf, Inf),
+                control=list(parscale=c(f=40, h=100, sd_est=0.001), maxit=10000))
 end_time <- Sys.time()
 m3_runtime <- end_time-start_time
 m3_runtime
@@ -388,7 +519,7 @@ saveRDS(m3_f_fit, file = here("mle","m3_f_fit.rds"))
 ```
 
 ```{r, m3_f_fit}
-#summary(readRDS(here("mle", "m3_f_fit.rds")))
+summary(readRDS(here("mle", "m3_f_fit.rds")))
 ```
 
 # Model 3b - Half-Saturation Method
@@ -522,7 +653,7 @@ m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
 ```
 
 ```{r, m4_ll}
-m4_ll <- function(f, arr_t, h){
+m4_ll <- function(f, arr_t, h, sd_est){
   data <- tmp
   m4_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h))
@@ -530,11 +661,42 @@ m4_ll <- function(f, arr_t, h){
   data$end <- m4_end$m4_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid), 
+    nll <- dnorm(data$resid,
+                 mean = 0,
+                 sd = sd(data$resid),
                  log = T)
+    # nll <- dnorm(data$resid,
+    #              mean = 0,
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$amt_rem*vol/1000,
+    #              mean = mean(data$end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$sqrt_data_end,
+    #              mean = mean(data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll <- dnorm(data$log_data_end,
+    #              mean = mean(data$log_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    # nll_sum <- 0
+    # for(i in 1:length(treatment_IDs)){
+    #   treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+    #   nll <- dnorm(treatment_data$sqrt_data_end,
+    #              mean = mean(treatment_data$sqrt_model_end),
+    #              sd = sd_est,
+    #              log = T)
+    #   nll_sum <- -sum(nll) + nll_sum
+    # }
+    # 
+    # nll_sum
     -sum(nll)
 }
 ```
@@ -546,11 +708,11 @@ start_time <- Sys.time()
 tmp <- data
 m4_f_fit <- mle2(m4_ll,
                 skip.hessian = T,
-                start=list(f=5, arr_t=50, h=100),
+                start=list(f=5, arr_t=50, h=100, sd_est=0.001),
                 method = "L-BFGS-B",
-                lower = c(0, 0, 0),
-                upper = c(Inf, Inf, Inf),
-                control=list(parscale=c(f=5, arr_t=50, h=100), maxit=10000))
+                lower = c(0, 0, 0, 0),
+                upper = c(Inf, Inf, Inf, Inf),
+                control=list(parscale=c(f=5, arr_t=50, h=100, sd_est=0.001), maxit=10000))
 end_time <- Sys.time()
 m4_runtime <- end_time-start_time
 m4_runtime
@@ -561,7 +723,7 @@ saveRDS(m4_f_fit, file = here("mle","m4_f_fit.rds"))
 ```
 
 ```{r, m4_f_fit}
-#summary(readRDS(here("mle","m4_f_fit.rds")))
+summary(readRDS(here("mle","m4_f_fit.rds")))
 ```
 
 
