@@ -143,52 +143,6 @@ getAIC(m6c)
 ```
 
 
-# plotting function
-
-```{r}
-seq_plot <- function(rate){
-  seq_data %>% filter(temp %in% c(15,20,25)) %>%
-  ggplot(.) +
-  geom_line(aes(x=resource, 
-                y=!!sym(rate),
-                group=temp_factor,
-                color=as.factor(temp_factor))) +
-  geom_point(aes(x=resource, 
-                  y=rate_len_mean, 
-                  group = as.factor(temp), 
-                  color = as.factor(temp),
-                  shape = as.factor(temp)),
-             size=3) + 
-    geom_linerange(aes(x=resource, 
-                       ymin=rate_len_mean-rate_len_mean_se,
-                       ymax=rate_len_mean+rate_len_mean_se,
-                       color=as.factor(temp))) +
-#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
-}
-
-seq_plot_temp <- function(rate){
-  seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>%
-  ggplot(.) +
-  geom_line(aes(x=temp, 
-                y=!!sym(rate),
-                group=resource,
-                color=as.factor(resource))) +
-  geom_point(aes(x=temp, 
-                  y=rate_len_mean, 
-                  group = as.factor(resource), 
-                  color = as.factor(resource),
-                  shape = as.factor(resource))) +
-        geom_linerange(aes(x=temp, 
-                       ymin=rate_len_mean-rate_len_mean_se,
-                       ymax=rate_len_mean+rate_len_mean_se,
-                       color=as.factor(resource))) + 
-    scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
-  labs(x="Temperature", y="Foraging rate (mL/day)", color="", shape="", title = "") 
-}
-
-```
 
 
 
@@ -294,28 +248,6 @@ m6c_w <- as.numeric(m6c_coef[4])
 
 
 
-```{r, eval=F}
-m1_plot <- seq_plot("m1_rate") + labs(title = "Size-dependent model")
-m2_plot <- seq_plot("m2_rate") + labs(title = "Temperature-dependent model")
-m3_plot <- seq_plot("m3_rate") + labs(title = "Resource-dependent model")
-m4_plot_base <- seq_plot("m4_rate") + labs(title = "Temp. and Res. dependent model")
-m4_plot <- seq_plot("m4_rate") + labs(title = paste("No Interaction. AIC =", round(m4_aic, 3)))
-m4_plot
-
-```
-
-```{r, eval=F}
-m6c_plot <- seq_plot("m6c_rate") + labs(title = paste("h(temp) ~ EXP. AIC =", round(m6c_aic, 3)))
-m4_plot
-
-m6c_plot
-
-```
-
-
-
-
-
 
 
 # Interaction parameters
@@ -334,7 +266,7 @@ h_plot <- m6_range %>% ggplot(., aes(x=temp, y=h_c)) +
   scale_y_continuous(breaks = c(200, 400, 600, 800)) + 
   labs(x = "Temperature (C)", y = "Handling time (days/mgC)", title = "")
 
-ggsave("h_plot.png", h_plot, path=here("workshop","figures"))
+#ggsave("h_plot.png", h_plot, path=here("workshop","figures"))
 
 
 ```
@@ -545,52 +477,6 @@ seq_data %<>% left_join(., r_end_mean)
 data_summ %<>% left_join(., r_end_mean)
 ```
 
-```{r}
-#all_fits <- 
-seq_data %>% dplyr::select(resource, temp_factor, amt_rem_mean, amt_rem_se, m4_R_end, m6c_R_end) %>%
-  filter(temp_factor %in% c(15, 20, 25)) %>%
-  mutate("additive" = m4_R_end, "interactive" = m6c_R_end) %>%
-  dplyr::select(-c(m4_R_end, m6c_R_end)) %>%
-  pivot_longer(cols=c('additive', 'interactive')) %>%
-  ggplot(.,aes(x=resource, y=value*1000/15, group = interaction(name, temp_factor),color=temp_factor)) +
-  geom_line(aes(linetype=name), size = 0.75) +
-  #scale_linetype_manual(values = c( 3, 6)) +
-  geom_point(data=data_summ, aes(x=resource, 
-                            y=amt_rem_mean, 
-                            group = as.factor(temp), 
-                            color = as.factor(temp))) + 
-  geom_linerange(aes(ymin = (amt_rem_mean-amt_rem_se), ymax=(amt_rem_mean+amt_rem_se), color=temp_factor)) +
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource Conc. (mgC/L)", y="Final Resource Conc. (mgC/L)", color="Temp", title = "", linetype="Model") 
-```
-
-```{r}
-#all_fits <- 
-seq_data %>% dplyr::select(resource, temp_factor, amt_rem_mean, amt_rem_se, m2_R_end, m3_R_end) %>%
-  filter(temp_factor %in% c(15, 20, 25)) %>%
-  mutate("temp-only" = m2_R_end, "resource-only" = m3_R_end) %>%
-  dplyr::select(-c(m2_R_end, m3_R_end)) %>%
-  pivot_longer(cols=c('temp-only', 'resource-only')) %>%
-  ggplot(.,aes(x=resource, y=value*1000/15, group = interaction(name, temp_factor),color=temp_factor)) +
-  geom_line(aes(linetype=name), size = 0.75) +
-  #scale_linetype_manual(values = c(5, 1, 3, 6)) +
-  geom_point(data=data_summ, aes(x=resource, 
-                            y=amt_rem_mean,
-                            group = as.factor(temp), 
-                            color = as.factor(temp))) + 
-  geom_linerange(aes(ymin = (amt_rem_mean-amt_rem_se), ymax=(amt_rem_mean+amt_rem_se), color=temp_factor)) +
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource Conc. (mgC/L)", y="Final Resource Conc. (mgC/L)", color="Temp", title = "", linetype="Model") 
-```
-
-
-
-things to make:
-
-final version of final resource concentration
-
-resources consumed 
-
 
 ```{r}
 seq_data %<>% 
@@ -600,157 +486,6 @@ seq_data %<>%
          m4_consumed = amt_init_mean*15/1000 - m4_R_end,
          m6c_consumed = amt_init_mean*15/1000 - m6c_R_end)
 ```
-
-```{r}
-algae_plot <- function(var){
-seq_data %>% filter(temp %in% const_temp) %>% 
-  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
-  geom_line() + 
-  labs(x = "Resource (mgC/L)", 
-       y = "Algae consumed (mgC)",
-       color = "Temp") + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-}
-```
-
-```{r}
-theme_set(theme_bw(base_size = 8))
-
-
-a1 <- algae_plot("m1_consumed") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + 
-  labs("Size")
-a2 <- algae_plot("m2_consumed") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + labs("Temp")
-a3 <- algae_plot("m3_consumed") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + labs("Resource")
-a4 <- algae_plot("m4_consumed") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + labs("Additive")
-
-a5 <- algae_plot("m6c_consumed") +
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + labs("Interactive")
-
-algae_fig <- a2 / a3 / a4 / a5
-
-#ggsave("algae_plot.png", algae_fig, units = "in", height = 4.5, width = 1.5)
-```
-
-
-```{r}
-seq_plot <- function(rate){
-  seq_data %>% filter(temp %in% c(15,20,25)) %>%
-  ggplot(.) +
-  geom_line(aes(x=resource, 
-                y=!!sym(rate),
-                group=temp_factor,
-                color=as.factor(temp_factor))) +
-  geom_point(aes(x=resource, 
-                  y=rate_len_mean, 
-                  group = as.factor(temp), 
-                  color = as.factor(temp),
-                  shape = as.factor(temp)),
-             size=1.5) + 
-    geom_linerange(aes(x=resource, 
-                       ymin=rate_len_mean-rate_len_mean_se,
-                       ymax=rate_len_mean+rate_len_mean_se,
-                       color=as.factor(temp))) +
-#    scale_color_manual(values = c("#FFC107", "#1E88E5", "#D81B60")) +
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  labs(x="Resource", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
-}
-```
-
-
-
-
-```{r}
-theme_set(theme_bw(base_size = 8))
-
-p1 <- seq_plot("m1_rate") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none")
-
-p2 <- seq_plot("m2_rate") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none")
-
-p3 <- seq_plot("m3_rate") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none")
-
-p4 <- seq_plot("m4_rate") +
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none")
-
-p5 <- seq_plot("m6c_rate") +
-  theme(plot.title = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        legend.position = "none")
-
-
-rate_plot <- p2 / p3 / p4 / p5
-
-#ggsave("rate_plot.png", plot = rate_plot, units = "in", height = 4.5, width = 1.5)
-```
-
-
-now for spores consumed over time for each model specification
 
 
 
@@ -966,79 +701,6 @@ saveRDS(seq_data, file=here("model_fitting","foraging","rate_fit.rds"))
 
 
 
-```{r}
-spores_plot <- function(var){
-seq_data %>% filter(temp %in% const_temp) %>% 
-  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
-  geom_line() + 
-  labs(x = "Resource (mgC/L)", 
-       y = "Spores consumed",
-       color = "Temp") + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-}
-```
-
-```{r}
-spores_plot("m1_Z_end")
-spores_plot("m2_Z_end")
-spores_plot("m3_Z_end")
-spores_plot("m4_Z_end")
-spores_plot("m6c_Z_end")
-```
-
-
-```{r}
-theme_set(theme_bw(base_size = 8))
-
-
-s1 <- spores_plot("m1_Z_end") + 
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + 
-  labs("Size")
-s2 <- spores_plot("m2_Z_end") + 
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + labs("Temp")
-s3 <- spores_plot("m3_Z_end") + 
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + labs("Resource")
-s4 <- spores_plot("m4_Z_end") + 
-  theme(axis.title.x = element_blank(),
-        axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(),
-        axis.title.y = element_blank(),
-        # axis.text.y = element_blank(),
-        # axis.ticks.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + labs("Additive")
-
-s5 <- spores_plot("m6c_Z_end") + 
-  theme(axis.title.x = element_blank(),
-        axis.title.y = element_blank(),
-        plot.title = element_blank(),
-        legend.position = "none") + labs("Interactive")
-
-spores_fig <- s2 / s3 / s4 / s5
-
-ggsave("spores_plot.png", spores_fig, units = "in", height = 4.5, width = 1.5)
-```
 
 
 

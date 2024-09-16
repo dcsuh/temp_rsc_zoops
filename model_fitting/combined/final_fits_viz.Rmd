@@ -24,12 +24,11 @@ library(patchwork)
 m1_u_f_fit <- readRDS(file = here("mle", "final", "m1_fit.rds"))
 m2_u_f_fit <- readRDS(file = here("mle", "final", "m2_fit.rds"))
 m3_u_f_fit <- readRDS(file = here("mle", "final", "m3_fit.rds"))
-#m4_u_f_fit <- readRDS(file = here("mle", "final", "m4_fit.rds"))
+
 m4_u_f_fit <- readRDS(file = here("model_fitting", "m4_coef_fit.rds"))
-m5_u_f_fit <- readRDS(file = here("mle", "final", "m5_fit.rds"))
+
 m5_u_f_fit <- readRDS(file = here("model_fitting", "m5_phi_fit.rds"))
-#m5a_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit.rds"))
-m5b_u_f_fit <- readRDS(file = here("mle", "final", "m5a_fit_alt2.rds"))
+
 ```
 
 
@@ -40,7 +39,7 @@ getAIC(m2_u_f_fit) #temperature-dependent u
 getAIC(m3_u_f_fit) #rho
 getAIC(m4_u_f_fit) #temperature-dependent u and rho
 getAIC(m5_u_f_fit) #per-temperature u and rho
-getAIC(m5b_u_f_fit)
+
 ```
 
 
@@ -55,7 +54,10 @@ fora_summ <- data %>%
             end_r_se = (sd(amt_rem)/sqrt(n()))*fora_vol/1000)
 
 prevalence <- readRDS(here("processed_data", "prevalence.rds"))
-prevalence %<>% filter(temp %in% c(15, 20, 25)) %>% filter(species=="D") %>% mutate(ID = paste(temp, resource, sep="_")) %>% dplyr::select(-c(temp, resource, species))
+prevalence %<>% filter(temp %in% c(15, 20, 25)) %>% 
+  filter(species=="D") %>% 
+  mutate(ID = paste(temp, resource, sep="_")) %>% 
+  dplyr::select(-c(temp, resource, species))
 
 
 viz_summ <- left_join(fora_summ, prevalence)
@@ -108,24 +110,7 @@ m1_h <- as.numeric(m1_coef[4])
 m1_w <- as.numeric(m1_coef[5])
 
 
-viz_summ %<>% mutate(m1_I_end = mapply(m1_sim, 
-                                       R=resource*life_vol/1000, 
-                                       time=1, 
-                                       f=m1_f/life_vol, 
-                                       u = m1_u, 
-                                       length=life_mm, 
-                                       gamma=gamma, 
-                                       Z=200*life_vol,
-                                       ref_t = ref_t,
-                                       arr_t_f = m1_arr,
-                                       h = m1_h*exp(m1_w*temp),
-                                       temp = temp))
 
-
-
-data_summ %<>% mutate(m1_rate = (m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m1_h*exp(m1_w*temp)*resource/1000),
-                      m1_u = m1_u)
 ```
 
 
@@ -158,26 +143,7 @@ m2_h <- as.numeric(m2_coef[5])
 m2_w <- as.numeric(m2_coef[6])
 
 
-viz_summ %<>% mutate(m2_I_end = mapply(m2_sim, 
-                                       R=resource*life_vol/1000,
-                                       time=1,
-                                       f=m2_f/life_vol,
-                                       u = m2_u,
-                                       length=life_mm,
-                                       gamma=gamma,
-                                       Z=200*life_vol,
-                                       ref_t = ref_t,
-                                       arr_t_f = m2_arr,
-                                       arr_t_u = m2_arr_u,
-                                       h = m2_h*exp(m2_w*temp),
-                                       temp = temp))
 
-
-
-
-data_summ %<>% mutate(m2_rate = (m2_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m2_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m2_h*exp(m2_w*temp)*resource/1000),
-                      m2_u = m2_u*exp(m2_arr_u*(1/ref_t - 1/temp)))
 ```
 
 
@@ -212,26 +178,7 @@ m3_w <- as.numeric(m3_coef[5])
 m3_rho <- as.numeric(m3_coef[6])
 
 
-viz_summ %<>% mutate(m3_I_end = mapply(m3_sim, 
-                                       R=resource*life_vol/1000,
-                                       time=1,
-                                       f=m3_f/life_vol,
-                                       u = m3_u*exp(m3_rho*resource),
-                                       length=life_mm,
-                                       gamma=gamma,
-                                       Z=200*life_vol,
-                                       ref_t = ref_t,
-                                       arr_t_f = m3_arr,
-                                       h = m3_h*exp(m3_w*temp),
-                                       temp = temp))
 
-
-
-
-
-data_summ %<>% mutate(m3_rate = (m3_f*exp(m3_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m3_f*exp(m2_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m3_h*exp(m3_w*temp)*resource/1000),
-                      m3_u = m3_u*exp(m3_rho*resource))
 ```
 
 
@@ -255,73 +202,7 @@ seq_data %<>% mutate(m3_rate = (m3_f*exp(m3_arr*(1/ref_t - 1/temp))*(length^gamm
 ```
 
 
-# ```{r}
-# m4_num_sol <- function(t, x, params){
-#   R <- x[1]
-#   S <- x[2]
-#   I <- x[3]
-#   Z <- x[4]
-#   
-#   with(as.list(params),{
-#     dR <- -R*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-#               (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
-#     
-#     dS <- -Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-#                 (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
-#     
-#     dI <- Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-#                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
-#     
-#     dZ <- -Z*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
-#               (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
-#     res <- c(dR, dS, dI, dZ)
-#     list(res)}
-#   )
-# }
-# 
-#     # dS = -S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
-#     # dI = S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
-#     # dZ = -(S+I)*Z*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
-#     # dA = -(S+I)*A*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
-# ```
-# 
-# 
-# 
-# 
-# 
-# 
-# ```{r, m4_sim}
-# m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp, resource, w, rho){
-#   times <- seq(0, time, by=0.01)
-#   xstart <- c(R=R,
-#               S=1,
-#               I=0,
-#               Z=Z)
-#   params <- c(f=f,
-#               u=u,
-#               length = length,
-#               gamma = gamma,
-#               Z = Z,
-#               ref_t = ref_t,
-#               arr_t_f = arr_t_f,
-#               arr_t_u = arr_t_u,
-#               h = h,
-#               temp = temp,
-#               resource = resource,
-#               w = w,
-#               rho = rho)
-#   output <- as.data.frame(lsoda(y=xstart, times, m4_num_sol, params))
-#   
-#   if(Z == 0) {
-#   end_data <- slice_max(output, time)[,2]
-#   }
-#   else {
-#   end_data <- slice_max(output, time)[,4]  
-#   }
-# 
-#   return(end_data)
-# }
-# ```
+
 
 ```{r}
 m4_coef <- coef(m4_u_f_fit)
@@ -334,29 +215,6 @@ m4_w <- as.numeric(m4_coef[6])
 m4_rho <- as.numeric(m4_coef[7])
 
 
-# viz_summ %<>% mutate(m4_I_end = mapply(m4_sim, 
-#                                        R=resource*life_vol/1000, 
-#                                        time=1, 
-#                                        f=m4_f/life_vol, 
-#                                        u = m4_u, 
-#                                        length=life_mm, 
-#                                        gamma=gamma, 
-#                                        Z=200*life_vol,
-#                                        ref_t = ref_t,
-#                                        arr_t_f = m4_arr,
-#                                        arr_t_u = m4_arr_u,
-#                                        h = m4_h,
-#                                        temp = temp,
-#                                        resource = resource,
-#                                        w = m4_w,
-#                                        rho = m4_rho))
-
-
-
-
-data_summ %<>% mutate(m4_rate = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m4_h*exp(m4_w*temp)*resource/1000),
-                      m4_u = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp))*exp(m4_rho*resource))
 ```
 
 
@@ -375,24 +233,7 @@ seq_data %<>% mutate(m4_I_end = mapply(m4_sim,
                                        arr_t_f = m4_arr,
                                        arr_t_u = m4_arr_u,
                                        h = m4_h*exp(m4_w*temp),
-                                       temp = temp))
 
-# seq_data %<>% mutate(m4_I_end = mapply(m4_sim, 
-#                                        R=resource*life_vol/1000, 
-#                                        time=1, 
-#                                        f=m4_f/life_vol, 
-#                                        u = m4_u, 
-#                                        length=length, 
-#                                        gamma=gamma, 
-#                                        Z=200*life_vol,
-#                                        ref_t = ref_t,
-#                                        arr_t_f = m4_arr,
-#                                        arr_t_u = m4_arr_u,
-#                                        h = m4_h,
-#                                        temp = temp,
-#                                        resource = resource,
-#                                        w = m4_w,
-#                                        rho = m4_rho))
 
 seq_data %<>% mutate(m4_rate = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma))/
                         (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma)*m4_h*exp(m4_w*temp)*resource/1000),
@@ -428,12 +269,7 @@ m5_num_sol <- function(t, x, params){
 }
 
 
-    # dS = -S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*exp(R_trt*T_trt*u3)*
-    #   f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
-    # dI = S*Z*u*exp(T_A_u*((1/15)-(1/T_trt)))*exp(R_trt*u2)*exp(R_trt*T_trt*u3)*
-    #   f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
-    # dZ = -(S+I)*Z*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
-    # dA = -(S+I)*A*f*(l^2)*exp(T_A_f*((1/15)-(1/T_trt))) / (1+(A*f*(l^2)*h*exp(h2*T_trt)))
+
 ```
 
 
@@ -484,34 +320,7 @@ m5_phi <- as.numeric(m5_coef[8])
 
 
 
-viz_summ %<>% mutate(m5_I_end = mapply(m5_sim, 
-                                          R=resource*life_vol/1000, 
-                                          time=1, 
-                                          f=m5_f/life_vol, 
-                                          u = m5_u, 
-                                          length=life_mm, 
-                                          gamma=gamma, 
-                                          Z=200*life_vol,
-                                          ref_t = ref_t,
-                                          arr_t_f = m5_arr,
-                                          arr_t_u = m5_arr_u,
-                                          h = m5_h,
-                                          temp = temp,
-                                          resource = resource,
-                                          w = m5_w,
-                                          rho = m5_rho,
-                                          phi = m5_phi))
 
-
-data_summ %<>% mutate(m5_rate = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                       (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*
-                          (mm_mean^gamma)*
-                          m5_h*exp(m5_w*temp)*
-                          resource/1000),
-                      m5_u = m5_u*
-                       exp(m5_arr_u*(1/ref_t - 1/temp))*
-                       exp(m5_rho*resource)*
-                       exp(resource*temp*m5_phi))
 ```
 
 
@@ -547,134 +356,8 @@ seq_data %<>% mutate(m5_rate = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(length^gamm
 
 
 
-```{r, eval=F}
-m5a_coef <- coef(m5a_u_f_fit)
-m5a_f <- as.numeric(m5a_coef[1])
-m5a_u <- as.numeric(m5a_coef[2])
-m5a_arr <- as.numeric(m5a_coef[3])
-m5a_arr_u <- as.numeric(m5a_coef[4])
-m5a_h <- as.numeric(m5a_coef[5])
-m5a_w <- as.numeric(m5a_coef[6])
-m5a_rho_15 <- as.numeric(m5a_coef[7])
-m5a_rho_20 <- as.numeric(m5a_coef[8])
-m5a_rho_25 <- as.numeric(m5a_coef[9])
-
-viz_summ %<>% mutate(m5a_I_end = mapply(m4_sim, 
-                                       R=resource*life_vol/1000, 
-                                       time=1, 
-                                       f=m5a_f/life_vol, 
-                                       u = case_when(temp == 15 ~ m5a_u*exp(m5a_rho_15*resource),
-                                                     temp == 20 ~ m5a_u*exp(m5a_rho_20*resource),
-                                                     temp == 25 ~ m5a_u*exp(m5a_rho_25*resource)), 
-                                       length=life_mm, 
-                                       gamma=gamma, 
-                                       Z=200*life_vol,
-                                       ref_t = ref_t,
-                                       arr_t_f = m5a_arr,
-                                       arr_t_u = m5a_arr_u,
-                                       h = m5a_h*exp(m5a_w*temp),
-                                       temp = temp))
-
-data_summ %<>% mutate(m5a_rate = (m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m5a_h*exp(m5a_w*temp)*resource/1000),
-                      m5a_u = case_when(temp == 15 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_15*resource),
-                                       temp == 20 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_20*resource),
-                                       temp == 25 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_25*resource)))
-
-```
-
-```{r, eval=F}
-seq_data %<>% mutate(m5a_I_end = mapply(m4_sim, 
-                                       R=resource*life_vol/1000, 
-                                       time=1, 
-                                       f=m5a_f/life_vol, 
-                                       u = case_when(temp == 15 ~ m5a_u*exp(m5a_rho_15*resource),
-                                                     temp == 20 ~ m5a_u*exp(m5a_rho_20*resource),
-                                                     temp == 25 ~ m5a_u*exp(m5a_rho_25*resource)), 
-                                       length=length, 
-                                       gamma=gamma, 
-                                       Z=200*life_vol,
-                                       ref_t = ref_t,
-                                       arr_t_f = m5a_arr,
-                                       arr_t_u = m5a_arr_u,
-                                       h = m5a_h*exp(m5a_w*temp),
-                                       temp = temp))
 
 
-seq_data %<>% mutate(m5a_rate = (m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(length^gamma))/
-                        (1+m5a_f*exp(m5a_arr*(1/ref_t - 1/temp))*(length^gamma)*m5a_h*exp(m5a_w*temp)*resource/1000),
-                      m5a_u = case_when(temp == 15 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_15*resource),
-                                       temp == 20 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_20*resource),
-                                       temp == 25 ~ m5a_u*exp(m5a_arr_u*(1/ref_t - 1/temp))*exp(m5a_rho_25*resource)))
-```
-
-```{r}
-m5b_coef <- coef(m5b_u_f_fit)
-m5b_u_prime <- as.numeric(m5b_coef[1])
-m5b_f <- as.numeric(m5b_coef[2])
-m5b_arr <- as.numeric(m5b_coef[3])
-m5b_arr_u <- as.numeric(m5b_coef[4])
-m5b_h <- as.numeric(m5b_coef[5])
-m5b_w <- as.numeric(m5b_coef[6])
-m5b_rho_15 <- as.numeric(m5b_coef[7])
-m5b_rho_20 <- as.numeric(m5b_coef[8])
-m5b_rho_25 <- as.numeric(m5b_coef[9])
-
-viz_summ %<>% mutate(m5b_I_end = mapply(m4_sim, 
-                                       R=resource*life_vol/1000, 
-                                       time=1, 
-                                       f=m5b_f/life_vol, 
-                                       u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_rho_15*resource),
-                                                     temp == 20 ~ m5b_u_prime*exp(m5b_rho_20*resource),
-                                                     temp == 25 ~ m5b_u_prime*exp(m5b_rho_25*resource)), 
-                                       length=life_mm, 
-                                       gamma=gamma, 
-                                       Z=200*life_vol,
-                                       ref_t = ref_t,
-                                       arr_t_f = m5b_arr,
-                                       arr_t_u = m5b_arr_u,
-                                       h = m5b_h*exp(m5b_w*temp),
-                                       temp = temp))
-
-data_summ %<>% mutate(m5b_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(mm_mean^gamma))/
-                        (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(mm_mean^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
-                      m5b_u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
-                                       temp == 20 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
-                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
-
-```
-
-```{r, eval=F}
-seq_data %<>% mutate(m5b_I_end = mapply(m4_sim, 
-                                       R=resource*life_vol/1000, 
-                                       time=1, 
-                                       f=m5b_f/life_vol, 
-                                       u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_rho_15*resource),
-                                                     temp == 20 ~ m5b_u_prime*exp(m5b_rho_20*resource),
-                                                     temp == 25 ~ m5b_u_prime*exp(m5b_rho_25*resource)), 
-                                       length=length, 
-                                       gamma=gamma, 
-                                       Z=200*life_vol,
-                                       ref_t = ref_t,
-                                       arr_t_f = m5b_arr,
-                                       arr_t_u = m5b_arr_u,
-                                       h = m5b_h*exp(m5b_w*temp),
-                                       temp = temp))
-
-
-seq_data %<>% mutate(m5b_rate = (m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma))/
-                        (1+m5b_f*exp(m5b_arr*(1/ref_t - 1/temp))*(length^gamma)*m5b_h*exp(m5b_w*temp)*resource/1000),
-                      m5b_u = case_when(temp == 15 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_15*resource),
-                                       temp == 20 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_20*resource),
-                                       temp == 25 ~ m5b_u_prime*exp(m5b_arr_u*(1/ref_t - 1/temp))*exp(m5b_rho_25*resource)))
-```
-
-
-
-```{r}
-data_summ %<>% mutate(rate_mean_ml_day=rate_len_mean*60*24,
-                      rate_se_ml_day=rate_len_mean_se*60*24)
-```
 
 
 ```{r, eval=F}
@@ -804,19 +487,6 @@ seq_data %<>% mutate(spores_consumed_m5 = mapply(m1_sim_Z,
                                          arr_t_f = m5_arr,
                                          h = m5_h*exp(m5_w*temp),
                                          temp = temp))
-
-# seq_data %<>% mutate(spores_consumed_m5b = mapply(m1_sim_Z, 
-#                                          R=resource*life_vol/1000, 
-#                                          time=1, 
-#                                          f=m5b_f/life_vol, 
-#                                          u = 0, 
-#                                          length=length, 
-#                                          gamma=gamma, 
-#                                          Z=200*life_vol,
-#                                          ref_t = ref_t,
-#                                          arr_t_f = m5b_arr,
-#                                          h = m5b_h*exp(m5b_w*temp),
-#                                          temp = temp))
 ```
 
 
@@ -824,346 +494,7 @@ seq_data %<>% mutate(spores_consumed_m5 = mapply(m1_sim_Z,
 
 ```{r}
 saveRDS(seq_data, file = here("model_fitting", "combined", "seq_data.rds"))
-seq_data <- readRDS(file = here("model_fitting", "combined", "seq_data.rds"))
 ```
-
-
-```{r}
-seq_data %>% filter(temp %in% const_temp) %>% 
-    ggplot(.,aes(x=resource, 
-                 y=spores_consumed, 
-                 color=as.factor(temp))) + 
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-    geom_line(size = 0.75) +
-    labs(x="Resource (mgC/L)", y="Spores Consumed", color="Temp", title = "")
-```
-
-
-```{r}
-prev_plot <- function(var){
-  seq_data %>% filter(temp %in% const_temp) %>% 
-    ggplot(.,aes(x=resource, 
-                 y=!!sym(var), 
-                 color=as.factor(temp))) + 
-    geom_line() +
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-    new_scale_color() + 
-    geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-    geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-    labs(x="Resource", y="Probability of Infection", color="Temperature", title = "")
-}
-```
-
-
-```{r}
-viz_summ %>% ggplot(.,aes(x=resource, y=prev, color=as.factor(temp)))  +
-  geom_point(size=4) + 
-  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper)) +
-  labs(title="experimental data")
-
-prev_plot("m1_I_end") + labs(title = "size-dependent model")
-prev_plot("m2_I_end") + labs(title = "temp-dependent model")
-prev_plot("m3_I_end") + labs(title = "resource-dependent model")
-prev_plot("m4_I_end") + labs(title = "full model")
-prev_plot("m5_I_end") + labs(title = "interactive model")
-# prev_plot("m5a_I_end") + labs(title = "interactive model alt")
-# prev_plot("m5b_I_end") + labs(title = "interactive model altb")
-```
-
-```{r}
-theme_set(theme_bw(base_size = 10))
-
-p1 <- prev_plot("m2_I_end") + theme(axis.text.x = element_blank(),
-                              axis.ticks.x = element_blank(),
-                              axis.title.x = element_blank(),
-                              legend.position = "none") + labs(title = "temp-dependent model")
-p2 <- prev_plot("m3_I_end") + theme(axis.text.x = element_blank(),
-                              axis.ticks.x = element_blank(),
-                              axis.title.x = element_blank(),
-                              legend.position = "none")  + labs(title = "resource-dependent model")
-p3 <- prev_plot("m4_I_end") + theme(axis.text.x = element_blank(),
-                              axis.ticks.x = element_blank(),
-                              axis.title.x = element_blank(),
-                              legend.position = "none")  + labs(title = "full model")
-p4 <- prev_plot("m5_I_end") + theme(legend.position = "none") + labs(title = "interactive model")
-
-prev_fig <- p1 / p2 / p3 / p4
-
-# ggsave(here("prev_fig.png"), 
-#        prev_fig,
-#        width = 4,
-#        height = 4*2,
-#        units = "in")
-
-
-p1 <- prev_plot("m2_I_end") + theme(axis.text.x = element_blank(),
-                              axis.ticks.x = element_blank(),
-                              axis.title.x = element_blank(),
-                              legend.position = "none") + labs(title = "temp-dependent model")
-p2 <- prev_plot("m3_I_end") + theme(legend.position = "none")  + labs(title = "resource-dependent model")
-p3 <- prev_plot("m4_I_end") + theme(axis.text.x = element_blank(),
-                              axis.ticks.x = element_blank(),
-                              axis.title.x = element_blank(),
-                              axis.text.y = element_blank(),
-                              axis.ticks.y = element_blank(),
-                              axis.title.y = element_blank(),
-                              legend.position = "none")  + labs(title = "full model")
-p4 <- prev_plot("m5_I_end") + theme(axis.text.y = element_blank(),
-                                    axis.ticks.y = element_blank(),
-                                    axis.title.y = element_blank(),
-                                    legend.position = "none") + labs(title = "interactive model")
-
-
-
-
-
-prev_fig <- p1 / p2 | p3 / p4
-
-prev_fig
-# ggsave(here("prev_fig.png"), 
-#        prev_fig,
-#        width = 6,
-#        height = 6,
-#        units = "in")
-```
-
-
-```{r}
-all_fits <- seq_data %>% mutate(upper = conf$upper, lower = conf$lower) %>% 
-  dplyr::select(resource, temp, prev, upper, lower, m2_I_end, m3_I_end, m4_I_end, m5_I_end) %>%
-  filter(temp %in% c(15, 20, 25)) %>%
-  mutate("temp-only" = m2_I_end, "resource-only" = m3_I_end, "additive" = m4_I_end, "interactive" = m5_I_end) %>%
-  dplyr::select(-c(m2_I_end, m3_I_end, m4_I_end, m5_I_end)) %>%
-  pivot_longer(cols=c('temp-only', 'resource-only', 'additive', 'interactive')) %>%
-  ggplot(.,aes(x=resource, y=value, group = interaction(name, as.factor(temp)), color=as.factor(temp))) +
-  geom_line(aes(linetype=name), size =0.75) +
-  scale_linetype_manual(values = c(5, 1, 3, 6)) +
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  geom_linerange(aes(ymin = lower, ymax=upper, color=as.factor(temp))) +
-  labs(x="Resource Conc. (mgC/L)", y="Probability of Infection", color="Temp", shape="Data", title = "", linetype="Model") 
-
-all_fits
-
-# ggsave("prev_fits_final.png", all_fits, path=here("mle/fit_plots"), width = outwidth[1], height = outwidth[1]/golden)
-```
-
-Make a faceted version
-```{r}
-seq_data %>% mutate(upper = conf$upper, lower = conf$lower) %>% 
-  dplyr::select(resource, temp, prev, upper, lower, m2_I_end, m3_I_end) %>%
-  filter(temp %in% c(15, 20, 25)) %>%
-  mutate("temp-only" = m2_I_end, "resource-only" = m3_I_end) %>%
-  dplyr::select(-c(m2_I_end, m3_I_end)) %>%
-  pivot_longer(cols=c('temp-only', 'resource-only')) %>%
-  ggplot(.,aes(x=resource, y=value, group = interaction(name, as.factor(temp)), color=as.factor(temp))) +
-  geom_line(aes(linetype=name), size =0.75) +
-  scale_linetype_manual(values = c(1, 6)) +
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  geom_linerange(aes(ymin = lower, ymax=upper, color=as.factor(temp))) +
-  labs(x="Resource Conc. (mgC/L)", y="Probability of Infection", color="Temp", shape="Data", title = "", linetype="Model") 
-```
-
-
-```{r}
-seq_data %>% mutate(upper = conf$upper, lower = conf$lower) %>% 
-  dplyr::select(resource, temp, prev, upper, lower, m4_I_end, m5_I_end) %>%
-  filter(temp %in% c(15, 20, 25)) %>%
-  mutate("additive" = m4_I_end, "interactive" = m5_I_end) %>%
-  dplyr::select(-c(m4_I_end, m5_I_end)) %>%
-  pivot_longer(cols=c('additive', 'interactive')) %>%
-  ggplot(.,aes(x=resource, y=value, group = interaction(name, as.factor(temp)), color=as.factor(temp))) +
-  geom_line(aes(linetype=name), size =0.75) +
-  scale_linetype_manual(values = c(1, 4)) +
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-  geom_linerange(aes(ymin = lower, ymax=upper, color=as.factor(temp))) +
-  labs(x="Resource Conc. (mgC/L)", y="Probability of Infection", color="Temp", shape="Data", title = "", linetype="Model") 
-```
-
-
-
-```{r, eval=F}
-viz_summ %>% ggplot(.,aes(x=resource, y=prev, color=as.factor(temp)))  +
-  geom_point(size=4) + 
-  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper)) +
-  labs(title="experimental data")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m1_I_end, color=as.factor(temp))) + 
-  geom_point(size = 4, shape=2) +
-  new_scale_color() + 
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  geom_linerange(aes(ymin = conf$lower, ymax=conf$upper, color=as.factor(temp))) +
-  labs(title="independent model")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m2_I_end, color=as.factor(temp))) + 
-  geom_point(size = 4, shape=2) +
-  new_scale_color() +
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  labs(title="temperature-dependent model")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m3_I_end, color=as.factor(temp))) + 
-  geom_point(size = 4, shape=2) +
-  new_scale_color() + 
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  labs(title="resource-dependent model")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m4_I_end, color=as.factor(temp))) + 
-  geom_point(size = 4, shape=2) +
-  new_scale_color() + 
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  labs(title="full model")
-
-viz_summ %>% ggplot(.,aes(x=resource, y=m5_I_end, color=as.factor(temp))) + 
-  geom_point(size = 4, shape=2) +
-  new_scale_color() + 
-  geom_point(aes(x=resource, y=prev, color=as.factor(temp)), size=4) + 
-  labs(title="interaction model")
-
-```
-
-```{r}
-rate_plot <- function(var){
-  seq_data %>% filter(temp %in% const_temp) %>% 
-    ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
-      geom_line() +
-      new_scale_color() + 
-      geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=3, shape = 1) + 
-      labs(x = "resource", y = "Foraging rate (mL/day)", title="")
-}
-```
-
-```{r}
-  seq_data %>% filter(temp %in% const_temp) %>% 
-    ggplot(.,aes(x=resource, y=m1_rate, color=as.factor(temp), group=as.factor(temp))) + 
-      geom_line(size = 1, shape=2) +
-      new_scale_color() + 
-      geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=2, shape = 1) + 
-      labs(x = "resource", y = "Foraging rate (mL/day)", title="")
-```
-
-
-```{r}
-rate_plot("m1_rate") + labs(title = "Size-dependent model")
-rate_plot("m2_rate") + labs(title = "Temperature-dependent model")
-rate_plot("m3_rate") + labs(title = "Resource-dependent model")
-rate_plot("m4_rate") + labs(title = "Temp. + Res. dependent model")
-rate_plot("m5_rate") + labs(title = "Interaction model")
-# rate_plot("m5a_rate") + labs(title = "Interaction model alt")
-# rate_plot("m5b_rate") + labs(title = "Interaction model altb")
-
-
-```
-
-
-
-```{r}
-data_summ %>% ggplot(.,aes(x=resource, y=m1_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="independent model")
-
-seq_data %>% filter(temp %in% const_temp) %>% ggplot(.,aes(x=resource, y=m1_rate, color=as.factor(temp))) + 
-  geom_point(size = 3, shape=2) +
-  new_scale_color() + 
-  geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + 
-  labs(title="independent model")
-
-
-
-data_summ %>% ggplot(.,aes(x=resource, y=m2_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="temperature-dependent model")
-
-data_summ %>% ggplot(.,aes(x=resource, y=m3_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="resource_dependent model")
-
-data_summ %>% ggplot(.,aes(x=resource, y=m4_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="full model")
-
-data_summ %>% ggplot(.,aes(x=resource, y=m5_rate, color=as.factor(temp))) + geom_point(size = 3, shape=2) +
-  new_scale_color() + geom_point(aes(x=resource, y=rate_mean_ml_day, color=as.factor(temp)), size=4) + labs(title="interaction model")
-```
-
-```{r}
-u_plot <- function(var){
-  seq_data %>% 
-    filter(temp %in% const_temp) %>% 
-    ggplot(.,aes(x=resource, y=!!sym(var), color=as.factor(temp))) + 
-    geom_line(size = 2) + 
-    scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) +
-    labs(x = "Resource (mgC/L)", y = "Per-Spore Susceptibility", color = "Temp", title = "")
-}
-```
-
-```{r}
-susc_plot <- u_plot("m5_u") + labs(title="")
-susc_plot
-# ggsave("susc_plot.png", susc_plot, path=here("mle/fit_plots"))
-```
-
-
-# per-spore susceptibility
-
-```{r, eval=F}
-data_summ %>% ggplot(.,aes(x=resource, y=m1_u, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=m2_u, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=m3_u, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=m4_u, color=as.factor(temp))) + geom_point()
-data_summ %>% ggplot(.,aes(x=resource, y=m5_u, color=as.factor(temp))) + geom_point()
-```
-
-
-# Additional figure ideas
-
- - temp only figures
-    - 4 panel grid. clearance rate, spores consumed, per-spore susceptibility, probability of infection
-    
-```{r}
-
-```
-
- 
- - resource only figures
-    - 4 panel grid. clearance rate, spores consumed, per-spore susceptibility, probability of infection
-
- - all models for probability of infection
-    - clearance rate, per-spore susceptibility, probability of infection
-
-
-
-
-
-
-
-```{r}
-data_summ %<>% left_join(., length_summ)
-```
-
-
-Length - per-spore susceptibility connection
-```{r}
-
-data_summ %>% ggplot(., aes(x = mm_mean, y = m5_u)) + geom_point(aes(color = as.factor(temp), shape = as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "final lengths")
-
-
-data_summ %>% ggplot(., aes(x = life_mm, y = m5_u)) + geom_point(aes(color = as.factor(temp), shape = as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "day 5 lengths")
-
-
-data_summ %>% filter(temp == 15) %>% ggplot(., aes(x = life_mm, y = m5_u)) + geom_point(aes(shape=as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "day 5 lengths - 15C")
-
-data_summ %>% filter(temp == 20) %>% ggplot(., aes(x = life_mm, y = m5_u)) + geom_point(aes(shape=as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "day 5 lengths - 20C")
-
-data_summ %>% filter(temp == 25) %>% ggplot(., aes(x = life_mm, y = m5_u)) + geom_point(aes(shape=as.factor(resource)), size = 2) + geom_smooth(method = "lm") + labs(x = "Average Length", y = "per-spore susceptibility", color = "Temp", shape = "Resource", title = "day 5 lengths - 25C")
-
-```
-
-
-
-
-
-
-
-
 
 
 
