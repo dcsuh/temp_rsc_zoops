@@ -21,13 +21,13 @@ library(patchwork)
 
 
 ```{r}
-m1_u_f_fit <- readRDS(file = here("mle", "final", "m1_fit.rds"))
-m2_u_f_fit <- readRDS(file = here("mle", "final", "m2_fit.rds"))
-m3_u_f_fit <- readRDS(file = here("mle", "final", "m3_fit.rds"))
+m1_u_f_fit <- readRDS(file = here("mle", "m1_combined_fit.rds"))
+m2_u_f_fit <- readRDS(file = here("mle", "m2_combined_fit.rds"))
+m3_u_f_fit <- readRDS(file = here("mle", "m3_combined_fit.rds"))
 
-m4_u_f_fit <- readRDS(file = here("model_fitting", "m4_coef_fit.rds"))
+m4_u_f_fit <- readRDS(file = here("mle", "m4_combined_fit.rds"))
 
-m5_u_f_fit <- readRDS(file = here("model_fitting", "m5_phi_fit.rds"))
+m5_u_f_fit <- readRDS(file = here("mle", "m5_combined_fit.rds"))
 
 ```
 

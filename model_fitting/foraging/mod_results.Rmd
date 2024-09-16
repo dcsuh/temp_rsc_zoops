@@ -68,9 +68,8 @@ getAIC(m0)
 getAIC(m1)
 getAIC(m2)
 getAIC(m3)
-# getAIC(m3a)
+
 getAIC(m4)
-# getAIC(m4a)
 
 getAIC(m6c)
 ```
@@ -78,17 +77,7 @@ getAIC(m6c)
 
 # AIC table
 
-```{r, eval=F}
-model_list <- list(m0, m1, m2, m3, m4, m5b, m5c, m6b, m6c, m7b, m7c, m7d, m7e)
-mod_names <- c("m0", "m1", "m2", "m3", "m4", "m5b", "m5c", "m6b", "m6c", "m7b", "m7c", "m7d", "m7e")
-mod_names_descriptive <- c("base", "size", "temp", "rsc", "full", "arr(R)~LIN", "arr(R)~EXP", "h(T)~LIN", "h(T)~EXP", "LIN-LIN", "EXP_EXP", "LIN_EXP", "EXP_LIN")
-mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
-#tibble(mod_names, mod_names_descriptive) #check to make sure names line up
 
-aic_table <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
-
-saveRDS(aic_table, file=here("mle/aic_table.rds"))
-```
 
 
 ```{r}
@@ -117,8 +106,9 @@ data <- readRDS(here("processed_data","foraging_raw.rds"))
 ```{r}
 n <- nrow(data)
 
+
 getAIC_c <- function(model){
-  return((2*length(coef(model))-(summary(model)@m2logL)) + 
+  return((2*length(coef(model))-(2*summary(model)@m2logL/-2)) + 
            (2*length(coef(model))^2 + 2*length(coef(model)))/(n-length(coef(model))-1))
 }
 ```

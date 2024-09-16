@@ -416,7 +416,7 @@ m1_runtime
 
 coef(m1_u_f_fit)
 
-saveRDS(m1_u_f_fit, file = here("mle","final","m1_fit.rds"))
+saveRDS(m1_u_f_fit, file = here("mle","m1_combined_fit.rds"))
 ```
 
 
@@ -548,7 +548,7 @@ m2_runtime
 
 coef(m2_u_f_fit)
 
-saveRDS(m2_u_f_fit, file = here("mle","final","m2_fit.rds"))
+saveRDS(m2_u_f_fit, file = here("mle","m2_combined_fit.rds"))
 ```
 
 # Resource-depdendent Model
@@ -676,7 +676,7 @@ m3_runtime
 
 coef(m3_u_f_fit)
 
-saveRDS(m3_u_f_fit, file = here("mle","final","m3_fit.rds"))
+saveRDS(m3_u_f_fit, file = here("mle","m3_combined_fit.rds"))
 ```
 
 
@@ -919,7 +919,7 @@ m4_runtime
 coef(m4_u_f_fit)
 
 
-saveRDS(m4_u_f_fit, file = here("model_fitting","m4_coef_fit.rds"))
+saveRDS(m4_u_f_fit, file = here("mle","m4_combined_fit.rds"))
 
 ```
 
@@ -1239,7 +1239,7 @@ end_time - start_time
 
 coef(m5_u_f_fit)
 
-saveRDS(m5_u_f_fit, file = here("model_fitting","m5_phi_fit.rds"))
+saveRDS(m5_u_f_fit, file = here("mle","m5_combined_fit.rds"))
 ```
 
 ```{r, eval=F}
