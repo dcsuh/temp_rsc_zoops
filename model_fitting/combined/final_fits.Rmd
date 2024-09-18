@@ -244,149 +244,7 @@ m1_ll <- function(u, f, arr_t_f, h, w, sd_est){
 }
 ```
 
-Testing to see why the new model fits are better than the old.
 
-```{r, eval=F}
-u <- 0.00075
-f <- as.numeric(m6c_coef[1])
-arr_t_f <- as.numeric(m6c_coef[2])
-h <- as.numeric(m6c_coef[3])
-w <- as.numeric(m6c_coef[4])
-
-  data <- tmp
-  R_end <- as.data.frame(mapply(m1_sim, 
-                                R=data$amt_init*fora_vol/1000, 
-                                time=data$time/60/24, 
-                                f=f/fora_vol,
-                                u = 0, 
-                                length=data$mm, 
-                                gamma=gamma, 
-                                Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                h=h*exp(w*data$temp),
-                                temp=data$temp))
-  
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
-  
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid), 
-                 log = T)
-    nll_sum_f_m6c <- -sum(nll)
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m1_sim, 
-                                R=exp_data$resource*life_vol/1000, 
-                                time=exp_data$time, 
-                                f=f/life_vol, 
-                                u=u, 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                h=h*exp(w*exp_data$temp),
-                                temp=exp_data$temp))
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum_u_m6c <- -sum(exp_data$ll)
-
-```
-
-
-```{r, eval=F}
-m1_coef <- coef(m1_u_f_fit)
-u <- m1_coef[1]
-f <- m1_coef[2]
-arr_t_f <- m1_coef[3]
-h <- m1_coef[4]
-w <- m1_coef[5]
-
-
-  data <- tmp
-  R_end <- as.data.frame(mapply(m1_sim, 
-                                R=data$amt_init*fora_vol/1000, 
-                                time=data$time/60/24, 
-                                f=f/fora_vol,
-                                u = 0, 
-                                length=data$mm, 
-                                gamma=gamma, 
-                                Z=0,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                h=h*exp(w*data$temp),
-                                temp=data$temp))
-  
-  colnames(R_end) <- "R_end"
-  data$end <- R_end$R_end
-  #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
-  data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
-  data %<>% mutate(sqrt_model_end = sqrt(end),
-                   sqrt_data_end = sqrt(amt_rem*vol/1000),
-                   log_model_end = log(end),
-                   log_data_end = log(amt_rem*vol/1000))
-  
-    nll_sum <- 0
-    for(i in 1:length(treatment_IDs)){
-      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
-      nll <- dnorm(treatment_data$sqrt_data_end,
-                 mean = mean(treatment_data$sqrt_model_end),
-                 sd = sd_est,
-                 log = T)
-      nll_sum <- -sum(nll) + nll_sum
-    }
-  
-  
-  exp_data <- dataset %>% filter(exposed==TRUE)
-
-  
-  I_end <- as.data.frame(mapply(m1_sim, 
-                                R=exp_data$resource*life_vol/1000, 
-                                time=exp_data$time, 
-                                f=f/life_vol, 
-                                u=u, 
-                                length = exp_data$life_mm, 
-                                gamma=gamma, 
-                                Z=spore_conc*life_vol,
-                                ref_t=ref_t,
-                                arr_t_f=arr_t_f,
-                                h=h*exp(w*exp_data$temp),
-                                temp=exp_data$temp))
-  colnames(I_end) <- "I_end"
-  
-  exp_data %<>% cbind(I_end)
-  
-  exp_data %<>% 
-    mutate(ll = mapply(inf_out, inf_status = inf_status, I_end=I_end))
-  nll_sum_u_m1 <- -sum(exp_data$ll)
-
-```
-
-
-New algo splits the difference and has a lower log-likelihood overall because it can better match the infection data
-
-```{r, eval=F}
-nll_sum_f_m6c
-nll_sum_u_m6c
-nll_sum_f_m6c + nll_sum_u_m6c
-
-
-nll_sum_f_m1
-nll_sum_u_m1
-nll_sum_f_m1 + nll_sum_u_m1
-
-
-```
 
 
 
@@ -749,35 +607,35 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
 ```
 
 
-```{r, eval=F}
-m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
-  times <- seq(0, time, by=0.01)
-  xstart <- c(R=R,
-              S=1,
-              I=0,
-              Z=Z)
-  params <- c(f=f,
-              u=u*exp(arr_t_u*(1/ref_t - 1/temp)),
-              length = length,
-              gamma = gamma,
-              Z = Z,
-              ref_t = ref_t,
-              arr_t_f = arr_t_f,
-              arr_t_u = arr_t_u,
-              h = h,
-              temp = temp)
-  output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
-  
-  if(Z == 0) {
-  end_data <- slice_max(output, time)[,2]
-  }
-  else {
-  end_data <- slice_max(output, time)[,4]  
-  }
-
-  return(end_data)
-}
-```
+# ```{r, eval=F}
+# m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp){
+#   times <- seq(0, time, by=0.01)
+#   xstart <- c(R=R,
+#               S=1,
+#               I=0,
+#               Z=Z)
+#   params <- c(f=f,
+#               u=u*exp(arr_t_u*(1/ref_t - 1/temp)),
+#               length = length,
+#               gamma = gamma,
+#               Z = Z,
+#               ref_t = ref_t,
+#               arr_t_f = arr_t_f,
+#               arr_t_u = arr_t_u,
+#               h = h,
+#               temp = temp)
+#   output <- as.data.frame(lsoda(y=xstart, times, m1_num_sol, params))
+#   
+#   if(Z == 0) {
+#   end_data <- slice_max(output, time)[,2]
+#   }
+#   else {
+#   end_data <- slice_max(output, time)[,4]  
+#   }
+# 
+#   return(end_data)
+# }
+# ```
 
 
 
@@ -787,15 +645,15 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
 ```{r, m4_ll}
 m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, sd_est){
   
-    if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
-      (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)) <0 |
-     (u/100000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)) <0) {
-  
-      return(NA)
-  
-  } 
-  
-  else {  
+  #   if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
+  #     (u/10000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)) <0 |
+  #    (u/10000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)) <0) {
+  # 
+  #     return(NA)
+  # 
+  # } 
+  # 
+  # else {  
   
   
   data <- tmp
@@ -843,7 +701,7 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, sd_est){
                                 R=exp_data$resource*life_vol/1000, 
                                 time=exp_data$time, 
                                 f=f/life_vol, 
-                                u=(u/100000), 
+                                u=(u/10000), 
                                 length = exp_data$life_mm, 
                                 gamma=gamma, 
                                 Z=spore_conc*life_vol,
@@ -866,13 +724,13 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, sd_est){
   return(nll_sum)
   
   }
-}
+#}
 ```
 
 Now we use the optimizer
 
 ```{r, eval=F}
-m4_fit <- readRDS(file = here("mle","final","m4_fit.rds"))
+m4_fit <- readRDS(file = here("mle","m4_combined_fit.rds"))
 m4_coef <- coef(m4_fit)
 
 adjust_factor <- 1
@@ -893,21 +751,22 @@ adjust_factor <- 1
 
 start_time <- Sys.time()
 tmp <- data
-m4_u_f_fit <- mle2(m4_ll, start=list(u = m4_u*adjust_factor*100000, 
-                                     f=m4_f*adjust_factor,
-                                     arr_t_f=m4_arr_t_f*adjust_factor,
-                                     arr_t_u=m4_arr_t_u*adjust_factor,
-                                     h=m4_h*adjust_factor,
-                                     w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor,
+m4_u_f_fit <- mle2(m4_ll, start=list(f = 10,
+                                      u=10, 
+                                      arr_t_f=30, 
+                                      arr_t_u=30,
+                                      h=100,
+                                      w=0.1,
+                                      rho=0.1,
                                      sd_est = 0.01),
-                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
-                                     f=m4_f*adjust_factor,
-                                     arr_t_f=m4_arr_t_f*adjust_factor,
-                                     arr_t_u=m4_arr_t_u*adjust_factor,
-                                     h=m4_h*adjust_factor,
-                                     w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor,
+                     control=list(parscale = 
+                                    c(f = 10,
+                                      u=10, 
+                                      arr_t_f=30, 
+                                      arr_t_u=30,
+                                      h=100,
+                                      w=0.1,
+                                      rho=0.1,
                                      sd_est = 0.01), maxit = 10000),
                      skip.hessian=F, method="Nelder-Mead")
 
@@ -975,14 +834,16 @@ m4_u_f_fit <- mle2(m4_ll,  start=list(u = m4_u*adjust_factor*100000,
                                      arr_t_u=m4_arr_t_u*adjust_factor,
                                      h=m4_h*adjust_factor,
                                      w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor),
+                                     rho=m4_rho*adjust_factor,
+                                     sd_est = 0.01),
                      control=list(parscale = c(u = m4_u*adjust_factor*100000, 
                                      f=m4_f*adjust_factor,
                                      arr_t_f=m4_arr_t_f*adjust_factor,
                                      arr_t_u=m4_arr_t_u*adjust_factor,
                                      h=m4_h*adjust_factor,
                                      w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor), maxit = 10000),
+                                     rho=m4_rho*adjust_factor,
+                                     sd_est = 0.01), maxit = 10000),
                      skip.hessian=F, method="Nelder-Mead")
 
 
@@ -1012,14 +873,16 @@ m4_u_f_fit <- mle2(m4_ll, start=list(u = m4_u*adjust_factor*100000,
                                      arr_t_u=m4_arr_t_u*adjust_factor,
                                      h=m4_h*adjust_factor,
                                      w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor),
+                                     rho=m4_rho*adjust_factor,
+                                     sd_est = 0.01),
                      control=list(parscale = c(u = m4_u*adjust_factor*100000, 
                                      f=m4_f*adjust_factor,
                                      arr_t_f=m4_arr_t_f*adjust_factor,
                                      arr_t_u=m4_arr_t_u*adjust_factor,
                                      h=m4_h*adjust_factor,
                                      w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor), maxit=10000),
+                                     rho=m4_rho*adjust_factor,
+                                     sd_est = 0.01), maxit=10000),
                      skip.hessian=F, method="Nelder-Mead")
 
 
