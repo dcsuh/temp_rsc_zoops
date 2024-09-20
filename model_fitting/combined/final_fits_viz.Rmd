@@ -25,7 +25,8 @@ m1_u_f_fit <- readRDS(file = here("mle", "m1_combined_fit.rds"))
 m2_u_f_fit <- readRDS(file = here("mle", "m2_combined_fit.rds"))
 m3_u_f_fit <- readRDS(file = here("mle", "m3_combined_fit.rds"))
 
-m4_u_f_fit <- readRDS(file = here("mle", "m4_combined_fit.rds"))
+#m4_u_f_fit <- readRDS(here("mle","m4_combined_fit.rds"))
+m4_u_f_fit <- readRDS(here("mle","m4_combined_fit_a.rds"))
 
 m5_u_f_fit <- readRDS(file = here("mle", "m5_combined_fit.rds"))
 
@@ -207,7 +208,7 @@ seq_data %<>% mutate(m3_rate = (m3_f*exp(m3_arr*(1/ref_t - 1/temp))*(length^gamm
 ```{r}
 m4_coef <- coef(m4_u_f_fit)
 m4_f <- as.numeric(m4_coef[1])
-m4_u <- as.numeric(m4_coef[2])/100000
+m4_u <- as.numeric(m4_coef[2])/10000
 m4_arr <- as.numeric(m4_coef[3])
 m4_arr_u <- as.numeric(m4_coef[4])
 m4_h <- as.numeric(m4_coef[5])
@@ -233,6 +234,7 @@ seq_data %<>% mutate(m4_I_end = mapply(m4_sim,
                                        arr_t_f = m4_arr,
                                        arr_t_u = m4_arr_u,
                                        h = m4_h*exp(m4_w*temp),
+                                       temp = temp))
 
 
 seq_data %<>% mutate(m4_rate = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma))/
@@ -372,16 +374,16 @@ seq_data %<>% mutate(rate_mean_ml_day=rate_len_mean*60*24,
 ```{r}
 #generated from here("model_fitting", "foraging", "best_fit_f.Rmd")
 best_f <- readRDS(here("mle","update","best_f_fit.rds")) # full model with exponential effect of temp on handling time
-best_f <- readRDS(here("mle", "m6c_f_fit.rds")) # full model with exponential effect of temp on handling time
+best_f <- readRDS(here("mle","m6c_f_fit.rds")) # full model with exponential effect of temp on handling time
 
 
 best_f_coef <- coef(best_f)
 
 f_est <- best_f_coef[1] #ml/day
-arr_f_est <- best_f_coef[2] #Celsius
-h_est <- best_f_coef[3] #mg dry weight carbon/day
+arr_f_est <- best_f_coef[3] #Celsius
+h_est <- best_f_coef[5] #mg dry weight carbon/day
 #h is a huge number because it is milligrams carbon/day but daphnia are eating micrograms per day
-w_est <- best_f_coef[4] #per-degree Celsius (i.e. 1/Celsius)
+w_est <- best_f_coef[6] #per-degree Celsius (i.e. 1/Celsius)
 ```
 
 

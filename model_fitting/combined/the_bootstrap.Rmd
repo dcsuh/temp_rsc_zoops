@@ -19,7 +19,7 @@ Objective: Bootstrap confidence intervals for f and u and associated parameters 
 
 Which model is the best fitting model?
 ```{r}
-m5_u_f_fit <- readRDS(file = here("model_fitting", "m5_phi_fit.rds"))
+m5_u_f_fit <- readRDS(here("mle","m5_combined_fit.rds"))
 ```
 
 
@@ -118,6 +118,7 @@ m5_h <- as.numeric(m5_coef[5])
 m5_w <- as.numeric(m5_coef[6])
 m5_rho <- as.numeric(m5_coef[7])
 m5_phi <- as.numeric(m5_coef[8])
+m5_sd_est <- as.numeric(m5_coef[9])
 ```
 
 
@@ -167,7 +168,7 @@ slice_sample is set to keep the amount of data per treatment the same (30), but 
 
 
 ```{r}
-m5_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, phi){
+m5_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, phi, sd_est){
   
   if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
       (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)*exp(0.1/1000*15*phi)) <0 |
@@ -202,13 +203,22 @@ m5_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, phi){
   data$end <- R_end$R_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid), 
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
+                 sd = sd_est,
                  log = T)
-    nll_sum <- -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
   
+
   exp_data <- boot_dataset %>% filter(exposed==TRUE)
 
   
@@ -272,7 +282,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                     sd_est = m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -280,7 +291,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                     sd_est = m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -343,7 +355,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -351,7 +364,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -385,14 +399,15 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_02[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+      boot_02[[i]] <-mle2(m5_ll, start=list(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
                                       arr_t_u=m5_arr_u,
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -400,7 +415,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -434,14 +450,15 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_03[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+      boot_03[[i]] <-mle2(m5_ll, start=list(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
                                       arr_t_u=m5_arr_u,
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -449,7 +466,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -482,14 +500,15 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_04[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+      boot_04[[i]] <-mle2(m5_ll, start=list(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
                                       arr_t_u=m5_arr_u,
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -497,7 +516,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 

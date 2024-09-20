@@ -645,15 +645,15 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
 ```{r, m4_ll}
 m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, sd_est){
   
-  #   if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
-  #     (u/10000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)) <0 |
-  #    (u/10000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)) <0) {
-  # 
-  #     return(NA)
-  # 
-  # } 
-  # 
-  # else {  
+    if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
+      (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)) <0 |
+     (u/100000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)) <0) {
+
+      return(NA)
+
+  }
+
+  else {
   
   
   data <- tmp
@@ -701,7 +701,7 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, sd_est){
                                 R=exp_data$resource*life_vol/1000, 
                                 time=exp_data$time, 
                                 f=f/life_vol, 
-                                u=(u/10000), 
+                                u=(u/100000), 
                                 length = exp_data$life_mm, 
                                 gamma=gamma, 
                                 Z=spore_conc*life_vol,
@@ -724,7 +724,7 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, sd_est){
   return(nll_sum)
   
   }
-#}
+}
 ```
 
 Now we use the optimizer
@@ -813,7 +813,7 @@ m4_runtime
 coef(m4_u_f_fit)
 
 
-saveRDS(m4_u_f_fit, file = here("mle","m4_combined_fit_a.rds"))
+saveRDS(m4_u_f_fit, file = here("mle","m4_combined_fit_b.rds"))
 ```
 
 
