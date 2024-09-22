@@ -332,7 +332,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 20
+  iterations <- 15
   
   boot_01 <- list()
   
@@ -383,7 +383,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 20
+  iterations <- 10
   
   boot_02 <- list()
   
@@ -434,7 +434,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 10
+  iterations <- 5
   
   boot_03 <- list()
   
@@ -558,23 +558,36 @@ beet <- c(boot_01, boot_02, boot_03, boot_04)
 50_072624 <- 50 more iters
 45_072914 <- 45 more iters
 
+
+Start new iters with new model formulation
+20_092024 <- 20 more iters
+20_092124 <- 20 more iters
+25_092124 <- 25
+35_092224 <- 35 more iters
+
+
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "45_072924.rds"))
-mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_060824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_060924.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061024.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "70_061124.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "40_061124.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_061224.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061324.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "55_061424.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061524.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_071824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_072624.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_072924.rds")))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "35_092224.rds"))
+# mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "45_060824.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_060924.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_061024.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "70_061124.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "40_061124.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "45_061224.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_061324.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "55_061424.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_061524.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_071824.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_072624.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "45_072924.rds")))
+
+mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092024.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "20_092124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "25_092124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_092224.rds")))
 
 ```
 
@@ -590,6 +603,7 @@ mod_boot_coefs <- tibble(f = rep_len(0, tib_length),
                          w = rep_len(0, tib_length),
                          rho = rep_len(0, tib_length),
                          phi = rep_len(0, tib_length),
+                         sd_est = rep_len(0, tib_length),
                          warning = NA)
 
 
@@ -604,6 +618,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "52"
   }
   else if(mod_f_boot[[i]]@details[4] == 10){
@@ -616,6 +631,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "10"
   }
   else if(mod_f_boot[[i]]@min == 0){
@@ -628,6 +644,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "zero_ll"
   }
   else if(mod_f_boot[[i]]@details[4] == 1){
@@ -641,6 +658,7 @@ for(i in 1:length(mod_f_boot)){
   mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
   mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
   mod_boot_coefs$phi[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$sd_est[i] <- as.numeric(boot_coef[9])
   mod_boot_coefs$warning[i] <- "1"
   }
   else{
@@ -653,6 +671,7 @@ for(i in 1:length(mod_f_boot)){
   mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
   mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
   mod_boot_coefs$phi[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$sd_est[i] <- as.numeric(boot_coef[9])
   mod_boot_coefs$warning[i] <- "0"
   }
 }
@@ -670,6 +689,7 @@ mod_boot_coefs %>% ggplot(., aes(x = h)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = w)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = rho)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = phi)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = sd_est)) + geom_histogram()
 ```
 
 
@@ -685,7 +705,8 @@ mod_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
                         h = NA,
                         w = NA,
                         rho = NA,
-                        phi = NA)
+                        phi = NA,
+                        sd_est = NA)
 
 mod_quantiles$f[1] <- coef(m5_u_f_fit)[1]
 mod_quantiles$f[2] <- mean(mod_boot_coefs$f)
@@ -729,30 +750,35 @@ mod_quantiles$phi[1] <- coef(m5_u_f_fit)[8]
 mod_quantiles$phi[2] <- mean(mod_boot_coefs$phi)
 mod_quantiles$phi[3] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$phi[4] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$sd_est[1] <- coef(m5_u_f_fit)[8]
+mod_quantiles$sd_est[2] <- mean(mod_boot_coefs$sd_est)
+mod_quantiles$sd_est[3] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$sd_est[4] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[2]
 ```
 
 
 ```{r}
-mod_quantiles %<>% pivot_longer(cols = f:phi) %>% pivot_wider(., names_from="id")
+mod_quantiles %<>% pivot_longer(cols = f:sd_est) %>% pivot_wider(., names_from="id")
 
 ```
 
 ```{r, eval = F}
-theme_set(theme_bw(base_size = 12))
-
-rho_boot_plot <- mod_quantiles %>% filter(name %in% c("rho_15", "rho_20", "rho_25")) %>%
-  mutate(name = gsub("rho_", "", x=name)) %>%
-  ggplot(., aes(x = name, y=est, color = name)) + 
-  geom_point(size = 3) + 
-  geom_linerange(linewidth = 1, 
-                 aes(ymin=lower.025, ymax=upper.975)) + 
-  labs(x = expression(rho), y = "Estimate (Boostrapped 95% CI)", color = "Temp") + 
-  theme(legend.position = "none") + 
-  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
-
-rho_boot_plot
-
-ggsave(here("workshop", "figures", "rho_boot_plot.png"), width = 3, height = 4)
+# theme_set(theme_bw(base_size = 12))
+# 
+# rho_boot_plot <- mod_quantiles %>% filter(name %in% c("rho_15", "rho_20", "rho_25")) %>%
+#   mutate(name = gsub("rho_", "", x=name)) %>%
+#   ggplot(., aes(x = name, y=est, color = name)) + 
+#   geom_point(size = 3) + 
+#   geom_linerange(linewidth = 1, 
+#                  aes(ymin=lower.025, ymax=upper.975)) + 
+#   labs(x = expression(rho), y = "Estimate (Boostrapped 95% CI)", color = "Temp") + 
+#   theme(legend.position = "none") + 
+#   scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
+# 
+# rho_boot_plot
+# 
+# ggsave(here("workshop", "figures", "rho_boot_plot.png"), width = 3, height = 4)
 ```
 
 

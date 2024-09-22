@@ -646,8 +646,8 @@ m4_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, 
 m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, sd_est){
   
     if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
-      (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)) <0 |
-     (u/100000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)) <0) {
+      (u/10000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)) <0 |
+     (u/10000*exp(arr_t_u*((1/15)-(1/25)))*exp(1.0/1000*rho)) <0) {
 
       return(NA)
 
@@ -701,7 +701,7 @@ m4_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, sd_est){
                                 R=exp_data$resource*life_vol/1000, 
                                 time=exp_data$time, 
                                 f=f/life_vol, 
-                                u=(u/100000), 
+                                u=(u/10000), 
                                 length = exp_data$life_mm, 
                                 gamma=gamma, 
                                 Z=spore_conc*life_vol,
@@ -813,86 +813,13 @@ m4_runtime
 coef(m4_u_f_fit)
 
 
-saveRDS(m4_u_f_fit, file = here("mle","m4_combined_fit_b.rds"))
+saveRDS(m4_u_f_fit, file = here("mle","m4_combined_fit_a.rds"))
 ```
 
 
 
 
-```{r}
-adjust_factor <- 1.1
 
-start_time <- Sys.time()
-tmp <- data
-m4_u_f_fit <- mle2(m4_ll,  start=list(u = m4_u*adjust_factor*100000, 
-                                     f=m4_f*adjust_factor,
-                                     arr_t_f=m4_arr_t_f*adjust_factor,
-                                     arr_t_u=m4_arr_t_u*adjust_factor,
-                                     h=m4_h*adjust_factor,
-                                     w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor,
-                                     sd_est = 0.01),
-                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
-                                     f=m4_f*adjust_factor,
-                                     arr_t_f=m4_arr_t_f*adjust_factor,
-                                     arr_t_u=m4_arr_t_u*adjust_factor,
-                                     h=m4_h*adjust_factor,
-                                     w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor,
-                                     sd_est = 0.01), maxit = 10000),
-                     skip.hessian=F, method="Nelder-Mead")
-
-
-end_time <- Sys.time()
-m4_runtime <- end_time - start_time
-m4_runtime
-
-coef(m4_u_f_fit)
-
-
-saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_coef_fit.rds"))
-#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_1.1_fit_log.rds"))
-
-```
-
-
-
-
-```{r}
-adjust_factor <- 0.5
-
-start_time <- Sys.time()
-tmp <- data
-m4_u_f_fit <- mle2(m4_ll, start=list(u = m4_u*adjust_factor*100000, 
-                                     f=m4_f*adjust_factor,
-                                     arr_t_f=m4_arr_t_f*adjust_factor,
-                                     arr_t_u=m4_arr_t_u*adjust_factor,
-                                     h=m4_h*adjust_factor,
-                                     w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor,
-                                     sd_est = 0.01),
-                     control=list(parscale = c(u = m4_u*adjust_factor*100000, 
-                                     f=m4_f*adjust_factor,
-                                     arr_t_f=m4_arr_t_f*adjust_factor,
-                                     arr_t_u=m4_arr_t_u*adjust_factor,
-                                     h=m4_h*adjust_factor,
-                                     w=m4_w*adjust_factor,
-                                     rho=m4_rho*adjust_factor,
-                                     sd_est = 0.01), maxit=10000),
-                     skip.hessian=F, method="Nelder-Mead")
-
-
-end_time <- Sys.time()
-m4_runtime <- end_time - start_time
-m4_runtime
-
-coef(m4_u_f_fit)
-
-
-saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_coef_fit.rds"))
-#saveRDS(m4_u_f_fit, file = here("model_fitting","m4_0.5_fit_log.rds"))
-
-```
 
 # Interaction Model
 
