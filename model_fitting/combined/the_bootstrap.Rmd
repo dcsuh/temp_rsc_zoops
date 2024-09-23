@@ -332,7 +332,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 15
+  iterations <- 20
   
   boot_01 <- list()
   
@@ -383,7 +383,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 10
+  iterations <- 15
   
   boot_02 <- list()
   
@@ -434,7 +434,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 5
+  iterations <- 10
   
   boot_03 <- list()
   
@@ -564,10 +564,12 @@ Start new iters with new model formulation
 20_092124 <- 20 more iters
 25_092124 <- 25
 35_092224 <- 35 more iters
+35_092224a <- 35 more iters
+50_092324 <- 50 more iters
 
 
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "35_092224.rds"))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "50_092324.rds"))
 # mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
 #                 readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
 #                 readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
@@ -587,8 +589,9 @@ saveRDS(beet, file = here("model_fitting", "combined", "beet", "35_092224.rds"))
 mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092024.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "20_092124.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "25_092124.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "35_092224.rds")))
-
+                readRDS(file = here("model_fitting", "combined", "beet", "35_092224.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_092224a.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092324.rds")))
 ```
 
 
