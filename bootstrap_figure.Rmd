@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, message = F}
 library(here)
 source(here("base","src.R"))
+
+library(egg)
 ```
 
 
@@ -371,11 +373,19 @@ f_seq %>%
        x = "Temperature (C)",
        fill = "Resource\n(mgC/L)",
        color = "",
-       title = "Foraging Rate from best model") + 
+       title = "") + 
   guides(color = "none") + 
   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   theme_bw(base_size = 12)
+
+#gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
+
+ggsave(here("workshop", "figures", "update", "fora_ci_temp.png"), 
+       plot = set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")),
+       width = 7,
+       height = 4,
+       units = "in")
 
 f_seq %>%
   filter(temp %in% c(15, 20, 25)) %>%
@@ -388,11 +398,19 @@ f_seq %>%
   labs(y = "Foraging Rate (mL/day)",
        x = "Resource (mgC/L)",
        fill = "Temp (C)",
-       title = "Foraging Rate from best model") + 
+       title = "") + 
   guides(color = "none", fill = guide_legend(reverse=T)) + 
   scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
   scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
   theme_bw(base_size = 12)
+
+#gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
+
+ggsave(here("workshop", "figures", "update", "fora_ci_rsc.png"), 
+       plot = set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")),
+       width = 7,
+       height = 4,
+       units = "in")
 ```
 
 
@@ -475,13 +493,19 @@ u_seq %>%
        x = "Temperature (C)",
        fill = "Resource\n(mgC/L)",
        color = "",
-       title = "Per-Parasite Susceptibility from best model") + 
+       title = "") + 
   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   guides(color = "none") + 
   theme_bw(base_size = 12)
 
+#gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
 
+ggsave(here("workshop", "figures", "update", "susc_ci_temp.png"), 
+       plot = set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")),
+       width = 7,
+       height = 4,
+       units = "in")
 
 u_seq %>%
   filter(temp %in% c(15, 20, 25)) %>%
@@ -495,13 +519,19 @@ u_seq %>%
        x = "Resource (mgC/L)",
        fill = "Temp (C)",
        color = "",
-       title = "Per-Parasite Susceptibility from best model") + 
+       title = "") + 
   scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
   scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
   guides(color = "none", fill = guide_legend(reverse=T)) + 
   theme_bw(base_size = 12)
 
+#gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
 
+ggsave(here("workshop", "figures", "update", "susc_ci_rsc.png"), 
+       plot = set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")),
+       width = 7,
+       height = 4,
+       units = "in")
 ```
 
 
