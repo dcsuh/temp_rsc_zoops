@@ -316,7 +316,6 @@ seq_data %<>% mutate(mm = mapply(interpolate_length,
 
 ```{r}
 f_seq <- seq_data %>% 
-  filter(resource %in% c(0.1, 0.5, 1.0)) %>%
   mutate(f = NA,
          f_lower = NA,
          f_upper = NA)
@@ -366,7 +365,7 @@ f_seq %>%
   geom_ribbon(aes(ymin = f_lower,
                   ymax = f_upper,
                   fill = as.factor(resource)),
-              alpha = 0.5) + 
+              alpha = 0.3) + 
   geom_line(aes(y = f, color = as.factor(resource))) + 
   labs(y = "Foraging Rate (mL/day)",
        x = "Temperature (C)",
@@ -377,6 +376,23 @@ f_seq %>%
   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   theme_bw(base_size = 12)
+
+f_seq %>%
+  filter(temp %in% c(15, 20, 25)) %>%
+  ggplot(aes(x = resource, group = temp)) + 
+  geom_ribbon(aes(ymin = f_lower,
+                  ymax = f_upper,
+                  fill = as.factor(temp)),
+              alpha = 0.3) + 
+  geom_line(aes(y = f, color = as.factor(temp))) + 
+  labs(y = "Foraging Rate (mL/day)",
+       x = "Resource (mgC/L)",
+       fill = "Temp (C)",
+       title = "Foraging Rate from best model") + 
+  guides(color = "none", fill = guide_legend(reverse=T)) + 
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  theme_bw(base_size = 12)
 ```
 
 
@@ -386,7 +402,6 @@ f_seq %>%
 
 
 u_seq <- seq_data %>% 
-  filter(resource %in% c(0.1, 0.5, 1.0)) %>%
   mutate(u = NA,
          u_lower = NA,
          u_upper = NA)
@@ -429,6 +444,7 @@ u_seq %<>% mutate(u = u_est*exp(arr_u_est*(1/ref_t - 1/temp))*exp(rho_est*resour
 
 ```{r}
 u_seq %>%
+  filter(resource %in% c(0.1, 0.5, 1.0)) %>%
   ggplot(aes(x = temp, group = resource)) + 
   geom_ribbon(aes(ymin = u_lower/100000,
                   ymax = u_upper/100000,
@@ -453,7 +469,7 @@ u_seq %>%
   geom_ribbon(aes(ymin = u_lower/100000,
                   ymax = u_upper/100000,
                   fill = as.factor(resource)),
-              alpha = 0.5) + 
+              alpha = 0.3) + 
   geom_line(aes(y = u/100000, color = as.factor(resource))) + 
   labs(y = "Per-Parasite Susceptibility",
        x = "Temperature (C)",
@@ -464,6 +480,27 @@ u_seq %>%
   scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   guides(color = "none") + 
   theme_bw(base_size = 12)
+
+
+
+u_seq %>%
+  filter(temp %in% c(15, 20, 25)) %>%
+  ggplot(aes(x = resource, group = temp)) + 
+  geom_ribbon(aes(ymin = u_lower/100000,
+                  ymax = u_upper/100000,
+                  fill = as.factor(temp)),
+              alpha = 0.3) + 
+  geom_line(aes(y = u/100000, color = as.factor(temp))) + 
+  labs(y = "Per-Parasite Susceptibility",
+       x = "Resource (mgC/L)",
+       fill = "Temp (C)",
+       color = "",
+       title = "Per-Parasite Susceptibility from best model") + 
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  guides(color = "none", fill = guide_legend(reverse=T)) + 
+  theme_bw(base_size = 12)
+
 
 ```
 
