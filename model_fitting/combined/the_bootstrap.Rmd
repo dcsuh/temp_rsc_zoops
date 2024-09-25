@@ -566,10 +566,12 @@ Start new iters with new model formulation
 35_092224 <- 35 more iters
 35_092224a <- 35 more iters
 50_092324 <- 50 more iters
+45_092424 <- 45 more iters
+50_092524 <- 50 more iters
 
 
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "50_092324.rds"))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "50_092524.rds"))
 # mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
 #                 readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
 #                 readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
@@ -591,7 +593,9 @@ mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092
                 readRDS(file = here("model_fitting", "combined", "beet", "25_092124.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "35_092224.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "35_092224a.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_092324.rds")))
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092324.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_092424.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092524.rds")))
 ```
 
 
@@ -754,7 +758,7 @@ mod_quantiles$phi[2] <- mean(mod_boot_coefs$phi)
 mod_quantiles$phi[3] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$phi[4] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$sd_est[1] <- coef(m5_u_f_fit)[8]
+mod_quantiles$sd_est[1] <- coef(m5_u_f_fit)[9]
 mod_quantiles$sd_est[2] <- mean(mod_boot_coefs$sd_est)
 mod_quantiles$sd_est[3] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$sd_est[4] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[2]

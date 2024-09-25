@@ -71,7 +71,7 @@ temp_range <- seq(15,25,by=0.1)
 resource_range <- seq(0.1,1,by=0.01)
 
 seq_data <- tibble(temp=c(),
-                   resourece=c())
+                   resource=c())
 
 for (i in 1:length(temp_range)){
   tmp <- tibble(temp = temp_range[i],
@@ -86,7 +86,7 @@ for (i in 1:length(temp_range)){
 lm(mm ~ resource + temp, data = data)
 
 length_coef <- coef(lm(mm ~ resource + temp, data = data)) #lengths from foraging rate experiment
-#length_ceof <- coef(lm(mm ~ resource + as.numeric(temp_id), data = lengths)) #5 day lengths from life table
+#length_coef <- coef(lm(mm ~ resource + as.numeric(temp_id), data = lengths)) #5 day lengths from life table
 
 
 interpolate_length <- function(resource, temp){

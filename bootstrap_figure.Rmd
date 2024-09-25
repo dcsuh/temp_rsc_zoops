@@ -20,7 +20,8 @@ mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092
                 readRDS(file = here("model_fitting", "combined", "beet", "25_092124.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "35_092224.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "35_092224a.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_092324.rds")))
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092324.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_092424.rds")))
 
 ```
 
@@ -29,7 +30,7 @@ mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092
 m5_u_f_fit <- readRDS(here("mle","m5_combined_fit.rds"))
 ```
 
-```{r}
+```{r, include = F}
 tib_length <- length(mod_f_boot)
 
 mod_boot_coefs <- tibble(f = rep_len(0, tib_length),
@@ -115,7 +116,7 @@ for(i in 1:length(mod_f_boot)){
 ```
 
 
-```{r}
+```{r, include = F}
 mod_boot_coefs %<>% drop_na()
 
 mod_boot_coefs %>% ggplot(., aes(x = f)) + geom_histogram()
@@ -133,7 +134,7 @@ mod_boot_coefs %>% ggplot(., aes(x = sd_est)) + geom_histogram()
 
 
 quantiles
-```{r}
+```{r, include = F}
 mod_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
                         f = NA,
                         u = NA,
@@ -188,7 +189,7 @@ mod_quantiles$phi[2] <- mean(mod_boot_coefs$phi)
 mod_quantiles$phi[3] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$phi[4] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$sd_est[1] <- coef(m5_u_f_fit)[8]
+mod_quantiles$sd_est[1] <- coef(m5_u_f_fit)[9]
 mod_quantiles$sd_est[2] <- mean(mod_boot_coefs$sd_est)
 mod_quantiles$sd_est[3] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$sd_est[4] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[2]
@@ -201,7 +202,7 @@ mod_quantiles %<>% pivot_longer(cols = f:sd_est) %>% pivot_wider(., names_from="
 ```
 
 ```{r}
-theme_set(theme_bw(base_size = 6))
+theme_set(theme_bw(base_size = 10))
 
 param_ci <- 
   mod_quantiles %>% 
@@ -222,9 +223,11 @@ param_ci <-
 
 param_ci
 
-ggsave(here("workshop", "figures", "update", "param_est.png"), width = 4, height = 4)
+#ggsave(here("workshop", "figures", "update", "param_est.png"), width = 4, height = 4)
 ```
 
+
+# handling time
 
 ```{r}
 h_seq <- tibble(temp = seq(15, 25, by = 0.1),
@@ -233,16 +236,26 @@ h_seq <- tibble(temp = seq(15, 25, by = 0.1),
                 h_upper = NA)
 
 h_est <- mod_quantiles$est[5]
-h_min <- mod_quantiles$lower.025[5]
-h_max <- mod_quantiles$upper.975[5]
-
 w_est <- mod_quantiles$est[6]
-w_min <- mod_quantiles$lower.025[6]
-w_max <- mod_quantiles$upper.975[6]
+
+get_handling_time <- function(temp, bound){
+  tmp <- mod_boot_coefs %>% 
+    mutate(h_time = h * exp(temp*w)) %>%
+    summarize(min = min(h_time),
+              max = max(h_time))
+  if (bound == "upper"){
+    return(tmp$max)  
+  }
+  else if (bound == "lower") {
+    return(tmp$min) 
+  }
+}
+
+
 
 h_seq %<>% mutate(h = h_est * exp(temp*w_est),
-                  h_lower = h_min * exp(temp*w_min),
-                  h_upper = h_max * exp(temp*w_max))
+                  h_lower = mapply(get_handling_time, temp = temp, bound = "lower"),
+                  h_upper = mapply(get_handling_time, temp = temp, bound = "upper"))
 
 head(h_seq)
 ```
@@ -256,11 +269,211 @@ h_plot <-
               fill = "grey70") + 
   geom_line(aes(y = h)) + 
   labs(y = "Handling time (days/mgC)",
-       x = "Temperature (C)") + 
+       x = "Temperature (C)",
+       title = "Handling time with 95% CI") + 
   theme_bw(base_size = 12)
 
-ggsave(here("workshop", "figures", "update", "handling.png"), width = 6, height = 4)
+h_plot
+
+#ggsave(here("workshop", "figures", "update", "handling.png"), width = 6, height = 4)
 ```
+
+
+
+```{r, include = F}
+ref_t <- 15
+gamma <- 2
+
+temp_range <- seq(15,25,by=0.1)
+resource_range <- seq(0.1,1,by=0.01)
+
+seq_data <- tibble(temp=c(),
+                   resource=c())
+
+for (i in 1:length(temp_range)){
+  tmp <- tibble(temp = temp_range[i],
+                resource = seq(0.1,1,by=0.01))
+  seq_data %<>% bind_rows(., tmp)
+}
+
+fora_data <- readRDS(here("processed_data","foraging_raw.rds")) #foraging rate data
+
+length_coef <- coef(lm(mm ~ resource + temp, data = fora_data)) #lengths from foraging rate experiment
+#length_ceof <- coef(lm(mm ~ resource + as.numeric(temp_id), data = lengths)) #5 day lengths from life table
+
+
+interpolate_length <- function(resource, temp){
+  length <- length_coef[1] + resource*length_coef[2] + temp*length_coef[3]
+}
+
+seq_data %<>% mutate(mm = mapply(interpolate_length, 
+                                     resource = resource,
+                                     temp = temp))
+```
+
+
+# foraging rate
+
+```{r}
+f_seq <- seq_data %>% 
+  filter(resource %in% c(0.1, 0.5, 1.0)) %>%
+  mutate(f = NA,
+         f_lower = NA,
+         f_upper = NA)
+```
+
+
+```{r}
+
+f_est <- mod_quantiles$est[1]
+arr_est <- mod_quantiles$est[3]
+
+
+
+get_fora <- function(temp, resource, bound, mm = mm){
+  tmp <- mod_boot_coefs %>% 
+    mutate(fora = (f*exp(arr*(1/ref_t - 1/temp))*(mm^gamma))/
+                       (1+f*exp(arr*(1/ref_t - 1/temp))*
+                          (mm^gamma)*
+                          h*exp(w*temp)*
+                          resource/1000)) %>%
+    summarize(min = min(fora),
+              max = max(fora))
+  if (bound == "upper"){
+    return(tmp$max)  
+  }
+  else if (bound == "lower") {
+    return(tmp$min) 
+  }
+}
+
+
+f_seq %<>% mutate(f = (f_est*exp(arr_est*(1/ref_t - 1/temp))*(mm^gamma))/
+                       (1+f_est*exp(arr_est*(1/ref_t - 1/temp))*
+                          (mm^gamma)*
+                          h_est*exp(w_est*temp)*
+                          resource/1000),
+                  f_lower = mapply(get_fora, temp = temp, resource = resource, mm = mm, bound = "lower"),
+                  f_upper = mapply(get_fora, temp = temp, resource = resource, mm = mm, bound = "upper"))
+
+
+```
+
+```{r}
+f_seq %>%
+  filter(resource %in% c(0.1, 0.5, 1)) %>%
+  ggplot(aes(x = temp, group = resource)) + 
+  geom_ribbon(aes(ymin = f_lower,
+                  ymax = f_upper,
+                  fill = as.factor(resource)),
+              alpha = 0.5) + 
+  geom_line(aes(y = f, color = as.factor(resource))) + 
+  labs(y = "Foraging Rate (mL/day)",
+       x = "Temperature (C)",
+       fill = "Resource\n(mgC/L)",
+       color = "",
+       title = "Foraging Rate from best model") + 
+  guides(color = "none") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  theme_bw(base_size = 12)
+```
+
+
+# Per-Parasite Susceptibility
+
+```{r}
+
+
+u_seq <- seq_data %>% 
+  filter(resource %in% c(0.1, 0.5, 1.0)) %>%
+  mutate(u = NA,
+         u_lower = NA,
+         u_upper = NA)
+```
+
+```{r}
+# resource <- 1
+# temp <- 16.8
+# mod_boot_coefs %>% 
+#     mutate(per_spore_susc = u*exp(arr_u*(1/ref_t - 1/temp))*exp(rho*resource)*exp(resource*temp*phi)) %>%
+#     summarize(min = min(per_spore_susc),
+#               max = max(per_spore_susc))
+
+
+u_est <- mod_quantiles$est[2]
+arr_u_est <- mod_quantiles$est[4]
+rho_est <- mod_quantiles$est[7]
+phi_est <- mod_quantiles$est[8]
+
+
+get_susc <- function(temp, resource, bound){
+  tmp <- mod_boot_coefs %>% 
+    mutate(per_spore_susc = u*exp(arr_u*(1/ref_t - 1/temp))*exp(rho*resource)*exp(resource*temp*phi)) %>%
+    summarize(min = min(per_spore_susc),
+              max = max(per_spore_susc))
+  if (bound == "upper"){
+    return(tmp$max)  
+  }
+  else if (bound == "lower") {
+    return(tmp$min) 
+  }
+}
+
+
+u_seq %<>% mutate(u = u_est*exp(arr_u_est*(1/ref_t - 1/temp))*exp(rho_est*resource)*exp(resource*temp*phi_est),
+                  u_lower = mapply(get_susc, temp = temp, resource = resource, bound = "lower"),
+                  u_upper = mapply(get_susc, temp = temp, resource = resource, bound = "upper"))
+
+```
+
+```{r}
+u_seq %>%
+  ggplot(aes(x = temp, group = resource)) + 
+  geom_ribbon(aes(ymin = u_lower/100000,
+                  ymax = u_upper/100000,
+                  fill = as.factor(resource)),
+              alpha = 0.5) + 
+  geom_line(aes(y = u/100000, color = as.factor(resource))) + 
+  labs(y = "Per-Parasite Susceptibility",
+       x = "Temperature (C)",
+       fill = "Resource\n(mgC/L)",
+       color = "",
+       title = "Per-Parasite Susceptibility from best model") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  guides(color = "none") + 
+  theme_bw(base_size = 12) + 
+  facet_wrap(~resource,nrow = 1)
+
+
+u_seq %>%
+  filter(resource %in% c(0.1, 0.5, 1)) %>%
+  ggplot(aes(x = temp, group = resource)) + 
+  geom_ribbon(aes(ymin = u_lower/100000,
+                  ymax = u_upper/100000,
+                  fill = as.factor(resource)),
+              alpha = 0.5) + 
+  geom_line(aes(y = u/100000, color = as.factor(resource))) + 
+  labs(y = "Per-Parasite Susceptibility",
+       x = "Temperature (C)",
+       fill = "Resource\n(mgC/L)",
+       color = "",
+       title = "Per-Parasite Susceptibility from best model") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  guides(color = "none") + 
+  theme_bw(base_size = 12)
+
+```
+
+
+```{r}
+#ggsave(here("workshop", "figures", "update", "susc_ci.png"), width = 6, height = 4)
+```
+
+
+
 
 
 
