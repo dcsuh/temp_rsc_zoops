@@ -572,7 +572,7 @@ Start new iters with new model formulation
 
 
 ```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "50_092624.rds"))
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "50_092724.rds"))
 # mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
 #                 readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
 #                 readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
@@ -597,7 +597,8 @@ mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092
                 readRDS(file = here("model_fitting", "combined", "beet", "50_092324.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "45_092424.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "50_092524.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_092624.rds")))
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092624.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092724.rds")))
 ```
 
 

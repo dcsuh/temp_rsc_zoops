@@ -1,5 +1,5 @@
 ---
-title: "temp_fig"
+title: "Main Figures"
 output: html_document
 date: "`r Sys.Date()`"
 ---
@@ -15,6 +15,7 @@ library(here)
 source(here("base","src.R"))
 library(ggnewscale)
 library(patchwork)
+library(egg)
 
 #library(plotly)
 ```
@@ -55,6 +56,7 @@ f_seq %<>% arrange(desc(temp))
 # plotting fns
 
 
+## fora fn
 
 ```{r}
 seq_plot_alt <- function(seq_data, rate){
@@ -71,103 +73,11 @@ seq_plot_alt <- function(seq_data, rate){
     scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
     scale_y_continuous(breaks = c(0, 20, 40), limits = c(0, 45)) + 
     guides(color = guide_legend(reverse=T)) + 
-  labs(x="Resource (mgC/L)", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "") 
+  labs(x="Resource (mgC/L)", y="Foraging rate (mL/day)", color="Temperature", shape="Temperature", title = "")
 }
 
 seq_plot_alt(f_seq, "m1_rate")
 ```
-
-
-
-```{r}
-
-
-algae_plot <- function(seq_data, var){
-seq_data %>% filter(temp %in% const_temp) %>% 
-  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) + 
-  geom_line(size=1) + 
-  geom_point(aes(x=resource, 
-                  y=amt_rem_mean*15/1000, 
-                  group = as.factor(temp), 
-                  color = as.factor(temp)),
-             size=1) + 
-    geom_linerange(aes(x=resource, 
-                       ymin=amt_rem_mean*15/1000-amt_rem_se*15/1000,
-                       ymax=amt_rem_mean*15/1000+amt_rem_se*15/1000,
-                       color=as.factor(temp))) +
-  labs(x = "Resource (mgC/L)", 
-       y = "Resource remaining (mgC)",
-       color = "Temp") + 
-    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
-    guides(color = guide_legend(reverse=T)) + 
-  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
-}
-
-algae_plot <- function(seq_data, var){
-seq_data %>% filter(temp %in% const_temp) %>%
-  ggplot(., aes(x=resource, y=!!sym(var)/15*1000, color=as.factor(temp), group = as.factor(temp))) +
-  geom_line(size=1) +
-  geom_point(aes(x=resource,
-                  y=amt_rem_mean,
-                  group = as.factor(temp),
-                  color = as.factor(temp)),
-             size=3) +
-    geom_linerange(aes(x=resource,
-                       ymin=amt_rem_mean-amt_rem_se,
-                       ymax=amt_rem_mean+amt_rem_se,
-                       color=as.factor(temp))) +
-  labs(x = "Resource (mgC/L)",
-       y = "Resource remaining (mgC/L)",
-       color = "Temp") +
-    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
-    guides(color = guide_legend(reverse=T)) + 
-  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
-}
-
-
-algae_plot_diff <- function(seq_data, var){
-seq_data %>% filter(temp %in% const_temp) %>%
-  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) +
-  geom_line(size=1) +
-  geom_point(aes(x=resource,
-                  y=amt_diff,
-                  group = as.factor(temp),
-                  color = as.factor(temp)),
-             size=3) +
-    geom_linerange(aes(x=resource,
-                       ymin=amt_diff-1.96*amt_rem_se,
-                       ymax=amt_diff+1.96*amt_rem_se,
-                       color=as.factor(temp))) +
-  labs(x = "Resource (mgC/L)",
-       y = "Resource difference (mgC/L)",
-       color = "Temp") +
-    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
-    guides(color = guide_legend(reverse=T)) + 
-  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
-}
-
-
-
-
-algae_plot_temp <- function(seq_data, var){
-seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>% 
-  ggplot(., aes(x=temp, y=!!sym(var), color=as.factor(resource), group = as.factor(resource))) + 
-  geom_line(size=1) + 
-  labs(x = "Temperature (C)", 
-       y = "Resource remaining (mgC)",
-       color = "Temp") + 
-  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
-}
-
-
-algae_plot_diff(f_seq, "m6c_diff")
-```
-
-
-
 
 ```{r}
 seq_plot_temp <- function(seq_data, rate){
@@ -196,6 +106,47 @@ seq_plot_temp(f_seq, "m1_rate")
 ```
 
 
+## algae fn 
+
+Shifted x-axis
+
+```{r}
+algae_plot_diff <- function(seq_data, var){
+seq_data %>% filter(temp %in% const_temp) %>%
+  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) +
+  geom_line(size=1) +
+  geom_point(aes(x=amt_init_mean,
+                  y=amt_diff,
+                  group = as.factor(temp),
+                  color = as.factor(temp)),
+             size=0.5) +
+    geom_linerange(aes(x=amt_init_mean,
+                       ymin=amt_diff-1.96*amt_rem_se,
+                       ymax=amt_diff+1.96*amt_rem_se,
+                       color=as.factor(temp))) +
+  labs(x = "Resource (mgC/L)",
+       y = "Resource difference (mgC/L)",
+       color = "Temp") +
+    scale_x_continuous(breaks = c(0.1, 0.5, 1.0), limits = c()) + 
+    scale_y_continuous(breaks = c(0, 0.2, 0.4), limits = c(-0.05, 0.425)) + 
+    guides(color = guide_legend(reverse=T)) + 
+  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
+}
+
+algae_plot_diff(f_seq, "m2_diff")
+algae_plot_diff(f_seq, "m3_diff")
+algae_plot_diff(f_seq, "m4_diff")
+algae_plot_diff(f_seq, "m6c_diff")
+
+```
+
+
+
+
+
+## spores fn
+
 ```{r}
 spores_plot <- function(seq_data, var){
 seq_data %>% filter(temp %in% const_temp) %>% 
@@ -205,9 +156,8 @@ seq_data %>% filter(temp %in% const_temp) %>%
        y = "Spores consumed",
        color = "Temp") + 
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
-  scale_y_continuous(breaks = c(0, 2000, 4000, 6000), limits = c(0, 6000)) + 
+  scale_y_continuous(breaks = c(0, 2000, 4000, 6000), limits = c(0, 6100)) + 
   guides(color = guide_legend(reverse=T)) + 
-  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D")) + 
   scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
 }
 
@@ -225,6 +175,7 @@ spores_plot(f_seq, "m1_Z_end")
 
 ```
 
+## prev fn
 
 ```{r}
 prev_plot <- function(seq_data, var){
@@ -284,6 +235,7 @@ rate_plot <- function(seq_data, var){
 
 ```
 
+##susc fn
 
 ```{r}
 u_plot <- function(seq_data, var){
@@ -318,165 +270,194 @@ u_plot(u_seq, "m5_u")
 
 
 
-Shifted x-axis
+
+
+
+
+
+
+
+# plots
+
+## foraging rate
 
 ```{r}
-algae_plot_diff <- function(seq_data, var){
-seq_data %>% filter(temp %in% const_temp) %>%
-  ggplot(., aes(x=resource, y=!!sym(var), color=as.factor(temp), group = as.factor(temp))) +
-  geom_line(size=1) +
-  geom_point(aes(x=amt_init_mean,
-                  y=amt_diff,
-                  group = as.factor(temp),
-                  color = as.factor(temp)),
-             size=3) +
-    geom_linerange(aes(x=amt_init_mean,
-                       ymin=amt_diff-1.96*amt_rem_se,
-                       ymax=amt_diff+1.96*amt_rem_se,
-                       color=as.factor(temp))) +
-  labs(x = "Resource (mgC/L)",
-       y = "Resource difference (mgC/L)",
-       color = "Temp") +
-    scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
-    guides(color = guide_legend(reverse=T)) + 
-  #scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
-}
+inside_theme <- 
+  theme(axis.text = element_blank(), 
+        axis.title = element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none",
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm")) #top, right, bottom, left
 
-algae_plot_diff(f_seq, "m2_diff")
-algae_plot_diff(f_seq, "m3_diff")
-algae_plot_diff(f_seq, "m4_diff")
-algae_plot_diff(f_seq, "m6c_diff")
-
-```
-
-
-
-```{r}
-algae_conc_plot <- function(seq_data, var){
-seq_data %>% filter(temp %in% const_temp) %>% 
-  ggplot(., aes(x=resource, y=!!sym(var)/15*1000, color=as.factor(temp), group = as.factor(temp))) + 
-  geom_line(size=1) + 
-  geom_point(aes(x=resource, 
-                  y=amt_consumed_mean, 
-                  group = as.factor(temp), 
-                  color = as.factor(temp)),
-             size=3) + 
-    geom_linerange(aes(x=resource, 
-                       ymin=amt_consumed_mean-amt_consumed_se,
-                       ymax=amt_consumed_mean+amt_consumed_se,
-                       color=as.factor(temp))) +
-  labs(x = "Resource (mgC/L)", 
-       y = "Algae consumed (mgC/L)",
-       color = "Temp") + 
-    ylim(0, NA) +
-  scale_color_manual(values = c("#619CFF", "#00BA38", "#F8766D"))
-}
-
-algae_plot_temp <- function(seq_data, var){
-seq_data %>% filter(resource %in% c(0.1, 0.5, 1)) %>% 
-  ggplot(., aes(x=temp, y=!!sym(var), color=as.factor(resource), group = as.factor(resource))) + 
-  geom_line(size=1) + 
-  labs(x = "Temperature (C)", 
-       y = "Algae consumed (mgC)",
-       color = "Temp") + 
-  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D"))
-}
-
-#algae_plot(f_seq, "m1_consumed")
-```
-
-
-
-
-
-
-# foraging rate
-
-```{r}
 f0 <- seq_plot_alt(f_seq, "m1_rate") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-f1 <- seq_plot_alt(f_seq, "m2_rate") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-f2 <- seq_plot_alt(f_seq, "m3_rate") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-f3 <- seq_plot_alt(f_seq, "m4_rate") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-f4 <- seq_plot_alt(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
+  theme(axis.text.x = element_blank(), 
+        axis.title = element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none",
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
+  
+f1 <- seq_plot_alt(f_seq, "m2_rate") +
+  inside_theme
 
-# f0 <- seq_plot_alt(f_seq, "m1_rate") + 
-#   theme(axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-# f1 <- seq_plot_alt(f_seq, "m2_rate") + 
-#   theme(axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-# f2 <- seq_plot_alt(f_seq, "m3_rate") + 
-#   theme(axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-# f3 <- seq_plot_alt(f_seq, "m4_rate") + 
-#   theme(axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-# f4 <- seq_plot_alt(f_seq, "m6c_rate") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank())
+f2 <- seq_plot_alt(f_seq, "m3_rate") +
+  inside_theme
+
+f3 <- seq_plot_alt(f_seq, "m4_rate") +
+  inside_theme
+
+f4 <- seq_plot_alt(f_seq, "m6c_rate") + 
+  theme(axis.text = element_blank(), 
+        axis.title = element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none", 
+        axis.title.y = element_blank(), 
+        panel.background = element_rect(fill = "#ADD0E9"),
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
 
-clearance_plots <- f0 / f1 / f2 / f3 / f4
+clearance_plots <- f0 | f1 | f2 | f3 | f4
+
+clearance_plots
 
 #ggsave(here("workshop", "figures","clearance_plots_alt_all.png"),
-ggsave(here("workshop", "figures","clearance_plots_alt_all_axes.png"),
+#ggsave(here("workshop", "figures","clearance_plots_alt_all_axes.png"),
+ggsave(here("workshop", "figures", "final", "clearance_plots.png"),
        clearance_plots,
-       width = 3,
-       height = 9,
+       width = 8,
+       height = 2,
        units = "in")
 ```
 
 
-# algae consumed
+## algae consumed
 
 ```{r}
-a0 <- algae_plot_diff(f_seq, "m1_diff") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-a1 <- algae_plot_diff(f_seq, "m2_diff") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-a2 <- algae_plot_diff(f_seq, "m3_diff") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-a3 <- algae_plot_diff(f_seq, "m4_diff") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(), axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-a4 <- algae_plot_diff(f_seq, "m6c_diff") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank(), panel.background = element_rect(fill = "#ADD0E9"))
+algae_theme <- theme(axis.text = element_blank(), 
+                     axis.title = element_blank(), 
+                     plot.title = element_blank(), 
+                     legend.position = "none")
 
-# a0 <- algae_plot_diff(f_seq, "m1_diff") + 
-#   theme(axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-# a1 <- algae_plot_diff(f_seq, "m2_diff") + 
-#   theme(axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-# a2 <- algae_plot_diff(f_seq, "m3_diff") + 
-#   theme(axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-# a3 <- algae_plot_diff(f_seq, "m4_diff") + 
-#   theme(axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-# a4 <- algae_plot_diff(f_seq, "m6c_diff") + theme(plot.title = element_blank(), legend.position = "none", axis.title.y = element_blank())
+a0 <- algae_plot_diff(f_seq, "m1_diff") +
+  theme(axis.text.x = element_blank(), 
+         axis.title = element_blank(), 
+         plot.title = element_blank(), 
+         legend.position = "none",
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
-algae_plots_diff <- a0 / a1 / a2 / a3 / a4
+a1 <- algae_plot_diff(f_seq, "m2_diff") +
+  inside_theme
+
+a2 <- algae_plot_diff(f_seq, "m3_diff") +
+  inside_theme
+
+a3 <- algae_plot_diff(f_seq, "m4_diff") +
+  inside_theme
+
+a4 <- algae_plot_diff(f_seq, "m6c_diff") + 
+  theme(axis.text = element_blank(),
+        axis.title = element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none", 
+        axis.title.y = element_blank(), 
+        panel.background = element_rect(fill = "#ADD0E9"),
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
+
+algae_plots_diff <- a0 | a1 | a2 | a3 | a4
+algae_plots_diff
+
 
 #ggsave(here("workshop", "figures","algae_plots_diff.png"),
-ggsave(here("workshop", "figures","algae_plots_diff_all_axes.png"),
+# ggsave(here("workshop", "figures","algae_plots_diff_all_axes.png"),
 #ggsave(here("workshop", "figures","algae_plots_diff_all.png"),
+ggsave(here("workshop", "figures", "final", "algae_plots.png"),
        algae_plots_diff,
-       width = 3,
-       height = 9,
+       width = 8,
+       height = 2,
        units = "in")
 ```
 
+## fora spores
+
 ```{r}
+fs_theme <-
+  theme(axis.text.y = element_blank(), 
+        axis.title = element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none",
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm")) #top, right, bottom, left
+
+fs0 <- spores_plot(f_seq, "m1_Z_end") + 
+  theme(axis.text.y = element_text(size = 6, angle = 25),
+        axis.title = element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none",
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
+
 fs1 <- spores_plot(f_seq, "m2_Z_end") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+  fs_theme
+
 fs2 <- spores_plot(f_seq, "m3_Z_end") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
+  fs_theme
+
 fs3 <- spores_plot(f_seq, "m4_Z_end") + 
-  theme(axis.text.x = element_blank(), axis.ticks.x = element_blank() ,axis.title = element_blank(), plot.title = element_blank(), legend.position = "none")
-fs4 <- spores_plot(f_seq, "m6c_Z_end") + theme(axis.title.y=element_blank(), plot.title = element_blank(), legend.position = "none", panel.background = element_rect(fill = "#ADD0E9"))
+  fs_theme
 
-fora_spores_plots <- fs1 / fs2 / fs3 / fs4
+fs4 <- spores_plot(f_seq, "m6c_Z_end") + 
+  theme(axis.title=element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none", 
+        panel.background = element_rect(fill = "#ADD0E9"), 
+        axis.text.y = element_blank(),
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
-# ggsave(here("workshop", "figures","fora_spore_plots.png"),
-#        fora_spores_plots,
-#        width = 3,
-#        height = 8,
-#        units = "in")
+fora_spores_plots <- fs0 | fs1 | fs2 | fs3 | fs4
+
+fora_spores_plots
+
+ggsave(here("workshop", "figures", "final", "fora_spore_plots.png"),
+       fora_spores_plots,
+       width = 8,
+       height = 2,
+       units = "in")
 ```
+
+# 2 y-axis
+
+```{r}
+fora_spore_lm <- lm(m1_Z_end ~ m1_rate, data = f_seq)
+fora_spore_lm <- lm(m2_Z_end ~ m2_rate, data = f_seq)
+
+summary(fora_spore_lm)
+
+
+
+fs_data <- 
+  f_seq %>% 
+  dplyr::select(temp, resource, m1_rate:m6c_R_end, m1_Z_end, m6c_Z_end)
+```
+
+
+
+
+#save foraging plot
+```{r}
+foraging <- 
+  grid.arrange(grobs=lapply(list(f0, f1, f2, f3, f4,
+                                 a0, a1, a2, a3, a4,
+                                 fs0, fs1, fs2, fs3, fs4), 
+                            set_panel_size,
+                            width=unit(1.3, "in"), 
+                            height=unit(1, "in")),
+               ncol = 5)
+
+
+ggsave(here("workshop", "figures", "final", "foraging.png"),
+       foraging,
+       width = 8.5,
+       height = 4.5,
+       units = "in")
+```
+
 
 
 
@@ -521,7 +502,7 @@ fora_spores_hz <- fs1 | fs2 | fs3 | fs4
 
 
 
-# spores plots
+## spores plots
 
 
 
@@ -558,7 +539,7 @@ ggsave(here("workshop", "figures","spores_plots_all_axes.png"),
 ```
 
 
-# susc plots  
+## susc plots  
 
 
 ```{r}
@@ -594,7 +575,7 @@ ggsave(here("workshop", "figures","susc_plots_all_axes.png"),
 
 
 
-# prev plots
+## prev plots
 
 
 ```{r}
@@ -710,74 +691,6 @@ ggsave(here("workshop", "figures","prev_data.png"),
        width = 3,
        height = 3,
        units = "in")
-```
-
-
-
-
-
-
-# 3D plots
-
-
-
-
-
-```{r}
-# u_seq %>% ggplot(., aes(x = resource, y = temp, fill = spores_consumed_m5)) + 
-#   geom_tile() + 
-#   scale_fill_viridis_c(option = "magma") + 
-#   labs(title = "Spores Consumed")
-
-u_seq %>% ggplot(., aes(x = resource, y = temp, z = m5_u, fill = m5_u)) + 
-  geom_tile() + 
-  geom_contour() + 
-  metR::geom_text_contour(stroke = 0.15, label.placer = label_placer_n()) + 
-  scale_fill_viridis_c(option = "mako", direction = 1) + 
-  labs(x = "Resource", y = "Temperature", title = "Per-Spore Susceptibility") +
-  theme(legend.position = "none")
-
-u_seq %>% ggplot(., aes(x = resource, y = temp, z = m5_I_end, fill = m5_I_end)) + 
-  geom_tile() + 
-  geom_contour() + 
-  metR::geom_text_contour(stroke = 0.15, label.placer = label_placer_n()) + 
-  scale_fill_viridis_c(option = "magma", direction = 1) + 
-  labs(x = "Resource", y = "Temperature", title = "Probability of Infection") +
-  theme(legend.position = "none")
-
-
-
-```
-
-
-```{r}
-u_seq %>% ggplot(., aes(x = spores_consumed_m5, y = m5_u, size = m5_I_end, color = temp)) + 
-  geom_point()
-u_seq %>% filter(temp %in% seq(15, 25, by = 1) & resource %in% seq(0.1, 1, by = 0.2)) %>%
-  ggplot(., aes(x = spores_consumed_m5, y = m5_u, 
-                size = m5_I_end, color = temp, shape = as.factor(resource), group = as.factor(temp))) + 
-  geom_point() + 
-  geom_line(size = 1) + 
-  scale_color_viridis_c()
-
-```
-
-
-
-```{r, eval=F}
-plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m2_I_end, color = ~m2_I_end)
-plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m3_I_end, color = ~m3_I_end)
-plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m4_I_end, color = ~m4_I_end)
-plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m5_I_end, color = ~m5_I_end)
-```
-
-```{r, eval=F}
-plot_ly(u_seq, x = ~temp, y = ~resource, z = ~m5_u, color = ~m5_I_end)
-```
-
-```{r, eval=F}
-plot_ly(u_seq, x = ~spores_consumed_m4, y = ~m4_u, z = ~m4_I_end, color = ~m4_I_end)
-plot_ly(u_seq, x = ~spores_consumed_m5, y = ~m5_u, z = ~m5_I_end, color = ~m5_I_end)
 ```
 
 
