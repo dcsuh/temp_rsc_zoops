@@ -216,7 +216,6 @@ theme_set(theme_bw(base_size = 8))
 
 param_ci <- 
   mod_quantiles %>% 
-  #filter(name == "f") %>%
   ggplot(aes(x = name, 
              y = est)) + 
   geom_point() + 
@@ -229,8 +228,7 @@ param_ci <-
   theme(axis.text.x = element_blank(),
         axis.ticks.x = element_blank()) + 
   facet_wrap(~name, scales = "free",
-             nrow = 2,
-             labeller = label_parsed)
+             nrow = 2)
 
 param_ci
 
@@ -252,8 +250,8 @@ w_est <- mod_quantiles$est[6]
 get_handling_time <- function(temp, bound){
   tmp <- mod_boot_coefs %>% 
     mutate(h_time = h * exp(temp*w)) %>%
-    summarize(min = min(h_time),
-              max = max(h_time))
+    summarize(min = quantile(h_time, probs = seq(0.025, 0.975, 0.95))[1],
+              max = quantile(h_time, probs = seq(0.025, 0.975, 0.95))[2])
   if (bound == "upper"){
     return(tmp$max)  
   }
@@ -347,8 +345,8 @@ get_fora <- function(temp, resource, bound, mm = mm){
                           (mm^gamma)*
                           h*exp(w*temp)*
                           resource/1000)) %>%
-    summarize(min = min(fora),
-              max = max(fora))
+    summarize(min = quantile(fora, probs = seq(0.025, 0.975, 0.95))[1],
+              max = quantile(fora, probs = seq(0.025, 0.975, 0.95))[2])
   if (bound == "upper"){
     return(tmp$max)  
   }
@@ -383,7 +381,7 @@ f_seq %>%
        fill = "Resource\n(mgC/L)",
        color = "",
        title = "") + 
-  guides(color = "none") + 
+  guides(color = "none", fill = "none") + 
   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   theme_bw(base_size = 12)
@@ -409,8 +407,10 @@ f_seq %>%
        fill = "Temp (C)",
        title = "") + 
   guides(color = "none", fill = guide_legend(reverse=T)) + 
+  guides(color = "none", fill = "none") + 
   scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
   scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  theme(legend.position = "none") + 
   theme_bw(base_size = 12)
 
 #gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
@@ -452,8 +452,8 @@ phi_est <- mod_quantiles$est[8]
 get_susc <- function(temp, resource, bound){
   tmp <- mod_boot_coefs %>% 
     mutate(per_spore_susc = u*exp(arr_u*(1/ref_t - 1/temp))*exp(rho*resource)*exp(resource*temp*phi)) %>%
-    summarize(min = min(per_spore_susc),
-              max = max(per_spore_susc))
+    summarize(min = quantile(per_spore_susc, probs=seq(0.025, 0.975, 0.95))[1],
+              max = quantile(per_spore_susc, probs=seq(0.025, 0.975, 0.95))[2])
   if (bound == "upper"){
     return(tmp$max)  
   }
@@ -505,7 +505,8 @@ u_seq %>%
        title = "") + 
   scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
-  guides(color = "none") + 
+  theme(legend.position = "none") + 
+  guides(color = "none", fill = "none") + 
   theme_bw(base_size = 12)
 
 #gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
@@ -531,7 +532,9 @@ u_seq %>%
        title = "") + 
   scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
   scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  theme(legend.position = "none") + 
   guides(color = "none", fill = guide_legend(reverse=T)) + 
+  guides(color = "none", fill = "none") + 
   theme_bw(base_size = 12)
 
 #gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
@@ -542,6 +545,7 @@ ggsave(here("workshop", "figures", "update", "susc_ci_rsc.png"),
        height = 4,
        units = "in")
 ```
+
 
 
 ```{r}
