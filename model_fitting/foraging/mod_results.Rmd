@@ -89,9 +89,9 @@ mod_names_full <- paste(mod_names, mod_names_descriptive, sep="_")
 
 aic_table_final <- AICtab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T)
 
-aic_table_final
+aic_table_final %>% print() %>% as.data.frame() %>% flextable()
 
-saveRDS(aic_table_final, file=here("mle/aic_table_f_final.rds"))
+#saveRDS(aic_table_final, file=here("mle/aic_table_f_final.rds"))
 ```
 
 
@@ -124,7 +124,9 @@ getAIC_c(m6c)
 
 ```{r}
 aic_c_table_final <- AICctab(model_list, logLik=T, base=T, mnames=mod_names_full, weights=T, nobs=n)
-aic_c_table_final
+aicc_flex <- aic_c_table_final %>% print() %>% as.data.frame() %>% rownames_to_column(var = "model") %>% flextable()
+
+save_as_docx("aicc" = aicc_flex, path = here("figures", "fora_table_results.docx"))
 ```
 
 
