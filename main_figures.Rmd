@@ -289,24 +289,30 @@ inside_theme <-
         legend.position = "none",
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm")) #top, right, bottom, left
 
-f0 <- seq_plot_alt(f_seq, "m1_rate") + 
-  theme(axis.text.x = element_blank(), 
+bottom_theme <- 
+  theme(axis.text.y = element_blank(), 
         axis.title = element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none",
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm")) #top, right, bottom, left
+
+f0 <- seq_plot_alt(f_seq, "m1_rate") + 
+  theme(axis.title = element_blank(), 
         plot.title = element_blank(), 
         legend.position = "none",
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
   
 f1 <- seq_plot_alt(f_seq, "m2_rate") +
-  inside_theme
+  bottom_theme
 
 f2 <- seq_plot_alt(f_seq, "m3_rate") +
-  inside_theme
+  bottom_theme
 
 f3 <- seq_plot_alt(f_seq, "m4_rate") +
-  inside_theme
+  bottom_theme
 
 f4 <- seq_plot_alt(f_seq, "m6c_rate") + 
-  theme(axis.text = element_blank(), 
+  theme(axis.text.y = element_blank(), 
         axis.title = element_blank(), 
         plot.title = element_blank(), 
         legend.position = "none", 
@@ -323,7 +329,7 @@ clearance_plots
 ggsave(here("workshop", "figures", "final", "clearance_plots.png"),
        clearance_plots,
        width = 8,
-       height = 2,
+       height = 1.5,
        units = "in")
 ```
 
@@ -371,9 +377,11 @@ algae_plots_diff
 ggsave(here("workshop", "figures", "final", "algae_plots.png"),
        algae_plots_diff,
        width = 8,
-       height = 2,
+       height = 1.5,
        units = "in")
 ```
+
+
 
 ## fora spores
 
@@ -416,7 +424,7 @@ fora_spores_plots
 ggsave(here("workshop", "figures", "final", "fora_spore_plots.png"),
        fora_spores_plots,
        width = 8,
-       height = 2,
+       height = 1.5,
        units = "in")
 ```
 
@@ -510,7 +518,7 @@ spores_plots
 ggsave(here("workshop", "figures", "final", "inf_spores_plots.png"),
        spores_plots,
        width = 8,
-       height = 2,
+       height = 1.5,
        units = "in")
 ```
 
@@ -554,7 +562,7 @@ susc_plots
 ggsave(here("workshop", "figures", "final", "susc_plots.png"),
        susc_plots,
        width = 8,
-       height = 2,
+       height = 1.5,
        units = "in")
 ```
 
@@ -597,7 +605,7 @@ prev_plots
 ggsave(here("workshop", "figures", "final", "prev_plots.png"),
        prev_plots,
        width = 8,
-       height = 2,
+       height = 1.5,
        units = "in")
 ```
 
