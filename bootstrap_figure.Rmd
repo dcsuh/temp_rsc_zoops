@@ -38,7 +38,9 @@ mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092
                 readRDS(file = here("model_fitting", "combined", "beet", "38_100524.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "37_100624.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "37_100624a.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "32_100724.rds")))
+                readRDS(file = here("model_fitting", "combined", "beet", "32_100724.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_100824.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "42_100924.rds")))
 
 ```
 
