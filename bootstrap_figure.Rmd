@@ -40,7 +40,8 @@ mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092
                 readRDS(file = here("model_fitting", "combined", "beet", "37_100624a.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "32_100724.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "35_100824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "42_100924.rds")))
+                readRDS(file = here("model_fitting", "combined", "beet", "42_100924.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "31_101024.rds")))
 
 ```
 
@@ -241,7 +242,7 @@ param_ci <-
 
 param_ci
 
-ggsave(here("workshop", "figures", "update", "param_est.png"), width = 6, height = 4)
+#ggsave(here("workshop", "figures", "update", "param_est.png"), width = 6, height = 4)
 ```
 
 
