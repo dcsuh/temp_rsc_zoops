@@ -242,7 +242,7 @@ param_ci <-
 
 param_ci
 
-#ggsave(here("workshop", "figures", "update", "param_est.png"), width = 6, height = 4)
+ggsave(here("workshop", "figures", "update", "param_est.png"), width = 6, height = 4)
 ```
 
 
