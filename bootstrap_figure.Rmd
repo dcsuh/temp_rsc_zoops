@@ -13,6 +13,7 @@ library(here)
 source(here("base","src.R"))
 
 library(egg)
+library(flextable)
 ```
 
 
@@ -219,6 +220,27 @@ mod_quantiles$sd_est[4] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.97
 ```{r}
 mod_quantiles %<>% pivot_longer(cols = f:sd_est) %>% pivot_wider(., names_from="id")
 
+confint_table <- 
+mod_quantiles %>%
+  dplyr::select(-c(mean)) %>%
+  mutate(across(est:upper.975, round, digits = 4)) %>%
+  mutate(across(est:upper.975, as.character)) %>%
+  flextable() %>%
+  add_header_row(top = TRUE,
+                 values = c("95% Bootstrapped Confidence Intervals",
+                            "",
+                            "",
+                            "")) %>%
+  set_header_labels(
+    name = "Parameter",
+    est = "Estimate",
+    lower.025 = "2.5%",
+    upper.975 = "97.5%"
+  ) %>%
+  merge_at(i = 1, j = 1:4, part = "header")
+
+save_as_docx("confint_table" = confint_table, path = here("figures", "boot_conf_int.docx"))
+
 ```
 
 ```{r}
@@ -338,10 +360,7 @@ f_seq <- seq_data %>%
   mutate(f = NA,
          f_lower = NA,
          f_upper = NA)
-```
 
-
-```{r}
 
 f_est <- mod_quantiles$est[1]
 arr_est <- mod_quantiles$est[3]
@@ -374,10 +393,13 @@ f_seq %<>% mutate(f = (f_est*exp(arr_est*(1/ref_t - 1/temp))*(mm^gamma))/
                   f_lower = mapply(get_fora, temp = temp, resource = resource, mm = mm, bound = "lower"),
                   f_upper = mapply(get_fora, temp = temp, resource = resource, mm = mm, bound = "upper"))
 
+saveRDS(f_seq, file = here("mle", "f_seq_bootstrap.rds"))
 
 ```
 
 ```{r}
+f_seq <- readRDS(file = here("mle", "f_seq_bootstrap.rds"))
+
 f_seq %>%
   filter(resource %in% c(0.1, 0.5, 1)) %>%
   ggplot(aes(x = temp, group = resource)) + 
@@ -442,15 +464,7 @@ u_seq <- seq_data %>%
   mutate(u = NA,
          u_lower = NA,
          u_upper = NA)
-```
 
-```{r}
-# resource <- 1
-# temp <- 16.8
-# mod_boot_coefs %>% 
-#     mutate(per_spore_susc = u*exp(arr_u*(1/ref_t - 1/temp))*exp(rho*resource)*exp(resource*temp*phi)) %>%
-#     summarize(min = min(per_spore_susc),
-#               max = max(per_spore_susc))
 
 
 u_est <- mod_quantiles$est[2]
@@ -475,11 +489,19 @@ get_susc <- function(temp, resource, bound){
 
 u_seq %<>% mutate(u = u_est*exp(arr_u_est*(1/ref_t - 1/temp))*exp(rho_est*resource)*exp(resource*temp*phi_est),
                   u_lower = mapply(get_susc, temp = temp, resource = resource, bound = "lower"),
-                  u_upper = mapply(get_susc, temp = temp, resource = resource, bound = "upper"))
+                  u_upper = mapply(get_susc, temp = temp, resource = resource, bound = "upper"),
+                  u_coef = exp(arr_u_est*(1/ref_t - 1/temp))*exp(rho_est*resource)*exp(resource*temp*phi_est),
+                  arr_eff = exp(arr_u_est*(1/ref_t - 1/temp)),
+                  rho_eff = exp(rho_est*resource),
+                  phi_eff = exp(resource*temp*phi_est))
+
+saveRDS(u_seq, file = here("mle", "u_seq_bootstrap.rds"))
 
 ```
 
 ```{r}
+u_seq <- readRDS(file = here("mle", "u_seq_bootstrap.rds"))
+
 u_seq %>%
   filter(resource %in% c(0.1, 0.5, 1.0)) %>%
   ggplot(aes(x = temp, group = resource)) + 
@@ -587,7 +609,121 @@ ggsave(here("workshop", "figures", "update", "susc_ci_rsc.png"),
 ```
 
 
+```{r}
+u_seq %>%
+  filter(resource %in% 0.1) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "resource == 0.1")
 
+u_seq %>%
+  filter(resource %in% 0.25) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "resource == 0.1")
+
+u_seq %>%
+  filter(resource %in% 0.5) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") +
+  labs(title = "resource == 0.5")
+
+u_seq %>%
+  filter(resource %in% 0.75) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") +
+  labs(title = "resource == 0.5")
+
+u_seq %>%
+  filter(resource %in% 1.0) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") +
+  labs(title = "resource == 1.0")
+```
+
+```{r}
+u_seq %>%
+  filter(temp %in% 15) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 15")
+
+u_seq %>%
+  filter(temp %in% 17.5) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 17.5")
+
+u_seq %>%
+  filter(temp %in% 20) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 20")
+
+u_seq %>%
+  filter(temp %in% 25) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 25")
+```
+
+
+```{r}
+u_seq %>%
+  filter(temp %in% 24.6) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 24.6")
+
+# u_seq %>%
+#   filter(temp %in% 24.7) %>%
+#   pivot_longer(cols = u_coef:phi_eff) %>%
+#   ggplot(., aes(x = resource, y = value)) + 
+#   geom_line() + 
+#   facet_wrap(~name, scales = "free") + 
+#   labs(title = "temp == 24.7")
+
+u_seq %>%
+  filter(temp %in% 24.8) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 24.8")
+```
+
+```{r}
+u_seq %>%
+  ggplot(., aes(x = temp, y = resource, fill = u)) +
+  scale_fill_viridis_c() + 
+  geom_tile()
+
+
+u_seq %>%
+  ggplot(., aes(x = temp, y = resource, fill = phi_eff)) +
+  scale_fill_viridis_c() + 
+  geom_tile()
+```
 
 
 
