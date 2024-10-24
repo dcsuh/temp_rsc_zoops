@@ -173,10 +173,10 @@ mod_quantiles$f[3] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[
 mod_quantiles$f[4] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[2]
 
 
-mod_quantiles$u[1] <- coef(m5_u_f_fit)[2]
-mod_quantiles$u[2] <- mean(mod_boot_coefs$u)
-mod_quantiles$u[3] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[1]
-mod_quantiles$u[4] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[2]
+mod_quantiles$u[1] <- coef(m5_u_f_fit)[2]/100000
+mod_quantiles$u[2] <- mean(mod_boot_coefs$u)/100000
+mod_quantiles$u[3] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[1]/100000
+mod_quantiles$u[4] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[2]/100000
 
 
 mod_quantiles$arr[1] <- coef(m5_u_f_fit)[3]
