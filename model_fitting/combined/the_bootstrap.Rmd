@@ -19,7 +19,7 @@ Objective: Bootstrap confidence intervals for f and u and associated parameters 
 
 Which model is the best fitting model?
 ```{r}
-m5_u_f_fit <- readRDS(file = here("model_fitting", "m5_phi_fit.rds"))
+m5_u_f_fit <- readRDS(here("mle","m5_combined_fit.rds"))
 ```
 
 
@@ -118,6 +118,7 @@ m5_h <- as.numeric(m5_coef[5])
 m5_w <- as.numeric(m5_coef[6])
 m5_rho <- as.numeric(m5_coef[7])
 m5_phi <- as.numeric(m5_coef[8])
+m5_sd_est <- as.numeric(m5_coef[9])
 ```
 
 
@@ -167,7 +168,7 @@ slice_sample is set to keep the amount of data per treatment the same (30), but 
 
 
 ```{r}
-m5_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, phi){
+m5_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, phi, sd_est){
   
   if(f<0 | h<0 | u<0 | arr_t_f<0 | arr_t_u<0 |
       (u/100000*exp(arr_t_u*((1/15)-(1/15)))*exp(0.1/1000*rho)*exp(0.1/1000*15*phi)) <0 |
@@ -202,13 +203,22 @@ m5_ll <- function(f, u, arr_t_f, arr_t_u, h, w, rho, phi){
   data$end <- R_end$R_end
   #data %<>% mutate(resid = log(end) - log(amt_rem*fora_vol/1000))
   data %<>% mutate(resid = sqrt(end) - sqrt(amt_rem*fora_vol/1000))
+  data %<>% mutate(sqrt_model_end = sqrt(end),
+                   sqrt_data_end = sqrt(amt_rem*vol/1000),
+                   log_model_end = log(end),
+                   log_data_end = log(amt_rem*vol/1000))
   
-    nll <- dnorm(data$resid, 
-                 mean = 0, 
-                 sd = sd(data$resid), 
+    nll_sum <- 0
+    for(i in 1:length(treatment_IDs)){
+      treatment_data <- data %>% filter(treatment_ID == treatment_IDs[i])
+      nll <- dnorm(treatment_data$sqrt_data_end,
+                 mean = mean(treatment_data$sqrt_model_end),
+                 sd = sd_est,
                  log = T)
-    nll_sum <- -sum(nll)
+      nll_sum <- -sum(nll) + nll_sum
+    }
   
+
   exp_data <- boot_dataset %>% filter(exposed==TRUE)
 
   
@@ -272,7 +282,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                     sd_est = m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -280,7 +291,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                     sd_est = m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -343,7 +355,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -351,7 +364,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -369,7 +383,7 @@ We'll include the bootstrapping here
 
 ```{r, warning=F}
 
-  iterations <- 20
+  iterations <- 15
   
   boot_02 <- list()
   
@@ -385,14 +399,15 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_02[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+      boot_02[[i]] <-mle2(m5_ll, start=list(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
                                       arr_t_u=m5_arr_u,
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -400,7 +415,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -434,14 +450,15 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_03[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+      boot_03[[i]] <-mle2(m5_ll, start=list(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
                                       arr_t_u=m5_arr_u,
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -449,7 +466,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -482,14 +500,15 @@ We'll include the bootstrapping here
         slice_sample(., prop=1, replace=T) %>%
         ungroup()
 
-      boot_04[[i]] <- mle2(m5_ll, start=list(u = m5_u*100000,
+      boot_04[[i]] <-mle2(m5_ll, start=list(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
                                       arr_t_u=m5_arr_u,
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi), 
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est), 
                      control=list(parscale = c(u = m5_u*100000,
                                       f=m5_f, 
                                       arr_t_f=m5_arr, 
@@ -497,7 +516,8 @@ We'll include the bootstrapping here
                                       h=m5_h,
                                       w=m5_w,
                                       rho=m5_rho,
-                                      phi=m5_phi),
+                                      phi=m5_phi,
+                                      sd_est=m5_sd_est),
                                   maxit=5000,
                                   reltol=0.00001),
                                   skip.hessian=F, 
@@ -538,24 +558,78 @@ beet <- c(boot_01, boot_02, boot_03, boot_04)
 50_072624 <- 50 more iters
 45_072914 <- 45 more iters
 
-```{r}
-saveRDS(beet, file = here("model_fitting", "combined", "beet", "45_072924.rds"))
-mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_060824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_060924.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061024.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "70_061124.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "40_061124.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_061224.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061324.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "55_061424.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061524.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_071824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_072624.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_072924.rds")))
 
+Start new iters with new model formulation
+20_092024 <- 20 more iters
+20_092124 <- 20 more iters
+25_092124 <- 25
+35_092224 <- 35 more iters
+35_092224a <- 35 more iters
+50_092324 <- 50 more iters
+45_092424 <- 45 more iters
+50_092524 <- 50 more iters
+50_092624 <- 50 more iters
+50_092724 <- 50 more iters
+50_092824 <- 50 more iters
+50_092924 <- 50 more iters
+48_093024 <- 48 more iters
+30_100124 <- 30 more iters
+50_100224 <- 50 more iters
+50_100324 <- 50 more iters
+45_100424 <- 45 more iters
+50_100524 <- 50 more iters
+38_100524 <- 38 more iters
+37_100624 <- 37 more iters
+37_100624a <- 37 more iters
+32_100724 <- 32 more iters
+35_100824 <- 35 more iters
+42_100924 <- 42 more iters
+31_101024 <- 31 more iters
+
+
+```{r}
+saveRDS(beet, file = here("model_fitting", "combined", "beet", "31_101024.rds"))
+# mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "45_060824.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_060924.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_061024.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "70_061124.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "40_061124.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "45_061224.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_061324.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "55_061424.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_061524.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_071824.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "50_072624.rds")),
+#                 readRDS(file = here("model_fitting", "combined", "beet", "45_072924.rds")))
+
+mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092024.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "20_092124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "25_092124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_092224.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_092224a.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092324.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_092424.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092524.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092624.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092724.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092824.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092924.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "48_093024.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "30_100124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_100224.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_100324.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_100424.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_100524.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "38_100524.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "37_100624.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "37_100624a.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "32_100724.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_100824.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "42_100924.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "31_101024.rds")))
 ```
 
 
@@ -570,6 +644,7 @@ mod_boot_coefs <- tibble(f = rep_len(0, tib_length),
                          w = rep_len(0, tib_length),
                          rho = rep_len(0, tib_length),
                          phi = rep_len(0, tib_length),
+                         sd_est = rep_len(0, tib_length),
                          warning = NA)
 
 
@@ -584,6 +659,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "52"
   }
   else if(mod_f_boot[[i]]@details[4] == 10){
@@ -596,6 +672,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "10"
   }
   else if(mod_f_boot[[i]]@min == 0){
@@ -608,6 +685,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "zero_ll"
   }
   else if(mod_f_boot[[i]]@details[4] == 1){
@@ -621,6 +699,7 @@ for(i in 1:length(mod_f_boot)){
   mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
   mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
   mod_boot_coefs$phi[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$sd_est[i] <- as.numeric(boot_coef[9])
   mod_boot_coefs$warning[i] <- "1"
   }
   else{
@@ -633,6 +712,7 @@ for(i in 1:length(mod_f_boot)){
   mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
   mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
   mod_boot_coefs$phi[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$sd_est[i] <- as.numeric(boot_coef[9])
   mod_boot_coefs$warning[i] <- "0"
   }
 }
@@ -650,6 +730,7 @@ mod_boot_coefs %>% ggplot(., aes(x = h)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = w)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = rho)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = phi)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = sd_est)) + geom_histogram()
 ```
 
 
@@ -665,7 +746,8 @@ mod_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
                         h = NA,
                         w = NA,
                         rho = NA,
-                        phi = NA)
+                        phi = NA,
+                        sd_est = NA)
 
 mod_quantiles$f[1] <- coef(m5_u_f_fit)[1]
 mod_quantiles$f[2] <- mean(mod_boot_coefs$f)
@@ -709,30 +791,35 @@ mod_quantiles$phi[1] <- coef(m5_u_f_fit)[8]
 mod_quantiles$phi[2] <- mean(mod_boot_coefs$phi)
 mod_quantiles$phi[3] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$phi[4] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$sd_est[1] <- coef(m5_u_f_fit)[9]
+mod_quantiles$sd_est[2] <- mean(mod_boot_coefs$sd_est)
+mod_quantiles$sd_est[3] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$sd_est[4] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[2]
 ```
 
 
 ```{r}
-mod_quantiles %<>% pivot_longer(cols = f:phi) %>% pivot_wider(., names_from="id")
+mod_quantiles %<>% pivot_longer(cols = f:sd_est) %>% pivot_wider(., names_from="id")
 
 ```
 
 ```{r, eval = F}
-theme_set(theme_bw(base_size = 12))
-
-rho_boot_plot <- mod_quantiles %>% filter(name %in% c("rho_15", "rho_20", "rho_25")) %>%
-  mutate(name = gsub("rho_", "", x=name)) %>%
-  ggplot(., aes(x = name, y=est, color = name)) + 
-  geom_point(size = 3) + 
-  geom_linerange(linewidth = 1, 
-                 aes(ymin=lower.025, ymax=upper.975)) + 
-  labs(x = expression(rho), y = "Estimate (Boostrapped 95% CI)", color = "Temp") + 
-  theme(legend.position = "none") + 
-  scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
-
-rho_boot_plot
-
-ggsave(here("workshop", "figures", "rho_boot_plot.png"), width = 3, height = 4)
+# theme_set(theme_bw(base_size = 12))
+# 
+# rho_boot_plot <- mod_quantiles %>% filter(name %in% c("rho_15", "rho_20", "rho_25")) %>%
+#   mutate(name = gsub("rho_", "", x=name)) %>%
+#   ggplot(., aes(x = name, y=est, color = name)) + 
+#   geom_point(size = 3) + 
+#   geom_linerange(linewidth = 1, 
+#                  aes(ymin=lower.025, ymax=upper.975)) + 
+#   labs(x = expression(rho), y = "Estimate (Boostrapped 95% CI)", color = "Temp") + 
+#   theme(legend.position = "none") + 
+#   scale_color_manual(values = c("#FFC107", "#21918c", "#440154"))
+# 
+# rho_boot_plot
+# 
+# ggsave(here("workshop", "figures", "rho_boot_plot.png"), width = 3, height = 4)
 ```
 
 

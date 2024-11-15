@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r}
+```{r, message=F}
 library(here)
 
 source(here("base","src.R"))
@@ -30,7 +30,7 @@ foraging %<>% mutate(temp = as.factor(temp),
 
 
 
-body size ANOVA
+# body size ANOVA
 ```{r}
 size_aov <- aov(mm ~ resource + temp, data = foraging)
 size_aov_int <- aov(mm ~ resource * temp, data = foraging) #interaction not significant
@@ -48,7 +48,7 @@ TukeyHSD(size_aov, which = "temp")
 TukeyHSD(size_aov, which = "resource")
 ```
 
-body size lm
+# body size lm
 ```{r}
 size_lm <- lm(mm ~ as.numeric(resource) + as.numeric(temp), data = foraging)
 size_lm_int <- lm(mm ~ as.numeric(resource) * as.numeric(temp), data = foraging) #interaction not significant
@@ -56,6 +56,10 @@ size_lm_int <- lm(mm ~ as.numeric(resource) * as.numeric(temp), data = foraging)
 
 ```{r}
 summary(size_lm)
+```
+
+
+```{r}
 summary(size_lm_int) #interaction not significant
 ```
 
@@ -75,7 +79,7 @@ summary(size_lm_25)
 
 
 
-amt_consumed ANOVA
+# amt_consumed ANOVA
 ```{r}
 #amt_aov <- aov(amt_consumed ~ resource + temp, data = foraging)
 amt_aov_int <- aov(amt_consumed ~ resource * temp, data = foraging)
@@ -91,7 +95,7 @@ TukeyHSD(amt_aov_int, which = "temp")
 TukeyHSD(amt_aov_int, which = "resource")
 ```
 
-linear models for amount consumed
+# linear models for amount consumed
 ```{r}
 amt_lm <- lm(amt_consumed ~ as.numeric(resource) + as.numeric(temp), data = foraging)
 amt_lm_int <- lm(amt_consumed ~ as.numeric(resource) * as.numeric(temp), data = foraging)
@@ -99,6 +103,10 @@ amt_lm_int <- lm(amt_consumed ~ as.numeric(resource) * as.numeric(temp), data = 
 
 ```{r}
 summary(amt_lm)
+```
+
+
+```{r}
 summary(amt_lm_int)
 ```
 
@@ -107,7 +115,7 @@ summary(amt_lm_int)
 
 
 
-prob infection glm
+# prob infection glm
 ```{r}
 #inf_glm <- glm(inf ~ as.numeric(temp) + as.numeric(resource), family = binomial, data = mort)
 #inf_glm <- glm(inf ~ as.factor(temp) + as.factor(resource), family = binomial, data = mort)

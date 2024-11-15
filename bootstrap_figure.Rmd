@@ -11,34 +11,47 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r, message = F}
 library(here)
 source(here("base","src.R"))
+
+library(egg)
+library(flextable)
 ```
 
 
 ```{r}
-mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "10_060724a.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "5_060724.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "30_060824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_060824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_060924.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061024.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "70_061124.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "40_061124.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_061224.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061324.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "55_061424.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_061524.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_071824.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "50_072624.rds")),
-                readRDS(file = here("model_fitting", "combined", "beet", "45_072924.rds")))
+mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092024.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "20_092124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "25_092124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_092224.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_092224a.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092324.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_092424.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092524.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092624.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092724.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092824.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_092924.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "48_093024.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "30_100124.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_100224.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_100324.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "45_100424.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "50_100524.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "38_100524.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "37_100624.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "37_100624a.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "32_100724.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "35_100824.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "42_100924.rds")),
+                readRDS(file = here("model_fitting", "combined", "beet", "31_101024.rds")))
 
 ```
 
 
 ```{r}
-m5_u_f_fit <- readRDS(file = here("model_fitting", "m5_phi_fit.rds"))
+m5_u_f_fit <- readRDS(here("mle","m5_combined_fit.rds"))
 ```
 
-```{r}
+```{r, include = F}
 tib_length <- length(mod_f_boot)
 
 mod_boot_coefs <- tibble(f = rep_len(0, tib_length),
@@ -49,6 +62,7 @@ mod_boot_coefs <- tibble(f = rep_len(0, tib_length),
                          w = rep_len(0, tib_length),
                          rho = rep_len(0, tib_length),
                          phi = rep_len(0, tib_length),
+                         sd_est = rep_len(0, tib_length),
                          warning = NA)
 
 
@@ -63,6 +77,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "52"
   }
   else if(mod_f_boot[[i]]@details[4] == 10){
@@ -75,6 +90,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "10"
   }
   else if(mod_f_boot[[i]]@min == 0){
@@ -87,6 +103,7 @@ for(i in 1:length(mod_f_boot)){
     mod_boot_coefs$w[i] <- NA
     mod_boot_coefs$rho[i] <- NA
     mod_boot_coefs$phi[i] <- NA
+    mod_boot_coefs$sd_est[i] <- NA
     mod_boot_coefs$warning[i] <- "zero_ll"
   }
   else if(mod_f_boot[[i]]@details[4] == 1){
@@ -100,6 +117,7 @@ for(i in 1:length(mod_f_boot)){
   mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
   mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
   mod_boot_coefs$phi[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$sd_est[i] <- as.numeric(boot_coef[9])
   mod_boot_coefs$warning[i] <- "1"
   }
   else{
@@ -112,13 +130,14 @@ for(i in 1:length(mod_f_boot)){
   mod_boot_coefs$w[i] <- as.numeric(boot_coef[6])
   mod_boot_coefs$rho[i] <- as.numeric(boot_coef[7])
   mod_boot_coefs$phi[i] <- as.numeric(boot_coef[8])
+  mod_boot_coefs$sd_est[i] <- as.numeric(boot_coef[9])
   mod_boot_coefs$warning[i] <- "0"
   }
 }
 ```
 
 
-```{r}
+```{r, include = F}
 mod_boot_coefs %<>% drop_na()
 
 mod_boot_coefs %>% ggplot(., aes(x = f)) + geom_histogram()
@@ -129,13 +148,14 @@ mod_boot_coefs %>% ggplot(., aes(x = h)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = w)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = rho)) + geom_histogram()
 mod_boot_coefs %>% ggplot(., aes(x = phi)) + geom_histogram()
+mod_boot_coefs %>% ggplot(., aes(x = sd_est)) + geom_histogram()
 ```
 
 
 
 
 quantiles
-```{r}
+```{r, include = F}
 mod_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
                         f = NA,
                         u = NA,
@@ -144,24 +164,25 @@ mod_quantiles <- tibble(id = c("est", "mean", "lower.025", "upper.975"),
                         h = NA,
                         w = NA,
                         rho = NA,
-                        phi = NA)
+                        phi = NA,
+                        sd_est = NA)
 
 mod_quantiles$f[1] <- coef(m5_u_f_fit)[1]
 mod_quantiles$f[2] <- mean(mod_boot_coefs$f)
 mod_quantiles$f[3] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$f[4] <- quantile(mod_boot_coefs$f, probs=seq(0.025, 0.975, 0.95))[2]
 
-mod_quantiles$u[1] <- coef(m5_u_f_fit)[2]
-mod_quantiles$u[2] <- mean(mod_boot_coefs$u)
-mod_quantiles$u[3] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[1]
-mod_quantiles$u[4] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$u[1] <- coef(m5_u_f_fit)[2]/100000
+mod_quantiles$u[2] <- mean(mod_boot_coefs$u)/100000
+mod_quantiles$u[3] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[1]/100000
+mod_quantiles$u[4] <- quantile(mod_boot_coefs$u, probs=seq(0.025, 0.975, 0.95))[2]/100000
 
 
 mod_quantiles$arr[1] <- coef(m5_u_f_fit)[3]
 mod_quantiles$arr[2] <- mean(mod_boot_coefs$arr)
 mod_quantiles$arr[3] <- quantile(mod_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$arr[4] <- quantile(mod_boot_coefs$arr, probs=seq(0.025, 0.975, 0.95))[2]
-
 
 mod_quantiles$arr_u[1] <- coef(m5_u_f_fit)[4]
 mod_quantiles$arr_u[2] <- mean(mod_boot_coefs$arr_u)
@@ -188,19 +209,45 @@ mod_quantiles$phi[1] <- coef(m5_u_f_fit)[8]
 mod_quantiles$phi[2] <- mean(mod_boot_coefs$phi)
 mod_quantiles$phi[3] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[1]
 mod_quantiles$phi[4] <- quantile(mod_boot_coefs$phi, probs=seq(0.025, 0.975, 0.95))[2]
+
+mod_quantiles$sd_est[1] <- coef(m5_u_f_fit)[9]
+mod_quantiles$sd_est[2] <- mean(mod_boot_coefs$sd_est)
+mod_quantiles$sd_est[3] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[1]
+mod_quantiles$sd_est[4] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.975, 0.95))[2]
 ```
 
 
 ```{r}
-mod_quantiles %<>% pivot_longer(cols = f:phi) %>% pivot_wider(., names_from="id")
+mod_quantiles %<>% pivot_longer(cols = f:sd_est) %>% pivot_wider(., names_from="id")
+
+confint_table <- 
+mod_quantiles %>%
+  dplyr::select(-c(mean)) %>%
+  mutate(across(est:upper.975, round, digits = 4)) %>%
+  mutate(across(est:upper.975, as.character)) %>%
+  flextable() %>%
+  add_header_row(top = TRUE,
+                 values = c("95% Bootstrapped Confidence Intervals",
+                            "",
+                            "",
+                            "")) %>%
+  set_header_labels(
+    name = "Parameter",
+    est = "Estimate",
+    lower.025 = "2.5%",
+    upper.975 = "97.5%"
+  ) %>%
+  merge_at(i = 1, j = 1:4, part = "header")
+
+save_as_docx("confint_table" = confint_table, path = here("figures", "boot_conf_int.docx"))
+
 ```
 
 ```{r}
-theme_set(theme_bw(base_size = 6))
+theme_set(theme_bw(base_size = 8))
 
 param_ci <- 
   mod_quantiles %>% 
-  #filter(name == "f") %>%
   ggplot(aes(x = name, 
              y = est)) + 
   geom_point() + 
@@ -217,9 +264,11 @@ param_ci <-
 
 param_ci
 
-ggsave(here("workshop", "figures", "update", "param_est.png"), width = 4, height = 4)
+ggsave(here("workshop", "figures", "update", "param_est.png"), width = 6, height = 4)
 ```
 
+
+# handling time
 
 ```{r}
 h_seq <- tibble(temp = seq(15, 25, by = 0.1),
@@ -228,16 +277,26 @@ h_seq <- tibble(temp = seq(15, 25, by = 0.1),
                 h_upper = NA)
 
 h_est <- mod_quantiles$est[5]
-h_min <- mod_quantiles$lower.025[5]
-h_max <- mod_quantiles$upper.975[5]
-
 w_est <- mod_quantiles$est[6]
-w_min <- mod_quantiles$lower.025[6]
-w_max <- mod_quantiles$upper.975[6]
+
+get_handling_time <- function(temp, bound){
+  tmp <- mod_boot_coefs %>% 
+    mutate(h_time = h * exp(temp*w)) %>%
+    summarize(min = quantile(h_time, probs = seq(0.025, 0.975, 0.95))[1],
+              max = quantile(h_time, probs = seq(0.025, 0.975, 0.95))[2])
+  if (bound == "upper"){
+    return(tmp$max)  
+  }
+  else if (bound == "lower") {
+    return(tmp$min) 
+  }
+}
+
+
 
 h_seq %<>% mutate(h = h_est * exp(temp*w_est),
-                  h_lower = h_min * exp(temp*w_min),
-                  h_upper = h_max * exp(temp*w_max))
+                  h_lower = mapply(get_handling_time, temp = temp, bound = "lower"),
+                  h_upper = mapply(get_handling_time, temp = temp, bound = "upper"))
 
 head(h_seq)
 ```
@@ -251,10 +310,419 @@ h_plot <-
               fill = "grey70") + 
   geom_line(aes(y = h)) + 
   labs(y = "Handling time (days/mgC)",
-       x = "Temperature (C)") + 
+       x = "Temperature (C)",
+       title = "Handling time with 95% CI") + 
   theme_bw(base_size = 12)
 
+h_plot
+
 ggsave(here("workshop", "figures", "update", "handling.png"), width = 6, height = 4)
+```
+
+
+
+```{r, include = F}
+ref_t <- 15
+gamma <- 2
+
+temp_range <- seq(15,25,by=0.1)
+resource_range <- seq(0.1,1,by=0.01)
+
+seq_data <- tibble(temp=c(),
+                   resource=c())
+
+for (i in 1:length(temp_range)){
+  tmp <- tibble(temp = temp_range[i],
+                resource = seq(0.1,1,by=0.01))
+  seq_data %<>% bind_rows(., tmp)
+}
+
+fora_data <- readRDS(here("processed_data","foraging_raw.rds")) #foraging rate data
+
+length_coef <- coef(lm(mm ~ resource + temp, data = fora_data)) #lengths from foraging rate experiment
+#length_ceof <- coef(lm(mm ~ resource + as.numeric(temp_id), data = lengths)) #5 day lengths from life table
+
+
+interpolate_length <- function(resource, temp){
+  length <- length_coef[1] + resource*length_coef[2] + temp*length_coef[3]
+}
+
+seq_data %<>% mutate(mm = mapply(interpolate_length, 
+                                     resource = resource,
+                                     temp = temp))
+```
+
+
+# foraging rate
+
+```{r}
+f_seq <- seq_data %>% 
+  mutate(f = NA,
+         f_lower = NA,
+         f_upper = NA)
+
+
+f_est <- mod_quantiles$est[1]
+arr_est <- mod_quantiles$est[3]
+
+
+
+get_fora <- function(temp, resource, bound, mm = mm){
+  tmp <- mod_boot_coefs %>% 
+    mutate(fora = (f*exp(arr*(1/ref_t - 1/temp))*(mm^gamma))/
+                       (1+f*exp(arr*(1/ref_t - 1/temp))*
+                          (mm^gamma)*
+                          h*exp(w*temp)*
+                          resource/1000)) %>%
+    summarize(min = quantile(fora, probs = seq(0.025, 0.975, 0.95))[1],
+              max = quantile(fora, probs = seq(0.025, 0.975, 0.95))[2])
+  if (bound == "upper"){
+    return(tmp$max)  
+  }
+  else if (bound == "lower") {
+    return(tmp$min) 
+  }
+}
+
+
+f_seq %<>% mutate(f = (f_est*exp(arr_est*(1/ref_t - 1/temp))*(mm^gamma))/
+                       (1+f_est*exp(arr_est*(1/ref_t - 1/temp))*
+                          (mm^gamma)*
+                          h_est*exp(w_est*temp)*
+                          resource/1000),
+                  f_lower = mapply(get_fora, temp = temp, resource = resource, mm = mm, bound = "lower"),
+                  f_upper = mapply(get_fora, temp = temp, resource = resource, mm = mm, bound = "upper"))
+
+saveRDS(f_seq, file = here("mle", "f_seq_bootstrap.rds"))
+
+```
+
+```{r}
+f_seq <- readRDS(file = here("mle", "f_seq_bootstrap.rds"))
+
+f_seq %>%
+  filter(resource %in% c(0.1, 0.5, 1)) %>%
+  ggplot(aes(x = temp, group = resource)) + 
+  geom_ribbon(aes(ymin = f_lower,
+                  ymax = f_upper,
+                  fill = as.factor(resource)),
+              alpha = 0.3) + 
+  geom_line(aes(y = f, color = as.factor(resource))) + 
+  labs(y = "Foraging Rate (mL/day)",
+       x = "Temperature (C)",
+       fill = "Resource\n(mgC/L)",
+       color = "",
+       title = "") + 
+  guides(color = "none", fill = "none") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  theme_bw(base_size = 12)
+
+#gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
+
+ggsave(here("workshop", "figures", "update", "fora_ci_temp.png"), 
+       plot = set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")),
+       width = 7,
+       height = 4,
+       units = "in")
+
+f_seq %>%
+  filter(temp %in% c(15, 20, 25)) %>%
+  ggplot(aes(x = resource, group = temp)) + 
+  geom_ribbon(aes(ymin = f_lower,
+                  ymax = f_upper,
+                  fill = as.factor(temp)),
+              alpha = 0.3) + 
+  geom_line(aes(y = f, color = as.factor(temp))) + 
+  labs(y = "Foraging Rate (mL/day)",
+       x = "Resource (mgC/L)",
+       fill = "Temp (C)",
+       title = "") + 
+  guides(color = "none", fill = guide_legend(reverse=T)) + 
+  guides(color = "none", fill = "none") + 
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  theme(legend.position = "none") + 
+  theme_bw(base_size = 12)
+
+#gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
+
+ggsave(here("workshop", "figures", "update", "fora_ci_rsc.png"), 
+       plot = set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")),
+       width = 7,
+       height = 4,
+       units = "in")
+```
+
+
+# Per-Parasite Susceptibility
+
+```{r}
+
+
+u_seq <- seq_data %>% 
+  mutate(u = NA,
+         u_lower = NA,
+         u_upper = NA)
+
+
+
+u_est <- mod_quantiles$est[2]
+arr_u_est <- mod_quantiles$est[4]
+rho_est <- mod_quantiles$est[7]
+phi_est <- mod_quantiles$est[8]
+
+
+get_susc <- function(temp, resource, bound){
+  tmp <- mod_boot_coefs %>% 
+    mutate(per_spore_susc = u*exp(arr_u*(1/ref_t - 1/temp))*exp(rho*resource)*exp(resource*temp*phi)) %>%
+    summarize(min = quantile(per_spore_susc, probs=seq(0.025, 0.975, 0.95))[1],
+              max = quantile(per_spore_susc, probs=seq(0.025, 0.975, 0.95))[2])
+  if (bound == "upper"){
+    return(tmp$max)  
+  }
+  else if (bound == "lower") {
+    return(tmp$min) 
+  }
+}
+
+
+u_seq %<>% mutate(u = u_est*exp(arr_u_est*(1/ref_t - 1/temp))*exp(rho_est*resource)*exp(resource*temp*phi_est),
+                  u_lower = mapply(get_susc, temp = temp, resource = resource, bound = "lower"),
+                  u_upper = mapply(get_susc, temp = temp, resource = resource, bound = "upper"),
+                  u_coef = exp(arr_u_est*(1/ref_t - 1/temp))*exp(rho_est*resource)*exp(resource*temp*phi_est),
+                  arr_eff = exp(arr_u_est*(1/ref_t - 1/temp)),
+                  rho_eff = exp(rho_est*resource),
+                  phi_eff = exp(resource*temp*phi_est))
+
+saveRDS(u_seq, file = here("mle", "u_seq_bootstrap.rds"))
+
+```
+
+```{r}
+u_seq <- readRDS(file = here("mle", "u_seq_bootstrap.rds"))
+
+u_seq %>%
+  filter(resource %in% c(0.1, 0.5, 1.0)) %>%
+  ggplot(aes(x = temp, group = resource)) + 
+  geom_ribbon(aes(ymin = u_lower/100000,
+                  ymax = u_upper/100000,
+                  fill = as.factor(resource)),
+              alpha = 0.5) + 
+  geom_line(aes(y = u/100000, color = as.factor(resource))) + 
+  labs(y = "Per-Parasite Susceptibility",
+       x = "Temperature (C)",
+       fill = "Resource\n(mgC/L)",
+       color = "",
+       title = "Per-Parasite Susceptibility from best model") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  guides(color = "none") + 
+  theme_bw(base_size = 12) + 
+  facet_wrap(~resource,nrow = 1)
+
+
+
+
+u_seq %>%
+  filter(resource %in% c(0.1, 0.5, 1)) %>%
+  ggplot(aes(x = temp, group = resource)) + 
+  geom_ribbon(aes(ymin = u_lower/100000,
+                  ymax = u_upper/100000,
+                  fill = as.factor(resource)),
+              alpha = 0.3) + 
+  geom_line(aes(y = u/100000, color = as.factor(resource))) + 
+  labs(y = "Per-Parasite Susceptibility",
+       x = "Temperature (C)",
+       fill = "Resource\n(mgC/L)",
+       color = "",
+       title = "") + 
+  scale_color_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
+  theme(legend.position = "none") + 
+  guides(color = "none", fill = "none") + 
+  theme_bw(base_size = 12)
+
+#gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
+
+ggsave(here("workshop", "figures", "update", "susc_ci_temp.png"), 
+       plot = set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")),
+       width = 7,
+       height = 4,
+       units = "in")
+
+u_seq %>%
+  filter(temp %in% c(15, 20, 25)) %>%
+  ggplot(aes(x = resource, group = temp)) + 
+  geom_ribbon(aes(ymin = u_lower/100000,
+                  ymax = u_upper/100000,
+                  fill = as.factor(temp)),
+              alpha = 0.3) + 
+  geom_line(aes(y = u/100000, color = as.factor(temp))) + 
+  labs(y = "Per-Parasite Susceptibility",
+       x = "Resource (mgC/L)",
+       fill = "Temp (C)",
+       color = "",
+       title = "") + 
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  theme(legend.position = "none") + 
+  guides(color = "none", fill = guide_legend(reverse=T)) + 
+  guides(color = "none", fill = "none") + 
+  theme_bw(base_size = 12) +
+  facet_wrap(~temp, nrow=1)
+
+
+u_seq %>%
+  filter(temp %in% c(15, 20, 25)) %>%
+  ggplot(aes(x = resource, group = temp)) + 
+  geom_ribbon(aes(ymin = u_lower/100000,
+                  ymax = u_upper/100000,
+                  fill = as.factor(temp)),
+              alpha = 0.3) + 
+  geom_line(aes(y = u/100000, color = as.factor(temp))) + 
+  labs(y = "Per-Parasite Susceptibility",
+       x = "Resource (mgC/L)",
+       fill = "Temp (C)",
+       color = "",
+       title = "") + 
+  scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
+  theme(legend.position = "none") + 
+  guides(color = "none", fill = guide_legend(reverse=T)) + 
+  guides(color = "none", fill = "none") + 
+  theme_bw(base_size = 12)
+
+#gridExtra::grid.arrange(egg::set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")))
+
+ggsave(here("workshop", "figures", "update", "susc_ci_rsc.png"), 
+       plot = set_panel_size(p=last_plot(), width=unit(5, "in"), height=unit(3, "in")),
+       width = 7,
+       height = 4,
+       units = "in")
+```
+
+
+
+```{r}
+#ggsave(here("workshop", "figures", "update", "susc_ci.png"), width = 6, height = 4)
+```
+
+
+```{r}
+u_seq %>%
+  filter(resource %in% 0.1) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "resource == 0.1")
+
+u_seq %>%
+  filter(resource %in% 0.25) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "resource == 0.1")
+
+u_seq %>%
+  filter(resource %in% 0.5) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") +
+  labs(title = "resource == 0.5")
+
+u_seq %>%
+  filter(resource %in% 0.75) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") +
+  labs(title = "resource == 0.5")
+
+u_seq %>%
+  filter(resource %in% 1.0) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = temp, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") +
+  labs(title = "resource == 1.0")
+```
+
+```{r}
+u_seq %>%
+  filter(temp %in% 15) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 15")
+
+u_seq %>%
+  filter(temp %in% 17.5) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 17.5")
+
+u_seq %>%
+  filter(temp %in% 20) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 20")
+
+u_seq %>%
+  filter(temp %in% 25) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 25")
+```
+
+
+```{r}
+u_seq %>%
+  filter(temp %in% 24.6) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 24.6")
+
+# u_seq %>%
+#   filter(temp %in% 24.7) %>%
+#   pivot_longer(cols = u_coef:phi_eff) %>%
+#   ggplot(., aes(x = resource, y = value)) + 
+#   geom_line() + 
+#   facet_wrap(~name, scales = "free") + 
+#   labs(title = "temp == 24.7")
+
+u_seq %>%
+  filter(temp %in% 24.8) %>%
+  pivot_longer(cols = u_coef:phi_eff) %>%
+  ggplot(., aes(x = resource, y = value)) + 
+  geom_line() + 
+  facet_wrap(~name, scales = "free") + 
+  labs(title = "temp == 24.8")
+```
+
+```{r}
+u_seq %>%
+  ggplot(., aes(x = temp, y = resource, fill = u)) +
+  scale_fill_viridis_c() + 
+  geom_tile()
+
+
+u_seq %>%
+  ggplot(., aes(x = temp, y = resource, fill = phi_eff)) +
+  scale_fill_viridis_c() + 
+  geom_tile()
 ```
 
 

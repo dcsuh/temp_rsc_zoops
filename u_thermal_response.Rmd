@@ -1,0 +1,77 @@
+---
+title: "arr function"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, message=F}
+library(tidyverse)
+library(magrittr)
+```
+
+
+
+We use a form of the Arrhenius equation that is meant to capture the exponentially increasing portion of a thermal reaction norm. However, we are able to generate results for per-parasite susceptibility that exhibit a non-monotonic, unimodal response. How is this possible?
+
+At current, we only observe this effect at high resource conditions.
+
+Fake data
+```{r}
+temp_range <- seq(15, 35, 1)
+
+dat <- 
+  tibble(temp = NA,
+         resource = NA,
+         u = NA)
+
+for (i in 1:length(temp_range)){
+  tmp <- tibble(temp = temp_range[i],
+                resource = c(0.1, 0.5, 1))
+  dat %<>% bind_rows(., tmp)
+}
+
+arr_t <- 93.4 #arrhenius coefficient
+
+ref_t <- 15 #reference temperature
+
+pps <- 12.25/100000 #per-parasite susceptibility
+
+dat %<>%
+  mutate(u_arr = exp(arr_t*(1/ref_t - 1/temp)))
+```
+
+```{r}
+dat %>%
+  ggplot(., aes(x = temp, y = u_arr)) + 
+  geom_line()
+```
+
+
+The full form also includes an effect of resources and the interaction between temperature and resources. However, the effects of resources shouldn't matter here when I am only considering one resource condition.
+
+
+```{r}
+rho <- 5.28 
+
+phi <- -0.215
+
+dat %<>%
+  mutate(u_rho = pps*exp(rho*resource),
+         u_phi = pps*exp(phi*resource*temp),
+         u_inter = u_arr*u_rho*u_phi)
+```
+
+```{r}
+dat %>%
+  ggplot(., aes(x = temp, y = u_inter, group = as.factor(resource))) + 
+  geom_line()
+```
+
+
+
+
