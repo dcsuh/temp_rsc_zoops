@@ -125,7 +125,8 @@ data_B$read_intercept <- control_intercept_B
 
 data <- rbind(data_A, data_B)
 
-data %<>% mutate(mm = as.numeric(length)*17.86/1000, #convert to mm. 17.86 is factor for converting from eyepiece micrometer
+data %<>% mutate(mm = as.numeric(length)*17.86/1000, 
+                 #at default magnification (5.6x), 1 unit in micrometer is equal to 17.86 micron
                  rate = log(control_read/read)*(vol/time), #vol is mL and time is min for a rate of mL/min
                  rate_len = rate/mm^2,
                  amt_rem = read/read_coef, #final resource concentration

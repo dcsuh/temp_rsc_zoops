@@ -1,12 +1,13 @@
+#generate foraging rate model results
+#Daniel Suh
+
 library(here)
 
 source(here("base","src.R"))
+source(here("01_foraging.R"))
 
-#read data
-data <- readRDS(here("processed_data","foraging_raw.rds"))
-data_summ <- readRDS(here("processed_data", "foraging.rds"))
 
-m0 <- readRDS(here("processe_data", "mle", "m0_f_fit.rds"))
+
 m1 <- readRDS(here("processe_data", "mle", "m1_f_fit.rds"))
 m2 <- readRDS(here("processe_data", "mle", "m2_f_fit.rds"))
 m3 <- readRDS(here("processe_data", "mle", "m3_f_fit.rds"))
@@ -103,11 +104,6 @@ m3_coef <- coef(m3)
 m3_f <- as.numeric(m3_coef[1])
 m3_h <- as.numeric(m3_coef[2])
 
-get_rate <- function(f, arr, temp, h, resource, length){
-  ((f*length^gamma*exp(arr*(1/ref_t - 1/temp)))/
-     (1+f*length^gamma*exp(arr*(1/ref_t - 1/temp))*h*resource))
-}
-
 m4_coef <- m4@coef
 m4_f <- as.numeric(m4_coef[1])
 m4_arr <- as.numeric(m4_coef[2])
@@ -118,6 +114,12 @@ m5_f <- as.numeric(m5_coef[1])
 m5_arr <- as.numeric(m5_coef[2])
 m5_h <- as.numeric(m5_coef[3])
 m5_w <- as.numeric(m5_coef[4])
+
+
+get_rate <- function(f, arr, temp, h, resource, length){
+  ((f*length^gamma*exp(arr*(1/ref_t - 1/temp)))/
+     (1+f*length^gamma*exp(arr*(1/ref_t - 1/temp))*h*resource))
+}
 
 
 seq_data %<>% mutate(m1_rate = length^gamma*m1_f,
@@ -362,6 +364,6 @@ seq_data %<>% mutate(m1_Z_end = mapply(m1_sim_z,
 
 # save data ---------------------------------------------------------------
 
-saveRDS(seq_data, file=here("processed_data", "fit_data","rate_fit.rds"))
+saveRDS(seq_data, file=here("processed_data", "fit_data","foraging_rate_fit_data.rds"))
 
 

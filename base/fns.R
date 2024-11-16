@@ -5,3 +5,8 @@
 getAIC <- function(model){
   return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
 }
+
+#get infection prevalence
+inf_out <- function(inf_status, I_end){
+  dbinom(x = inf_status, size = 1, prob=I_end, log=T)
+}
