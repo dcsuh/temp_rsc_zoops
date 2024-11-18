@@ -3,8 +3,9 @@
 
 #get AIC from mle outputs
 getAIC <- function(model){
-  return(2*length(coef(model))-(2*summary(model)@m2logL/-2))
+  return(2*length(coef(model)) + (summary(model)@m2logL))
 }
+
 
 #get infection prevalence
 inf_out <- function(inf_status, I_end){
