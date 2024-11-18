@@ -165,6 +165,7 @@ data_summ <- data %>%
             length_sd = sd(length, na.rm = T),
             length_se = sd(length, na.rm = T)/sqrt(n()),
             mm_mean = mean(mm, na.rm = T),
+            mm_se = sd(mm, na.rm=T(sqrt(sum(!is.na(mm))))),
             time_mean = mean(time_day, na.rm = T)) %>% ungroup()
 
 data_summ %<>% mutate(species = "D",
