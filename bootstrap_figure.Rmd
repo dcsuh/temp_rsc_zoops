@@ -44,6 +44,8 @@ mod_f_boot <- c(readRDS(file = here("model_fitting", "combined", "beet", "20_092
                 readRDS(file = here("model_fitting", "combined", "beet", "42_100924.rds")),
                 readRDS(file = here("model_fitting", "combined", "beet", "31_101024.rds")))
 
+
+#saveRDS(mod_f_boot, file = here("processed_data", "m2E_bootstraps.rds"))
 ```
 
 

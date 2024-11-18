@@ -111,6 +111,7 @@ data_summ <- data %>% group_by(temp, resource) %>% summarize(rate_mean = mean(ra
                                                              length_sd = sd(length, na.rm = T),
                                                              length_se = sd(length, na.rm = T)/sqrt(n()),
                                                              mm_mean = mean(mm, na.rm = T),
+                                                             mm_se = sd(mm, na.rm=T(sqrt(sum(!is.na(mm))))),
                                                              time_mean = mean(time_day, na.rm = T)) %>% ungroup()
 
 # data_summ <- data %>% group_by(temp, resource, block) %>% summarize(mean_rate = mean(rate),
