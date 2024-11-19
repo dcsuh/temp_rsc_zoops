@@ -110,6 +110,11 @@ summary(amt_lm)
 summary(amt_lm_int)
 ```
 
+```{r}
+amt_lm_15 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 15))
+amt_lm_20 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 20))
+amt_lm_25 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 25))
+```
 
 
 
