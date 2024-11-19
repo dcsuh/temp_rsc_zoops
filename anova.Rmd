@@ -64,15 +64,15 @@ summary(size_lm_int) #interaction not significant
 ```
 
 ```{r}
-size_lm_15 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 15))
-size_lm_20 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 20))
-size_lm_25 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 25))
+# size_lm_15 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 15))
+# size_lm_20 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 20))
+# size_lm_25 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 25))
 ```
 
 ```{r}
-summary(size_lm_15)
-summary(size_lm_20)
-summary(size_lm_25)
+# summary(size_lm_15)
+# summary(size_lm_20)
+# summary(size_lm_25)
 ```
 
 
@@ -110,6 +110,18 @@ summary(amt_lm)
 summary(amt_lm_int)
 ```
 
+```{r}
+amt_lm_15 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 15))
+amt_lm_20 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 20))
+amt_lm_25 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 25))
+```
+
+```{r}
+summary(amt_lm_15)
+summary(amt_lm_20)
+summary(amt_lm_25)
+```
+
 
 
 
@@ -128,6 +140,18 @@ inf_glm_int <- glm(inf ~ as.numeric(temp) * as.numeric(resource), family = binom
 summary(inf_glm_int)
 ```
 
+
+```{r}
+inf_glm_15 <- glm(inf ~ as.numeric(resource), family = binomial, data = mort %>% filter(temp == 15))
+inf_glm_20 <- glm(inf ~ as.numeric(resource), family = binomial, data = mort %>% filter(temp == 20))
+inf_glm_25 <- glm(inf ~ as.numeric(resource), family = binomial, data = mort %>% filter(temp == 25))
+```
+
+```{r}
+summary(inf_glm_15)
+summary(inf_glm_20)
+summary(inf_glm_25)
+```
 
 
 
