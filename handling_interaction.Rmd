@@ -1,0 +1,268 @@
+---
+title: "handling_interaction"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(here)
+
+source(here("model_fitting", "combined", "final_prep.R")) #data, global variables and functions
+```
+
+
+
+```{r}
+m4_u_f_fit <- readRDS(here("mle","m4_combined_fit_a.rds"))
+
+m5_u_f_fit <- readRDS(file = here("mle", "m5_combined_fit.rds"))
+```
+
+```{r}
+fora_summ <- data %>% 
+  mutate(ID = treatment_ID) %>%
+  group_by(ID) %>% 
+  summarize(end_r_mean = mean(amt_rem)*fora_vol/1000,
+            end_r_se = (sd(amt_rem)/sqrt(n()))*fora_vol/1000)
+
+prevalence <- readRDS(here("processed_data", "prevalence.rds"))
+prevalence %<>% filter(temp %in% c(15, 20, 25)) %>% 
+  filter(species=="D") %>% 
+  mutate(ID = paste(temp, resource, sep="_")) %>% 
+  dplyr::select(-c(temp, resource, species))
+
+
+viz_summ <- left_join(fora_summ, prevalence)
+viz_summ %<>% left_join(., data_summ)
+viz_summ %<>% left_join(., length_summ)
+```
+
+```{r}
+temp_range <- seq(15,25,by=0.1)
+resource_range <- seq(0,1,by=0.01)
+
+seq_data <- tibble(temp=c(),
+                   resource=c())
+
+for (i in 1:length(temp_range)){
+  tmp <- tibble(temp = temp_range[i],
+                resource = seq(0.1,1,by=0.01))
+  seq_data %<>% bind_rows(., tmp)
+}
+
+
+```
+
+```{r}
+lm(mm ~ resource + temp, data = data)
+
+length_coef <- coef(lm(mm ~ resource + temp, data = data)) #lengths from foraging rate experiment
+#length_coef <- coef(lm(mm ~ resource + as.numeric(temp_id), data = lengths)) #5 day lengths from life table
+
+
+interpolate_length <- function(resource, temp){
+  length <- length_coef[1] + resource*length_coef[2] + temp*length_coef[3]
+}
+
+seq_data %<>% mutate(length = mapply(interpolate_length, 
+                                     resource = resource,
+                                     temp = temp))
+
+seq_data %<>% left_join(., viz_summ, by=c("temp", "resource"))
+```
+
+
+```{r}
+m4_coef <- coef(m4_u_f_fit)
+m4_f <- as.numeric(m4_coef[1])
+m4_u <- as.numeric(m4_coef[2])/10000
+m4_arr <- as.numeric(m4_coef[3])
+m4_arr_u <- as.numeric(m4_coef[4])
+m4_h_low <- as.numeric(m4_coef[5])*0.5
+m4_h <- as.numeric(m4_coef[5])
+m4_h_high <- as.numeric(m4_coef[5])*2
+m4_w <- as.numeric(m4_coef[6])
+m4_rho <- as.numeric(m4_coef[7])
+
+
+```
+
+
+```{r}
+
+
+seq_data %<>% mutate(m4_I_end = mapply(m4_sim, 
+                                       R=resource*life_vol/1000, 
+                                       time=1, 
+                                       f=m4_f/life_vol, 
+                                       u = m4_u*exp(m4_rho*resource), 
+                                       length=length, 
+                                       gamma=gamma, 
+                                       Z=200*life_vol,
+                                       ref_t = ref_t,
+                                       arr_t_f = m4_arr,
+                                       arr_t_u = m4_arr_u,
+                                       h = m4_h*exp(m4_w*temp),
+                                       temp = temp))
+
+
+seq_data %<>% mutate(m4_rate = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma))/
+                        (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma)*m4_h*exp(m4_w*temp)*resource/1000),
+                     m4_rate_low = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma))/
+                        (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma)*m4_h_low*exp(m4_w*temp)*resource/1000),
+                     m4_rate_high = (m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma))/
+                        (1+m4_f*exp(m4_arr*(1/ref_t - 1/temp))*(length^gamma)*m4_h_high*exp(m4_w*temp)*resource/1000))
+```
+
+
+```{r}
+
+m5_num_sol <- function(t, x, params){
+  R <- x[1]
+  S <- x[2]
+  I <- x[3]
+  Z <- x[4]
+  
+  with(as.list(params),{
+    dR <- -R*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dS <- -Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*exp(resource*temp*phi)*
+      (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+                (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dI <- Z*S*u*exp(arr_t_u*(1/ref_t - 1/temp))*exp(resource*rho)*exp(resource*temp*phi)*
+      (f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+               (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    
+    dZ <- -Z*(S+I)*(f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma))/
+              (1+f*exp(arr_t_f*(1/ref_t - 1/temp))*(length^gamma)*h*R*exp(w*temp))
+    res <- c(dR, dS, dI, dZ)
+    list(res)}
+  )
+}
+
+
+
+```
+
+
+```{r}
+m5_sim <- function(R, time, f, u, length, gamma, Z, ref_t, arr_t_f, arr_t_u, h, temp, resource, w, rho, phi){
+  times <- seq(0, time, by=0.01)
+  xstart <- c(R=R,
+              S=1,
+              I=0,
+              Z=Z)
+  params <- c(f=f,
+              u=u,
+              length = length,
+              gamma = gamma,
+              Z = Z,
+              ref_t = ref_t,
+              arr_t_f = arr_t_f,
+              arr_t_u = arr_t_u,
+              h = h,
+              temp = temp,
+              resource = resource,
+              w = w,
+              rho = rho,
+              phi = phi)
+  output <- as.data.frame(lsoda(y=xstart, times, m5_num_sol, params))
+  
+  if(Z == 0) {
+  end_data <- slice_max(output, time)[,2]
+  }
+  else {
+  end_data <- slice_max(output, time)[,4]  
+  }
+
+  return(end_data)
+}
+```
+
+```{r}
+m5_coef <- coef(m5_u_f_fit)
+m5_f <- as.numeric(m5_coef[1])
+m5_u <- as.numeric(m5_coef[2])/100000
+m5_arr <- as.numeric(m5_coef[3])
+m5_arr_u <- as.numeric(m5_coef[4])
+m5_h_low <- as.numeric(m5_coef[5])*0.5
+m5_h <- as.numeric(m5_coef[5])
+m5_h_high <- as.numeric(m5_coef[5])*2
+m5_w <- as.numeric(m5_coef[6])
+m5_rho <- as.numeric(m5_coef[7])
+m5_phi <- as.numeric(m5_coef[8])
+
+
+
+
+```
+
+
+```{r}
+seq_data %<>% mutate(m5_I_end = mapply(m5_sim, 
+                                          R=resource*life_vol/1000, 
+                                          time=1, 
+                                          f=m5_f/life_vol, 
+                                          u = m5_u, 
+                                          length=length, 
+                                          gamma=gamma, 
+                                          Z=200*life_vol,
+                                          ref_t = ref_t,
+                                          arr_t_f = m5_arr,
+                                          arr_t_u = m5_arr_u,
+                                          h = m5_h,
+                                          temp = temp,
+                                          resource = resource,
+                                          w = m5_w,
+                                          rho = m5_rho,
+                                          phi = m5_phi))
+
+seq_data %<>% mutate(m5_rate = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(length^gamma))/
+                       (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*
+                          (length^gamma)*
+                          m5_h*exp(m5_w*temp)*
+                          resource/1000),
+                     m5_rate_low = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(length^gamma))/
+                       (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*
+                          (length^gamma)*
+                          m5_h_low*exp(m5_w*temp)*
+                          resource/1000),
+                     m5_rate_high = (m5_f*exp(m5_arr*(1/ref_t - 1/temp))*(length^gamma))/
+                       (1+m5_f*exp(m5_arr*(1/ref_t - 1/temp))*
+                          (length^gamma)*
+                          m5_h_high*exp(m5_w*temp)*
+                          resource/1000))
+```
+
+
+
+
+```{r}
+seq_data %>% 
+  filter(temp %in% c(19, 25)) %>%
+  dplyr::select(temp, resource, m4_rate:m4_rate_high) %>%
+  pivot_longer(., cols = c(m4_rate, m4_rate_low, m4_rate_high)) %>%
+  ggplot(., aes(x = resource, y = value, group = interaction(name, temp), color = as.factor(temp))) + 
+  geom_line(aes(linetype = name)) + 
+  labs(title = "Additive Model", y = "Foraging Rate")
+```
+
+```{r}
+seq_data %>% 
+  filter(temp %in% c(19,25)) %>%
+  dplyr::select(temp, resource, m5_rate:m5_rate_high) %>%
+  pivot_longer(., cols = c(m5_rate, m5_rate_low, m5_rate_high)) %>%
+  ggplot(., aes(x = resource, y = value, group = interaction(name, temp), color = as.factor(temp))) + 
+  geom_line(aes(linetype = name)) + 
+  labs(title = "Interactive Model", y = "Foraging Rate")
+```
+
+
+
+
