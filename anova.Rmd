@@ -134,6 +134,24 @@ summary(inf_glm_int)
 ```
 
 
+```{r}
+inf_glm_15 <- glm(inf ~ as.numeric(resource), 
+                  family = binomial, data = mort %>% filter(temp == 15))
+inf_glm_20 <- glm(inf ~ as.numeric(resource), 
+                  family = binomial, data = mort %>% filter(temp == 20))
+inf_glm_25 <- glm(inf ~ as.numeric(resource), 
+                  family = binomial, data = mort %>% filter(temp == 25))
+```
+
+```{r}
+summary(inf_glm_15)
+summary(inf_glm_20)
+summary(inf_glm_25)
+```
+
+
+
+
 
 
 

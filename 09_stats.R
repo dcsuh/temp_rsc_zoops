@@ -52,3 +52,15 @@ inf_glm_int <- glm(inf ~ as.numeric(temp) * as.numeric(resource), family = binom
 summary(inf_glm)
 summary(inf_glm_int)
 
+
+inf_glm_15 <- glm(inf ~ as.numeric(resource), 
+                  family = binomial, data = mort %>% filter(temp == 15))
+inf_glm_20 <- glm(inf ~ as.numeric(resource), 
+                  family = binomial, data = mort %>% filter(temp == 20))
+inf_glm_25 <- glm(inf ~ as.numeric(resource), 
+                  family = binomial, data = mort %>% filter(temp == 25))
+
+summary(inf_glm_15)
+summary(inf_glm_20)
+summary(inf_glm_25)
+
