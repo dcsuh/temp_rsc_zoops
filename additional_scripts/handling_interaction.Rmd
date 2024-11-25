@@ -50,7 +50,7 @@ seq_data <- tibble(temp=c(),
 
 for (i in 1:length(temp_range)){
   tmp <- tibble(temp = temp_range[i],
-                resource = seq(0.1,1,by=0.01))
+                resource = seq(0,1,by=0.01))
   seq_data %<>% bind_rows(., tmp)
 }
 
