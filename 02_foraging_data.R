@@ -8,11 +8,11 @@ source(here("01_foraging.R"))
 
 
 
-m1 <- readRDS(here("processe_data", "mle", "m1_f_fit.rds"))
-m2 <- readRDS(here("processe_data", "mle", "m2_f_fit.rds"))
-m3 <- readRDS(here("processe_data", "mle", "m3_f_fit.rds"))
-m4 <- readRDS(here("processe_data", "mle", "m4_f_fit.rds"))
-m5 <- readRDS(here("processe_data", "mle", "m5_f_fit.rds"))
+m1 <- readRDS(here("processed_data", "mle", "m1_f_fit.rds"))
+m2 <- readRDS(here("processed_data", "mle", "m2_f_fit.rds"))
+m3 <- readRDS(here("processed_data", "mle", "m3_f_fit.rds"))
+m4 <- readRDS(here("processed_data", "mle", "m4_f_fit.rds"))
+m5 <- readRDS(here("processed_data", "mle", "m5_f_fit.rds"))
 
 
 
@@ -364,6 +364,6 @@ seq_data %<>% mutate(m1_Z_end = mapply(m1_sim_z,
 
 # save data ---------------------------------------------------------------
 
-saveRDS(seq_data, file=here("processed_data", "fit_data","foraging_rate_fit_data.rds"))
+saveRDS(seq_data, file=here("processed_data", "mle", "fit_data", "foraging_rate_fit_data.rds"))
 
 

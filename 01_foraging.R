@@ -110,7 +110,7 @@ m2_sim <- function(R, time, f, length, gamma, ref_t, arr_t, temp){
 }
 
 m2_ll <- function(f, arr_t, sd_est){
-  data <- tmp
+  
   m2_end <- as.data.frame(mapply(m2_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp))
   colnames(m2_end) <- "m2_end"
@@ -160,7 +160,7 @@ m3_sim <- function(R, time, f, length, gamma, h){
 }
 
 m3_ll <- function(f, h, sd_est){
-  data <- tmp
+  
   output <- as.data.frame(mapply(m3_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, h=h))
   colnames(output) <- "end"
@@ -214,7 +214,7 @@ m4_sim <- function(R, time, f, length, gamma, arr_t, ref_t, temp, h){
 }
 
 m4_ll <- function(f, arr_t, h, sd_est){
-  data <- tmp
+  
   m4_end <- as.data.frame(mapply(m4_sim, R=data$amt_init*data$vol/1000, time=data$time/60/24, f=f/data$vol,
                                  length=data$mm, gamma=2, arr_t=arr_t, ref_t=15, temp=data$temp, h=h))
   colnames(m4_end) <- "m4_end"
@@ -242,7 +242,7 @@ m4_ll <- function(f, arr_t, h, sd_est){
 
 m5_ll <- function(f, arr_t, h, w, sd_est){
   
-  data <- tmp 
+  
   output <- as.data.frame(mapply(m4_sim, 
                                  R=data$amt_init*data$vol/1000, 
                                  time=data$time/60/24, 

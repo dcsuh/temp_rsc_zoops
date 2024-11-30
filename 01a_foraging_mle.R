@@ -14,7 +14,9 @@ m1_f_fit <- mle2(minuslogl=m1_ll,
                  skip.hessian=T, 
                  start=list(f=10,
                             sd_est = 0.01),
-                 method = "Nelder-Mead",
+                 method = "L-BFGS-B",
+                 lower = c(0, 0),
+                 upper = c(Inf, Inf),
                  control=list(parscale=c(f=10, sd_est = 0.001), maxit=10000))
 
 m2_f_fit <- mle2(m2_ll,
