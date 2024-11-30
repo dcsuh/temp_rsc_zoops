@@ -85,8 +85,17 @@ interpolate_resources <- function(resource){
 seq_data %<>% mutate(proj_res = mapply(interpolate_resources,
                                        resource = resource))
 
-data_summ_se <- data_summ %>% dplyr::select(temp, resource, rate_len_mean, rate_len_mean_se, amt_init_mean)
+data_summ_se <- data_summ %>% 
+  dplyr::select(temp, resource, rate_len_mean, rate_len_mean_se, amt_init_mean)
+
 seq_data %<>% left_join(., data_summ_se)
+
+r_end_mean <- 
+  data %>% 
+  group_by(temp, resource) %>%
+  summarize(amt_rem_mean = mean(amt_rem))
+
+seq_data %<>% left_join(., r_end_mean)
 
 
 
@@ -364,6 +373,6 @@ seq_data %<>% mutate(m1_Z_end = mapply(m1_sim_z,
 
 # save data ---------------------------------------------------------------
 
-saveRDS(seq_data, file=here("processed_data", "mle", "fit_data", "foraging_rate_fit_data.rds"))
+saveRDS(seq_data, file=here("processed_data", "seq_data", "foraging_rate_fit_data.rds"))
 
 

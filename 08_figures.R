@@ -7,8 +7,8 @@ source(here("base","src.R"))
 
 
 #read data
-f_seq <- readRDS(file=here("processed_data", "fit_data","foraging_rate_fit_data.rds"))
-u_seq <- readRDS(file=here("processed_data", "fit_data","infection_fit_data.rds"))
+f_seq <- readRDS(file=here("processed_data", "seq_data", "foraging_rate_fit_data.rds"))
+u_seq <- readRDS(file=here("processed_data", "seq_data", "infection_fit_data.rds"))
 
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
 

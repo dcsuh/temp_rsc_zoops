@@ -7,14 +7,14 @@ source(here("base","src.R"))
 source(here("03_infection.R"))
 
 #read data
-m5 <- readRDS(here("processe_data", "mle", "m5_combined_fit.rds"))
+m5 <- readRDS(here("processed_data", "mle", "m5_combined_fit.rds"))
 
 
 dataset %<>% filter(exposed==T)
 life_data <- dataset
 fora_data <- data
 
-m5_coef <- coef(m5_u_f_fit)
+m5_coef <- coef(m5)
 m5_f <- as.numeric(m5_coef[1])
 m5_u <- as.numeric(m5_coef[2])/100000
 m5_arr <- as.numeric(m5_coef[3])
@@ -68,4 +68,4 @@ for(i in 1:iterations){
   print(end_time-start_time)
 }
 
-saveRDS(boot_01, file = here("processed_data", "fit_data", "bootstrap_results.rds"))
+saveRDS(boot_01, file = here("processed_data", "seq_data", "bootstrap_results.rds"))

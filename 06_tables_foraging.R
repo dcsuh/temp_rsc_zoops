@@ -26,7 +26,12 @@ mod_names <- c("(1A) Size-only",
                "(1D) Additive", 
                "(1E) Interactive")
 
-aic_c_table_final <- AICctab(model_list, logLik=T, base=T, mnames=mod_names, weights=T, nobs=nrow(fora_data))
+aic_c_table_final <- AICctab(fora_model_list, 
+                             logLik=T, 
+                             base=T, 
+                             mnames=mod_names, 
+                             weights=T, 
+                             nobs=nrow(fora_data))
 
 aicc_flex <- 
   aic_c_table_final %>% 

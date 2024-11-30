@@ -23,7 +23,7 @@ m1_fit <-
                                  h=10000, 
                                  w=0.1,
                                  sd_est = 0.01)),
-       skip.hessian=F, method="Nelder-Mead")
+       skip.hessian=F, method="BFGS")
 
 
 m2_fit <-

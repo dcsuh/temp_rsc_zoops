@@ -482,10 +482,16 @@ m3_weight <- exp(-0.5*(m3_AICc-m5_AICc))/sum_deltaAIC
 m4_weight <- exp(-0.5*(m4_AICc-m5_AICc))/sum_deltaAIC
 m5_weight <- exp(-0.5*(m5_AICc-m5_AICc))/sum_deltaAIC
 
-mod_results_combined_df <- tibble(model = c("size", "temp", "resource", "additive", "interactive"),
+mod_names <- c("(2A) Independent", 
+               "(2B) Temperature-only", 
+               "(2C) Resource-only", 
+               "(2D) Additive", 
+               "(2E) Interactive")
+
+mod_results_combined_df <- tibble(model = mod_names,
                                   logLik = c(m1_ll, m2_ll, m3_ll, m4_ll, m5_ll),
                                   AICc = c(m1_AICc, m2_AICc, m3_AICc, m4_AICc, m5_AICc),
-                                  dLogLikl = c(m1_dll, m2_dll, m3_dll, m4_dll, m5_dll),
+                                  dLogLik = c(m1_dll, m2_dll, m3_dll, m4_dll, m5_dll),
                                   dAICc = c(m1_dAICc, m2_dAICc, m3_dAICc, m4_dAICc, m5_dAICc),
                                   df = c(m1_df, m2_df, m3_df, m4_df, m5_df),
                                   weight = round(c(m1_weight, m2_weight, m3_weight, m4_weight, m5_weight), digits = 4))
