@@ -6,8 +6,7 @@ library(here)
 source(here("base","src.R"))
 
 #read data
-fitness <- read_csv(here("raw_data", "main_fitness_data.csv"))
-mort <- readRDS(here("raw_data", "main_mort_edit.rds"))
+mort <- read_csv(here("raw_data", "infection.csv"))
 data <- read_csv(here("raw_data","foraging.csv"))
 
 
@@ -17,7 +16,6 @@ data <- read_csv(here("raw_data","foraging.csv"))
 
 #change classes as necessary
 mort$resource <- as.factor(mort$resource)
-fitness$resource <- as.factor(fitness$resource)
 
 #remove males and missing
 mort %<>% filter(!male %in% c(1) & !missing %in% c(1)) %>% select(-c(male,missing))
@@ -78,6 +76,32 @@ prevalence %<>% left_join(.,prev_treatment_factors)
 
 
 # Body Size ---------------------------------------------------------------
+
+#lengths were measured at different magnifications
+#this script converts raw measurements at different magnifications into standard mm lengths
+
+#conversions as follows
+#at default magnification (5.6x), 1 unit is equal to 17.86 micron
+#at 5x, 1 = 20
+#at 4x, 1 = 25
+
+
+mort$length <- c(0)
+
+for (i in 1:nrow(mort)){
+  if (!is.na(mort$length_mag_correction[i])){
+    if (mort$lm_corr_factor[i] == -1){
+      mort$length[i] <- mort$length_RAW[i] * 20 / 1000
+    }
+    else if (mort$lm_corr_factor[i] == -2){
+      mort$length[i] <- mort$length_RAW[i] * 25 / 1000
+    }
+  }
+  else
+    mort$length[i] <- mort$length_RAW[i] * 17.86 / 1000
+  #print(i)
+}
+
 
 length <- mort %>% filter(!removed %in% c(1) & !KBP %in% c(1)) %>% group_by(ID) %>% 
   summarize(n=n(), 
@@ -165,7 +189,7 @@ data_summ <- data %>%
             length_sd = sd(length, na.rm = T),
             length_se = sd(length, na.rm = T)/sqrt(n()),
             mm_mean = mean(mm, na.rm = T),
-            mm_se = sd(mm, na.rm=T(sqrt(sum(!is.na(mm))))),
+            mm_se = sd(mm, na.rm=T)/(sqrt(sum(!is.na(mm)))),
             time_mean = mean(time_day, na.rm = T)) %>% ungroup()
 
 data_summ %<>% mutate(species = "D",
