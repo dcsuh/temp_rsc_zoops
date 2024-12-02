@@ -74,6 +74,7 @@ for(i in 1:iterations){
 #mod_boot <- boot_01
 mod_boot <- readRDS(here("processed_data", "m2E_bootstraps.rds"))
 
+m5_fit <- readRDS(here("processed_data", "mle", "m5_combined_fit.rds"))
 
 tib_length <- length(mod_boot)
 

@@ -12,7 +12,7 @@ u_seq <- readRDS(file=here("processed_data", "seq_data", "infection_fit_data.rds
 
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
 
-m5_fit <- readRDS(here("processed_data", "mle", "m5_combined_fit.rds"))
+
 
 h_ci_seq <- readRDS(here("processed_data", "seq_data", "h_ci_bootstrap.rds"))
 f_ci_seq <- readRDS(here("processed_data", "seq_data", "f_ci_bootstrap.rds"))
