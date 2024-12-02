@@ -42,6 +42,12 @@ seq_data %<>% mutate(length = mapply(interpolate_length,
                                      resource = resource,
                                      temp = temp))
 
+prevalence <- readRDS(here("processed_data", "prevalence.rds"))
+prevalence %<>%  
+  mutate(resource = as.numeric(as.character(resource))) %>%
+  mutate(ID = paste(temp, resource, sep="_"))
+
+seq_data %<>% left_join(., prevalence, by=c("temp", "resource"))
 
 
 # solve for terminal infection prevalence ---------------------------------
@@ -185,7 +191,7 @@ seq_data %<>% mutate(m1_rate = (m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(length^gamm
                      m2_susc = m2_u*exp(m2_arr_u*(1/ref_t - 1/temp)),
                      m3_susc = m3_u*exp(m3_rho*resource),
                      m4_susc = m4_u*exp(m4_arr_u*(1/ref_t - 1/temp))*exp(m4_rho*resource),
-                     m5_u = m5_u*
+                     m5_susc = m5_u*
                        exp(m5_arr_u*(1/ref_t - 1/temp))*
                        exp(m5_rho*resource)*
                        exp(resource*temp*m5_phi))

@@ -279,7 +279,7 @@ ggsave(here("figures", "foraging.png"),
        units = "in")
 
 
-# figure 3: infection results ---------------------------------------------
+# Figure 3: infection results ---------------------------------------------
 
 
 
@@ -312,7 +312,7 @@ s4 <- spores_plot(u_seq, "spores_consumed_m5") +
 
 
 
-u0 <- u_plot(u_seq, "m1_u") + 
+u0 <- u_plot(u_seq, "m1_susc") + 
   theme(axis.text.y = element_text(size = 6, angle = 25),
         axis.text.x = element_blank(),
         axis.title = element_blank(), 
@@ -320,16 +320,16 @@ u0 <- u_plot(u_seq, "m1_u") +
         legend.position = "none",
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
-u1 <- u_plot(u_seq, "m2_u") + 
+u1 <- u_plot(u_seq, "m2_susc") + 
   inside_theme
 
-u2 <- u_plot(u_seq, "m3_u") + 
+u2 <- u_plot(u_seq, "m3_susc") + 
   inside_theme
 
-u3 <- u_plot(u_seq, "m4_u") + 
+u3 <- u_plot(u_seq, "m4_susc") + 
   inside_theme
 
-u4 <- u_plot(u_seq, "m5_u") + 
+u4 <- u_plot(u_seq, "m5_susc") + 
   theme(axis.text = element_blank(),
         axis.title = element_blank(), 
         plot.title = element_blank(), 
@@ -609,12 +609,11 @@ ggsave(here("figures", "handling.png"), width = 6, height = 4)
 
 # figure 5: bootstrapped CI's ---------------------------------------------
 
-
-
-f_seq <- seq_data %>% 
+f_seq <- f_seq %>%
   mutate(f = NA,
          f_lower = NA,
          f_upper = NA)
+
 
 
 f_est <- mod_quantiles$est[1]
@@ -702,11 +701,10 @@ ggsave(here("figures", "fora_ci_rsc.png"),
        units = "in")
 
 
-u_seq <- seq_data %>% 
+u_seq <- u_seq %>%
   mutate(u = NA,
          u_lower = NA,
          u_upper = NA)
-
 
 
 u_est <- mod_quantiles$est[2]
