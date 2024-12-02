@@ -293,4 +293,4 @@ seq_data %<>% mutate(spores_consumed_m1 = mapply(m1_sim_Z,
 
 # save data ---------------------------------------------------------------
 
-saveRDS(seq_data, file=here("processed_data", "seq_data","infection_fit_data.rds"))
+saveRDS(seq_data, file=here("processed_data", "seq_data", "infection_fit_data.rds"))
