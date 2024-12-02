@@ -45,21 +45,21 @@ m2_fit <-
 
 
 m3_fit <- 
-  mle2(m3_ll, start=list(u = 0.0001, 
+  mle2(m3_ll, start=list(u = 1, 
                          f=30, 
                          arr_t_f = 30,
                          h=16000,
                          w=0.1,
                          rho = 0.1,
                          sd_est = 0.01), 
-       control=list(parscale = c(u = 0.0001, 
+       control=list(parscale = c(u = 1, 
                                  f=1, 
                                  arr_t_f = 1,
                                  h=10000,
                                  w=0.1,
                                  rho = 0.1,
-                                 sd_est = 0.01)),
-       skip.hessian=F, method="Nelder-Mead")
+                                 sd_est = 0.01), maxit = 10000),
+       skip.hessian=F, method="BFGS")
 
 
 m4_fit <-
@@ -80,7 +80,7 @@ m4_fit <-
                         w=0.1,
                         rho=0.1,
                         sd_est = 0.01), maxit = 10000),
-       skip.hessian=F, method="Nelder-Mead")
+       skip.hessian=F, method="BFGS")
 
 m5_fit <-
   mle2(m5_ll, start=list(f = 10,

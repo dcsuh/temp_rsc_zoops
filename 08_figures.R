@@ -24,7 +24,7 @@ theme_set(theme_bw(base_size = 12))
 
 # some data prep ----------------------------------------------------------
 
-data_summ %<>% dplyr::select(temp, resource, amt_init_mean, mm_mean, mm_mean_se)
+data_summ %<>% dplyr::select(temp, resource, amt_init_mean, mm_mean, mm_se)
 f_seq %<>% left_join(., data_summ)
 
 #f_seq %<>% mutate(amt_diff = resource-amt_rem_mean,
@@ -33,7 +33,7 @@ f_seq %<>% mutate(amt_diff = amt_init_mean-amt_rem_mean,
                   m2_diff = resource - m2_R_end/15*1000,
                   m3_diff = resource - m3_R_end/15*1000,
                   m4_diff = resource - m4_R_end/15*1000,
-                  m6c_diff = resource - m6c_R_end/15*1000)
+                  m5_diff = resource - m5_R_end/15*1000)
 
 
 f_seq %<>% arrange(desc(temp))
@@ -47,8 +47,8 @@ length_data <- data_summ %>%
   ggplot(., aes(x=resource, y=mm_mean, group = as.factor(temp), color = as.factor(temp))) + 
   geom_point(size=3) +
   geom_linerange(size = 1, 
-                 aes(ymin=mm_mean-1.96*mm_mean_se,
-                     ymax=mm_mean+1.96*mm_mean_se,
+                 aes(ymin=mm_mean-1.96*mm_se,
+                     ymax=mm_mean+1.96*mm_se,
                      color=as.factor(temp))) +
   scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
   scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
@@ -224,7 +224,7 @@ f2 <- seq_plot_alt(f_seq, "m3_rate") +
 f3 <- seq_plot_alt(f_seq, "m4_rate") +
   bottom_theme
 
-f4 <- seq_plot_alt(f_seq, "m6c_rate") + 
+f4 <- seq_plot_alt(f_seq, "m5_rate") + 
   theme(axis.text.y = element_blank(), 
         axis.title = element_blank(), 
         plot.title = element_blank(), 
@@ -252,7 +252,7 @@ a2 <- algae_plot_diff(f_seq, "m3_diff") +
 a3 <- algae_plot_diff(f_seq, "m4_diff") +
   inside_theme
 
-a4 <- algae_plot_diff(f_seq, "m6c_diff") + 
+a4 <- algae_plot_diff(f_seq, "m5_diff") + 
   theme(axis.text = element_blank(),
         axis.title = element_blank(), 
         plot.title = element_blank(), 
@@ -265,8 +265,7 @@ a4 <- algae_plot_diff(f_seq, "m6c_diff") +
 
 foraging <- 
   grid.arrange(grobs=lapply(list(f0, f1, f2, f3, f4,
-                                 a0, a1, a2, a3, a4,
-                                 fs0, fs1, fs2, fs3, fs4), 
+                                 a0, a1, a2, a3, a4), 
                             set_panel_size,
                             width=unit(1.3, "in"), 
                             height=unit(1, "in")),
@@ -341,6 +340,12 @@ u4 <- u_plot(u_seq, "m5_u") +
 
 
 
+p_theme <-
+  theme(axis.text.y = element_blank(), 
+        axis.title = element_blank(), 
+        plot.title = element_blank(), 
+        legend.position = "none",
+        plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
 p0 <- prev_plot(u_seq, "m1_I_end") + 
   theme(axis.title = element_blank(), 
@@ -349,13 +354,13 @@ p0 <- prev_plot(u_seq, "m1_I_end") +
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
 p1 <- prev_plot(u_seq, "m2_I_end") + 
-  fs_theme
+  p_theme
 
 p2 <- prev_plot(u_seq, "m3_I_end") + 
-  fs_theme
+  p_theme
 
 p3 <- prev_plot(u_seq, "m4_I_end") + 
-  fs_theme
+  p_theme
 
 p4 <- prev_plot(u_seq, "m5_I_end") + 
   theme(axis.title=element_blank(), 
@@ -535,6 +540,8 @@ mod_quantiles$sd_est[4] <- quantile(mod_boot_coefs$sd_est, probs=seq(0.025, 0.97
 
 theme_set(theme_bw(base_size = 8))
 
+mod_quantiles %<>% pivot_longer(cols = f:sd_est) %>% pivot_wider(., names_from="id")
+
 param_ci <- 
   mod_quantiles %>% 
   ggplot(aes(x = name, 
@@ -601,6 +608,8 @@ ggsave(here("figures", "handling.png"), width = 6, height = 4)
 
 
 # figure 5: bootstrapped CI's ---------------------------------------------
+
+
 
 f_seq <- seq_data %>% 
   mutate(f = NA,

@@ -93,7 +93,8 @@ seq_data %<>% left_join(., data_summ_se)
 r_end_mean <- 
   data %>% 
   group_by(temp, resource) %>%
-  summarize(amt_rem_mean = mean(amt_rem))
+  summarize(amt_rem_mean = mean(amt_rem),
+            amt_rem_se = sd(amt_rem)/sqrt(n()))
 
 seq_data %<>% left_join(., r_end_mean)
 
@@ -141,7 +142,7 @@ seq_data %<>% mutate(m1_rate = length^gamma*m1_f,
                                       h=m4_h, 
                                       resource=seq_data$resource/1000, 
                                       length = length),
-                     m6c_rate = mapply(get_rate, 
+                     m5_rate = mapply(get_rate, 
                                        f=m5_f, 
                                        arr=m5_arr, 
                                        h=m5_h*exp(m5_w*seq_data$temp), 

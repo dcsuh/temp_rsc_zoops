@@ -8,11 +8,11 @@ source(here("03_infection.R"))
 
 
 
-m1 <- readRDS(here("processe_data", "mle", "m1_combined_fit.rds"))
-m2 <- readRDS(here("processe_data", "mle", "m2_combined_fit.rds"))
-m3 <- readRDS(here("processe_data", "mle", "m3_combined_fit.rds"))
-m4 <- readRDS(here("processe_data", "mle", "m4_combined_fit.rds"))
-m5 <- readRDS(here("processe_data", "mle", "m5_combined_fit.rds"))
+m1 <- readRDS(here("processed_data", "mle", "m1_combined_fit.rds"))
+m2 <- readRDS(here("processed_data", "mle", "m2_combined_fit.rds"))
+m3 <- readRDS(here("processed_data", "mle", "m3_combined_fit.rds"))
+m4 <- readRDS(here("processed_data", "mle", "m4_combined_fit.rds"))
+m5 <- readRDS(here("processed_data", "mle", "m5_combined_fit.rds"))
 
 
 temp_range <- seq(15,25,by=0.1)
@@ -48,14 +48,14 @@ seq_data %<>% mutate(length = mapply(interpolate_length,
 
 
 
-m1_coef <- coef(m1_u_f_fit)
+m1_coef <- coef(m1)
 m1_u <- as.numeric(m1_coef[1])
 m1_f <- as.numeric(m1_coef[2])
 m1_arr <- as.numeric(m1_coef[3])
 m1_h <- as.numeric(m1_coef[4])
 m1_w <- as.numeric(m1_coef[5])
 
-m2_coef <- coef(m2_u_f_fit)
+m2_coef <- coef(m2)
 m2_f <- as.numeric(m2_coef[1])
 m2_u <- as.numeric(m2_coef[2])
 m2_arr <- as.numeric(m2_coef[3])
@@ -63,15 +63,15 @@ m2_arr_u <- as.numeric(m2_coef[4])
 m2_h <- as.numeric(m2_coef[5])
 m2_w <- as.numeric(m2_coef[6])
 
-m3_coef <- coef(m3_u_f_fit)
+m3_coef <- coef(m3)
 m3_f <- as.numeric(m3_coef[1])
-m3_u <- as.numeric(m3_coef[2])
+m3_u <- as.numeric(m3_coef[2])/10000
 m3_arr <- as.numeric(m3_coef[3])
 m3_h <- as.numeric(m3_coef[4])
 m3_w <- as.numeric(m3_coef[5])
 m3_rho <- as.numeric(m3_coef[6])
 
-m4_coef <- coef(m4_u_f_fit)
+m4_coef <- coef(m4)
 m4_f <- as.numeric(m4_coef[1])
 m4_u <- as.numeric(m4_coef[2])/10000
 m4_arr <- as.numeric(m4_coef[3])
@@ -80,7 +80,7 @@ m4_h <- as.numeric(m4_coef[5])
 m4_w <- as.numeric(m4_coef[6])
 m4_rho <- as.numeric(m4_coef[7])
 
-m5_coef <- coef(m5_u_f_fit)
+m5_coef <- coef(m5)
 m5_f <- as.numeric(m5_coef[1])
 m5_u <- as.numeric(m5_coef[2])/100000
 m5_arr <- as.numeric(m5_coef[3])
@@ -191,7 +191,7 @@ seq_data %<>% mutate(m1_rate = (m1_f*exp(m1_arr*(1/ref_t - 1/temp))*(length^gamm
 
 # spores consumed ---------------------------------------------------------
 
-best_f <- readRDS(here("processe_data", "mle", "m5_f_fit.rds")) # full model with exponential effect of temp on handling time
+best_f <- readRDS(here("processed_data", "mle", "m5_f_fit.rds")) # full model with exponential effect of temp on handling time
 
 best_f_coef <- coef(best_f)
 

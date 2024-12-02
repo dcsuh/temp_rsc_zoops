@@ -183,7 +183,7 @@ m3_ll <- function(f, u, arr_t_f, h, w, rho, sd_est){
                                 R=exp_data$resource*life_vol/1000, 
                                 time=exp_data$time, 
                                 f=f/life_vol, 
-                                u=u*exp(exp_data$resource*rho), 
+                                u=u*exp(exp_data$resource*rho)/10000, 
                                 length = exp_data$life_mm, 
                                 gamma=gamma, 
                                 Z=spore_conc*life_vol,

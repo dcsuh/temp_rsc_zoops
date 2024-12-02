@@ -68,4 +68,4 @@ for(i in 1:iterations){
   print(end_time-start_time)
 }
 
-saveRDS(boot_01, file = here("processed_data", "seq_data", "bootstrap_results.rds"))
+saveRDS(boot_01, file = here("processed_data", "m2E_bootstraps.rds"))

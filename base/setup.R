@@ -12,8 +12,7 @@ install_if_necessary <- function(x) {
 
 
 # all the necessary packages go here
-pckg_names <- c("tidyverse", 
-                "magrittr", 
+pckg_names <- c("magrittr", 
                 "here", 
                 "lubridate", 
                 "epitools",
@@ -24,7 +23,9 @@ pckg_names <- c("tidyverse",
                 "bbmle",
                 "ggnewscale",
                 "flextable",
-                "AICcmodavg")
+                "AICcmodavg",
+                "egg",
+                "tidyverse")
 
 # load/install packages
 lapply(pckg_names, 
