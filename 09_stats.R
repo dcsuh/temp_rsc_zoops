@@ -5,32 +5,28 @@ library(here)
 source(here("base","src.R"))
 
 foraging <- readRDS(here("processed_data", "foraging_raw.rds"))
-mort <- readRDS(here("raw_data/main_mort_edit.rds"))
+foraging_length <- read_csv(here("raw_data", "foraging.csv")) #excludes imputed length data
+mort <- read_csv(here("raw_data", "infection.csv"))
 
 
 # prep data ---------------------------------------------------------------
 
 mort %<>% filter(exposed==1 & temp %in% const_temp)
-foraging %<>% mutate(temp = as.factor(temp),
-                     resource = as.factor(resource))
+
+foraging_length %<>% 
+  filter(trt == "trt") %>%
+  mutate(mm = as.numeric(length)*17.86/1000)
 
 
 
 # length ~ temp. + resource -----------------------------------------------
 
-size_lm <- lm(mm ~ as.numeric(resource) + as.numeric(temp), data = foraging)
-size_lm_int <- lm(mm ~ as.numeric(resource) * as.numeric(temp), data = foraging) #interaction not significant
+size_lm <- lm(mm ~ as.numeric(resource) + as.numeric(temp), data = foraging_length)
+size_lm_int <- lm(mm ~ as.numeric(resource) * as.numeric(temp), data = foraging_length) #interaction not significant
 
 summary(size_lm)
 summary(size_lm_int)
 
-size_lm_15 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 15))
-size_lm_20 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 20))
-size_lm_25 <- lm(mm ~ as.numeric(resource), data = foraging %>% filter(temp == 25))
-
-summary(size_lm_15)
-summary(size_lm_20)
-summary(size_lm_25)
 
 
 
@@ -41,6 +37,14 @@ amt_lm_int <- lm(amt_consumed ~ as.numeric(resource) * as.numeric(temp), data = 
 
 summary(amt_lm)
 summary(amt_lm_int)
+
+amt_lm_15 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 15))
+amt_lm_20 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 20))
+amt_lm_25 <- lm(amt_consumed ~ as.numeric(resource), data = foraging %>% filter(temp == 25))
+
+summary(amt_lm_15)
+summary(amt_lm_20)
+summary(amt_lm_25)
 
 
 
