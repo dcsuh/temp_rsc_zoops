@@ -1,4 +1,4 @@
-﻿measurement_num,species,mean_temp,temp_var,temp_id,resource,raw_meas
+measurement_num,species,mean_temp,temp_var,temp_id,resource,raw_meas
 1,daphnia,15,0,15,0.1,40
 2,daphnia,15,0,15,0.1,38
 3,daphnia,15,0,15,0.1,45
@@ -72,20 +72,3 @@
 71,daphnia,25,0,25,1,80
 72,daphnia,25,0,25,1,78
 73,daphnia,25,0,25,1,65
-74,daphnia,20,2,2V,1,65
-75,daphnia,20,2,2V,1,53
-76,daphnia,20,2,2V,1,60
-77,daphnia,20,2,2V,1,40
-78,daphnia,20,2,2V,1,59
-79,daphnia,20,2,2V,1,55
-80,daphnia,20,6,6V,1,65
-81,daphnia,20,6,6V,1,50
-82,daphnia,20,6,6V,1,65
-83,daphnia,20,6,6V,1,54
-84,daphnia,20,6,6V,1,52
-85,daphnia,20,6,6V,1,67
-86,daphnia,20,6,6V,1,47
-87,daphnia,20,14,14V,1,57
-88,daphnia,20,14,14V,1,45
-89,daphnia,20,14,14V,1,54
-90,daphnia,20,14,14V,1,45

@@ -7,7 +7,7 @@ source(here("base","src.R"))
 
 #read data
 mort <- read_csv(here("raw_data", "infection.csv"))
-data <- read_csv(here("raw_data","foraging.csv"))
+data <- read_csv(here("raw_data", "foraging.csv"))
 
 
 # Cleaning ----------------------------------------------------------------
