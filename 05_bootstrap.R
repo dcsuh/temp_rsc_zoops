@@ -223,6 +223,28 @@ theme_set(theme_bw(base_size = 8))
 
 mod_quantiles %<>% pivot_longer(cols = f:sd_est) %>% pivot_wider(., names_from="id")
 
+#Make table S2: Paramater estimates and CI for top performing model
+
+confint_table <- 
+  mod_quantiles %>%
+  dplyr::select(-c(mean)) %>%
+  mutate(across(est:upper.975, round, digits = 4)) %>%
+  mutate(across(est:upper.975, as.character)) %>%
+  flextable() %>%
+  add_header_row(top = TRUE,
+                 values = c("95% Bootstrapped Confidence Intervals",
+                            "",
+                            "",
+                            "")) %>%
+  set_header_labels(
+    name = "Parameter",
+    est = "Estimate",
+    lower.025 = "2.5%",
+    upper.975 = "97.5%"
+  ) %>%
+  merge_at(i = 1, j = 1:4, part = "header")
+
+save_as_docx("confint_table" = confint_table, path = here("figures", "boot_conf_int.docx"))
 
 
 
