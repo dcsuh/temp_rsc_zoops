@@ -424,10 +424,11 @@ param_ci <-
   labs(x = "",
        y = "",
        title = "Maximum Likelihood Estimates (95% CI)") + 
-  theme(axis.text.x = element_blank(),
-        axis.ticks.x = element_blank()) + 
   facet_wrap(~name, scales = "free",
-             nrow = 2)
+             nrow = 2) +
+  theme_bw(base_size = 8) +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
 
 ggsave(here("figures", "04_param_est.png"), width = 6, height = 4)
 
@@ -500,6 +501,7 @@ f_ci_seq %>%
   scale_color_manual(values = c("#FFC107", "#21918c", "#440154")) +
   scale_fill_manual(values = c("#FFC107", "#21918c", "#440154")) +
   theme(legend.position = "none") + 
+  scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
   theme_bw(base_size = 12)
 
 
@@ -558,6 +560,7 @@ u_ci_seq %>%
   theme(legend.position = "none") + 
   guides(color = "none", fill = guide_legend(reverse=T)) + 
   guides(color = "none", fill = "none") + 
+  scale_x_continuous(breaks = c(0.1, 0.5, 1.0)) + 
   theme_bw(base_size = 12)
 
 
