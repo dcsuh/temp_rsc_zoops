@@ -25,6 +25,7 @@ pckg_names <- c("magrittr",
                 "flextable",
                 "AICcmodavg",
                 "egg",
+                "patchwork",
                 "tidyverse")
 
 # load/install packages

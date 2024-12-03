@@ -474,7 +474,12 @@ m3_dAICc <- m3_AICc-m5_AICc
 m2_dAICc <- m2_AICc-m5_AICc
 m1_dAICc <- m1_AICc-m5_AICc
 
-sum_deltaAIC <- exp(-0.5*(m1_dAICc)) + exp(-0.5*(m2_dAICc)) + exp(-0.5*(m3_dAICc)) + exp(-0.5*(m4_dAICc)) + exp(-0.5*(m5_dAICc))
+sum_deltaAIC <- 
+  exp(-0.5*(m1_dAICc)) + 
+  exp(-0.5*(m2_dAICc)) + 
+  exp(-0.5*(m3_dAICc)) + 
+  exp(-0.5*(m4_dAICc)) + 
+  exp(-0.5*(m5_dAICc))
 
 m1_weight <- exp(-0.5*(m1_AICc-m5_AICc))/sum_deltaAIC
 m2_weight <- exp(-0.5*(m2_AICc-m5_AICc))/sum_deltaAIC

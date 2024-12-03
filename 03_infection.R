@@ -7,16 +7,12 @@ source(here("base","src.R"))
 
 
 #read infection data
-fitness <- read.csv(here("raw_data/main_fitness_edit.csv")) #must be read.csv
-mort <-  read_csv(here("raw_data/main_mort_edit.csv")) #mortality data
+mort <-  read_csv(here("raw_data/infection.csv")) #mortality data
 lengths <- read_csv(here("raw_data", "day5_length.csv")) #get average lengths
 
 #read foraging data
 data <- readRDS(here("processed_data","foraging_raw.rds")) #foraging rate data
 data_summ <- readRDS(here("processed_data", "foraging.rds")) #foraging rate data summary
-
-
-
 
 
 
@@ -46,10 +42,9 @@ ref_t <- 15 #celsius
 # cleaning ----------------------------------------------------------------
 
 #infection data
-fitness %<>% dplyr::select(tube, temp_id, REMOVED, KBP, final_date) #remove unnecessary variables
-lengths %<>% filter(temp_id %in% const_temp)
-
-dataset <- left_join(mort,fitness) #life table data
+dataset <- 
+  mort %>%
+  mutate(final_date = ifelse(is.na(mortality_day), end_data_date, mortality_day))
 
 
 dataset %<>% filter(species == "D") %>% #only daphnia for this analysis
@@ -64,7 +59,7 @@ dataset %<>% mutate(birthdate = ifelse(species == "daphnia", "4/5/22", "4/6/22")
   filter(!is.na(inf)) #remove NAs for inf for estimating beta. sometimes they died too young to tell
 
 
-dataset %<>% mutate(inf_status = inf, dead = ifelse(is.na(REMOVED) & is.na(KBP), 1, 0),
+dataset %<>% mutate(inf_status = inf, 
                     spore_exposure = 200, #spores/mL
                     uninf = 1-inf_status,
                     time = 1, #duration of exposure in days
@@ -84,11 +79,16 @@ length_summ <- lengths %>%
   ungroup() %>%
   dplyr::select(temp_id, resource, life_mm)
 
-length_summ %<>% add_row(temp_id=as.character(25), resource=as.numeric(0.5), life_mm=1.16) #midpoint between 1.0 and 0.1
+length_summ %<>% 
+  add_row(temp_id=as.numeric(25), 
+          resource=as.numeric(0.5), 
+          #midpoint between 1.0 and 0.1
+          life_mm=1.16) %>%
+  rename(temp = temp_id)
 
-dataset %<>% left_join(length_summ)
+dataset %<>% left_join(., length_summ)
 
-length_summ %<>% mutate(ID = paste(temp_id, resource, sep="_")) %>% dplyr::select(-c(temp_id, resource))
+length_summ %<>% mutate(ID = paste(temp, resource, sep="_")) %>% dplyr::select(-c(temp, resource))
 
 #interpolate lengths from foraging assay
 mean_length_summ <- data_summ %>% dplyr::select(temp, resource, mm_mean)

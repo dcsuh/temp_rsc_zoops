@@ -238,6 +238,15 @@ f4 <- seq_plot_alt(f_seq, "m5_rate") +
         panel.background = element_rect(fill = "#ADD0E9"),
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
+clearance_plots <- f0 | f1 | f2 | f3 | f4
+
+
+ggsave(here("figures", "02_clearance_plots.png"),
+       clearance_plots,
+       width = 8,
+       height = 1.5,
+       units = "in")
+
 
 
 
@@ -267,21 +276,15 @@ a4 <- algae_plot_diff(f_seq, "m5_diff") +
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
 
-
-foraging <- 
-  grid.arrange(grobs=lapply(list(f0, f1, f2, f3, f4,
-                                 a0, a1, a2, a3, a4), 
-                            set_panel_size,
-                            width=unit(1.3, "in"), 
-                            height=unit(1, "in")),
-               ncol = 5)
+algae_plots_diff <- a0 | a1 | a2 | a3 | a4
 
 
-ggsave(here("figures", "foraging.png"),
-       foraging,
-       width = 8.5,
-       height = 4.5,
+ggsave(here("figures", "02_algae_plots.png"),
+       algae_plots_diff,
+       width = 8,
+       height = 1.5,
        units = "in")
+
 
 
 # Figure 3: infection results ---------------------------------------------
@@ -315,6 +318,15 @@ s4 <- spores_plot(u_seq, "spores_consumed_m5") +
         panel.background = element_rect(fill = "#ADD0E9"),
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
+spores_plots <- s0 | s1 | s2 | s3 | s4
+
+
+ggsave(here("figures", "03_inf_spores_plots.png"),
+       spores_plots,
+       width = 8,
+       height = 1.5,
+       units = "in")
+
 
 
 u0 <- u_plot(u_seq, "m1_susc") + 
@@ -343,6 +355,14 @@ u4 <- u_plot(u_seq, "m5_susc") +
         panel.background = element_rect(fill = "#ADD0E9"),
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
+susc_plots <- u0 | u1 | u2 | u3 | u4
+
+
+ggsave(here("figures", "03_susc_plots.png"),
+       susc_plots,
+       width = 8,
+       height = 1.5,
+       units = "in")
 
 
 p_theme <-
@@ -376,22 +396,14 @@ p4 <- prev_plot(u_seq, "m5_I_end") +
         plot.margin = unit(c(0, 0.5, 0, 0.5), "mm"))
 
 
-infection <- 
-  grid.arrange(grobs=lapply(list(s0, s1, s2, s3, s4,
-                                 u0, u1, u2, u3, u4,
-                                 p0, p1, p2, p3, p4), 
-                            set_panel_size,
-                            width=unit(1.3, "in"), 
-                            height=unit(1, "in")),
-               ncol = 5)
+prev_plots <- p0 | p1 | p2 | p3 | p4
 
 
-ggsave(here("figures", "infection.png"),
-       infection,
-       width = 8.5,
-       height = 4.5,
+ggsave(here("figures", "03_prev_plots.png"),
+       prev_plots,
+       width = 8,
+       height = 1.5,
        units = "in")
-
 
 
 
@@ -417,7 +429,7 @@ param_ci <-
   facet_wrap(~name, scales = "free",
              nrow = 2)
 
-ggsave(here("figures", "param_est.png"), width = 6, height = 4)
+ggsave(here("figures", "04_param_est.png"), width = 6, height = 4)
 
 #handling time
 
@@ -436,7 +448,7 @@ h_plot <-
   theme_bw(base_size = 12)
 
 
-ggsave(here("figures", "handling.png"), width = 6, height = 4)
+ggsave(here("figures", "04_handling.png"), width = 6, height = 4)
 
 
 
@@ -463,7 +475,7 @@ f_ci_seq %>%
   scale_fill_manual(values = c("#CABD88", "#CA5216", "#65320D")) +
   theme_bw(base_size = 12)
 
-ggsave(here("figures", "fora_ci_temp.png"), 
+ggsave(here("figures", "05_fora_ci_temp.png"), 
        plot = set_panel_size(p=f_res_factor, width=unit(5, "in"), height=unit(3, "in")),
        width = 7,
        height = 4,
@@ -491,7 +503,7 @@ f_ci_seq %>%
   theme_bw(base_size = 12)
 
 
-ggsave(here("figures", "fora_ci_rsc.png"), 
+ggsave(here("figures", "05_fora_ci_rsc.png"), 
        plot = set_panel_size(p=f_temp_factor, width=unit(5, "in"), height=unit(3, "in")),
        width = 7,
        height = 4,
@@ -521,7 +533,7 @@ u_ci_seq %>%
   theme_bw(base_size = 12)
 
 
-ggsave(here("figures", "susc_ci_temp.png"), 
+ggsave(here("figures", "05_susc_ci_temp.png"), 
        plot = set_panel_size(p=inf_res_factor, width=unit(5, "in"), height=unit(3, "in")),
        width = 7,
        height = 4,
@@ -549,7 +561,7 @@ u_ci_seq %>%
   theme_bw(base_size = 12)
 
 
-ggsave(here("figures", "susc_ci_rsc.png"), 
+ggsave(here("figures", "05_susc_ci_rsc.png"), 
        plot = set_panel_size(p=inf_temp_factor, width=unit(5, "in"), height=unit(3, "in")),
        width = 7,
        height = 4,
