@@ -3,6 +3,19 @@
 
 library(here)
 
+if(file.exists(here("processed_data", "m2E_bootstraps.rds")) == TRUE |
+   file.exists(here("processed_data", "m2E_bootstrap_quantiles.rds")) == TRUE |
+   file.exists(here("processed_data", "seq_data", "h_ci_bootstrap.rds")) == TRUE |
+   file.exists(here("processed_data", "seq_data", "f_ci_bootstrap.rds")) == TRUE |
+   file.exists(here("processed_data", "seq_data", "u_ci_bootstrap.rds")) == TRUE) {
+  
+  message("Bootstrap data already exist.")
+  
+} else {
+  
+
+
+
 source(here("base","src.R"))
 source(here("03_infection.R"))
 
@@ -244,6 +257,13 @@ confint_table <-
   ) %>%
   merge_at(i = 1, j = 1:4, part = "header")
 
+if(dir.exists(here("figures")) == FALSE) {
+  message("Welcome! Let's make some room for figures.")
+  dir.create(here("figures")) 
+} else {
+  message("/figures exists! Proceeeding to save.")
+}
+
 save_as_docx("confint_table" = confint_table, path = here("figures", "boot_conf_int.docx"))
 
 
@@ -379,12 +399,21 @@ u_seq %<>% mutate(u = u_est*exp(arr_u_est*(1/ref_t - 1/temp))*exp(rho_est*resour
                   phi_eff = exp(resource*temp*phi_est))
 
 
+if(dir.exists(here("processed_data", "seq_data")) == FALSE) {
+  message("Welcome! Let's make some room for simulated model data.")
+  dir.create(here("processed_data", "seq_data")) 
+} else {
+  message("/processed_data/seq_data exists! Proceeeding to save.")
+}
+
+
 saveRDS(boot_01, file = here("processed_data", "m2E_bootstraps.rds"))
 saveRDS(mod_quantiles, file = here("processed_data", "m2E_bootstrap_quantiles.rds"))
 saveRDS(h_seq, here("processed_data", "seq_data", "h_ci_bootstrap.rds"))
 saveRDS(f_seq, here("processed_data", "seq_data", "f_ci_bootstrap.rds"))
 saveRDS(u_seq, here("processed_data", "seq_data", "u_ci_bootstrap.rds"))
 
+}
 
 
 

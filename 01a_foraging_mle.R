@@ -3,9 +3,23 @@
 
 library(here)
 
+
+
+
+if(file.exists(here("processed_data", "mle", "m1_f_fit.rds")) == TRUE |
+   file.exists(here("processed_data", "mle", "m2_f_fit.rds")) == TRUE |
+   file.exists(here("processed_data", "mle", "m3_f_fit.rds")) == TRUE |
+   file.exists(here("processed_data", "mle", "m4_f_fit.rds")) == TRUE |
+   file.exists(here("processed_data", "mle", "m5_f_fit.rds")) == TRUE) {
+  
+  message("Model parameter estimates already exist.")
+  
+  } else {
+    
+
+
 source(here("base","src.R"))
 source(here("01_foraging.R"))
-
 
 # maximum likelihood estimation -------------------------------------------
 
@@ -57,9 +71,17 @@ m5_f_fit <- mle2(m5_ll,
 
 # save outputs ------------------------------------------------------------
 
+if(dir.exists(here("processed_data", "mle")) == FALSE) {
+  message("Welcome! Let's make some room for the model estimates.")
+  dir.create(here("processed_data", "mle")) 
+} else {
+  message("/processed_data/mle exists! Proceeeding to save.")
+}
 
 saveRDS(m1_f_fit, file = here("processed_data", "mle", "m1_f_fit.rds"))
 saveRDS(m2_f_fit, file = here("processed_data", "mle", "m2_f_fit.rds"))
 saveRDS(m3_f_fit, file = here("processed_data", "mle", "m3_f_fit.rds"))
 saveRDS(m4_f_fit, file = here("processed_data", "mle", "m4_f_fit.rds"))
 saveRDS(m5_f_fit, file = here("processed_data", "mle", "m5_f_fit.rds"))
+
+}

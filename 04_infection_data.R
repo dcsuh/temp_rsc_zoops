@@ -3,6 +3,16 @@
 
 library(here)
 
+
+if(file.exists(here("processed_data", "seq_data", "infection_fit_data.rds")) == TRUE) {
+  
+  message("Simulated data already exist.")
+  
+} else {
+  
+
+
+
 source(here("base","src.R"))
 source(here("03_infection.R"))
 
@@ -299,4 +309,14 @@ seq_data %<>% mutate(spores_consumed_m1 = mapply(m1_sim_Z,
 
 # save data ---------------------------------------------------------------
 
+if(dir.exists(here("processed_data", "seq_data")) == FALSE) {
+  message("Welcome! Let's make some room for simulated model data.")
+  dir.create(here("processed_data", "seq_data")) 
+} else {
+  message("/processed_data/seq_data exists! Proceeeding to save.")
+}
+
+
 saveRDS(seq_data, file=here("processed_data", "seq_data", "infection_fit_data.rds"))
+
+}

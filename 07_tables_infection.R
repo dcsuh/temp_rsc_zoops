@@ -506,5 +506,12 @@ mod_results_combined_flex <-
               arrange(., desc(weight))) %>% 
   colformat_double(j = "AICc", big.mark = "")
 
+if(dir.exists(here("figures")) == FALSE) {
+  message("Welcome! Let's make some room for figures.")
+  dir.create(here("figures")) 
+} else {
+  message("/figures exists! Proceeeding to save.")
+}
+
 save_as_docx("aicc_combined" = mod_results_combined_flex, path = here("figures", "combined_table_results.docx"))
 

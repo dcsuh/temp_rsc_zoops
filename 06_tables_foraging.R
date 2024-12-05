@@ -40,4 +40,11 @@ aicc_flex <-
   rownames_to_column(var = "model") %>% 
   flextable()
 
+if(dir.exists(here("figures")) == FALSE) {
+  message("Welcome! Let's make some room for figures.")
+  dir.create(here("figures")) 
+} else {
+  message("/figures exists! Proceeeding to save.")
+}
+
 save_as_docx("aicc" = aicc_flex, path = here("figures", "fora_table_results.docx"))

@@ -6,6 +6,7 @@ library(here)
 source(here("base","src.R"))
 
 
+
 #read data
 f_seq <- readRDS(file=here("processed_data", "seq_data", "foraging_rate_fit_data.rds"))
 u_seq <- readRDS(file=here("processed_data", "seq_data", "infection_fit_data.rds"))
@@ -44,6 +45,12 @@ f_seq %<>% mutate(amt_diff = amt_init_mean-amt_rem_mean,
 f_seq %<>% arrange(desc(temp))
 
 
+if(dir.exists(here("figures")) == FALSE) {
+  message("Welcome! Let's make some room for figures.")
+  dir.create(here("figures")) 
+} else {
+  message("/figures exists! Proceeeding to save.")
+}
 
 
 # Figure 1: Data summary --------------------------------------------------

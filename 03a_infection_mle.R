@@ -3,6 +3,20 @@
 
 library(here)
 
+
+if(file.exists(here("processed_data", "mle", "m1_combined_fit.rds")) == TRUE |
+   file.exists(here("processed_data", "mle", "m2_combined_fit.rds")) == TRUE |
+   file.exists(here("processed_data", "mle", "m3_combined_fit.rds")) == TRUE |
+   file.exists(here("processed_data", "mle", "m4_combined_fit.rds")) == TRUE |
+   file.exists(here("processed_data", "mle", "m5_combined_fit.rds")) == TRUE) {
+  
+  message("Model parameter estimates already exist.")
+  
+} else {
+  
+
+
+
 source(here("base","src.R"))
 source(here("03_infection.R"))
 
@@ -109,8 +123,17 @@ m5_fit <-
 
 # save fits ---------------------------------------------------------------
 
+if(dir.exists(here("processed_data", "mle")) == FALSE) {
+  message("Welcome! Let's make some room for the model estimates.")
+  dir.create(here("processed_data", "mle")) 
+} else {
+  message("/processed_data/mle exists! Proceeeding to save.")
+}
+
 saveRDS(m1_fit, file = here("processed_data", "mle", "m1_combined_fit.rds"))
 saveRDS(m2_fit, file = here("processed_data", "mle", "m2_combined_fit.rds"))
 saveRDS(m3_fit, file = here("processed_data", "mle", "m3_combined_fit.rds"))
 saveRDS(m4_fit, file = here("processed_data", "mle", "m4_combined_fit.rds"))
 saveRDS(m5_fit, file = here("processed_data", "mle", "m5_combined_fit.rds"))
+
+}
