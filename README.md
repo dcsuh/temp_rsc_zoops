@@ -1,5 +1,7 @@
 Code and Data for "Temperature and resources interact to affect transmission via host foraging rate and susceptibility" by Daniel C. Suh, Katie Schroeder, and Alexander T. Strauss
 
+_build.R runs all scripts in sequence to generate all data and figures
+
 Scripts 00 through 05 perform all data cleaning and analysis.
 Scripts 06 through 09 generate figures and statistical results.
 

@@ -399,6 +399,19 @@ u_seq %<>% mutate(u = u_est*exp(arr_u_est*(1/ref_t - 1/temp))*exp(rho_est*resour
                   phi_eff = exp(resource*temp*phi_est))
 
 
+if(dir.exists(here("processed_data")) == FALSE) {
+  message("Welcome! Let's make some room for the processed data.")
+  dir.create(here("processed_data")) 
+} else {
+  message("/processed_data exists! Proceeeding to save.")
+}
+
+
+saveRDS(boot_01, file = here("processed_data", "m2E_bootstraps.rds"))
+saveRDS(mod_quantiles, file = here("processed_data", "m2E_bootstrap_quantiles.rds"))
+
+
+
 if(dir.exists(here("processed_data", "seq_data")) == FALSE) {
   message("Welcome! Let's make some room for simulated model data.")
   dir.create(here("processed_data", "seq_data")) 
@@ -407,8 +420,6 @@ if(dir.exists(here("processed_data", "seq_data")) == FALSE) {
 }
 
 
-saveRDS(boot_01, file = here("processed_data", "m2E_bootstraps.rds"))
-saveRDS(mod_quantiles, file = here("processed_data", "m2E_bootstrap_quantiles.rds"))
 saveRDS(h_seq, here("processed_data", "seq_data", "h_ci_bootstrap.rds"))
 saveRDS(f_seq, here("processed_data", "seq_data", "f_ci_bootstrap.rds"))
 saveRDS(u_seq, here("processed_data", "seq_data", "u_ci_bootstrap.rds"))

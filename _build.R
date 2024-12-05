@@ -1,0 +1,25 @@
+#full build script
+#runs all code in sequence to generate all data and figures
+
+library(here)
+
+rm(list = ls())
+source(here("00_data_processing.R"))
+rm(list = ls())
+source(here("01a_foraging_mle.R"))
+rm(list = ls())
+source(here("02_foraging_data.R"))
+rm(list = ls())
+source(here("03a_infection_mle.R"))
+rm(list = ls())
+source(here("04_infection_data.R"))
+rm(list = ls())
+source(here("05_bootstrap.R"))
+rm(list = ls())
+source(here("06_tables_foraging.R"))
+rm(list = ls())
+source(here("07_tables_infection.R"))
+rm(list = ls())
+source(here("08_figures.R"))
+rm(list = ls())
+source(here("09_stats.R"))
