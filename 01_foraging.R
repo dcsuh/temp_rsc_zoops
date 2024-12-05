@@ -10,11 +10,6 @@ data <- readRDS(here("processed_data","foraging_raw.rds"))
 data_summ <- readRDS(here("processed_data", "foraging.rds"))
 
 
-# Cleaning ----------------------------------------------------------------
-
-
-
-
 
 # Define local variables --------------------------------------------------
 
